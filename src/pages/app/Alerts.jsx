@@ -72,6 +72,16 @@ export default function Alerts() {
           <p style={{ fontSize: '13px', color: '#5E6774', fontFamily: 'Inter, sans-serif' }}>Events detected across your network</p>
         </div>
 
+        {/* Sample notice */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px',
+          padding: '10px 14px', borderRadius: '10px', fontSize: '12.5px',
+          background: 'rgba(145,89,7,0.06)', border: '1px solid rgba(145,89,7,0.2)', color: '#915907',
+        }}>
+          <Zap style={{ width: '13px', height: '13px', flexShrink: 0 }} />
+          These are sample alerts. Live life-event detection is on the roadmap — Common Ground theme monitoring is live today.
+        </div>
+
         {/* Filters */}
         <div style={{ display: 'flex', gap: '8px', marginBottom: '28px', flexWrap: 'wrap' }}>
           {FILTERS.map(f => (

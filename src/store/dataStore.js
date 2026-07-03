@@ -34,6 +34,7 @@ function fakeEmail(name) {
 function buildSeedContacts() {
   return seedContacts.map((c, i) => ({
     ...c,
+    seed: true,
     email: fakeEmail(c.name),
     phone: `+1 (555) 01${String(i).padStart(2, '0')}-${String(1000 + c.id * 37).slice(-4)}`,
     lastTouch: daysAgo(SEED_LAST_TOUCH[c.id] ?? 60),
@@ -75,6 +76,30 @@ export const useDataStore = create(
       },
 
       removeMeeting: id => set(s => ({ meetings: s.meetings.filter(m => m.id !== id) })),
+
+      // Sample-data controls: seeds are tagged so a real user can start clean
+      // without losing anything they added themselves.
+      clearSampleData: () => set(s => {
+        const seedIds = new Set(s.contacts.filter(c => c.seed).map(c => c.id))
+        const themesByContact = { ...s.themesByContact }
+        for (const id of seedIds) delete themesByContact[id]
+        return {
+          contacts: s.contacts.filter(c => !c.seed),
+          themesByContact,
+          touches: s.touches.filter(t => !seedIds.has(t.contactId)),
+          meetings: s.meetings.filter(m => !seedIds.has(m.contactId)),
+        }
+      }),
+
+      restoreSampleData: () => set(s => {
+        const existing = new Set(s.contacts.map(c => c.id))
+        return {
+          contacts: [...s.contacts, ...buildSeedContacts().filter(c => !existing.has(c.id))],
+          themesByContact: { ...buildSeedThemes(), ...s.themesByContact },
+          touches: [...s.touches.filter(t => !SEED_TOUCHES.some(st => st.id === t.id)), ...SEED_TOUCHES],
+          meetings: [...s.meetings.filter(m => !SEED_MEETINGS.some(sm => sm.id === m.id)), ...SEED_MEETINGS],
+        }
+      }),
 
       addContact: ({ name, role, company, email, phone, themes = [] }) => {
         const id = Date.now()
@@ -133,7 +158,17 @@ export const useDataStore = create(
     }),
     {
       name: 'harbored-data',
-      version: 1,
+      version: 2,
+      // v1 → v2: seed contacts predate the `seed` flag. Seed ids are the
+      // small numeric ids from appData; user-added contacts use Date.now().
+      migrate: (persisted, version) => {
+        if (version < 2 && persisted?.contacts) {
+          persisted.contacts = persisted.contacts.map(c =>
+            typeof c.id === 'number' && c.id <= 100 ? { ...c, seed: true } : c
+          )
+        }
+        return persisted
+      },
     }
   )
 )

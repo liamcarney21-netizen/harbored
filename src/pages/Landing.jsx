@@ -314,6 +314,12 @@ function WaitlistModal({ isOpen, onClose, onPreviewApp }) {
   const handleSubmit = e => {
     e.preventDefault();
     if (!email) return;
+    // Deliver to the server (emails the owner); keep a local copy as backup.
+    fetch('/api/waitlist', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ firstName, email }),
+    }).catch(() => {});
     const existing = JSON.parse(localStorage.getItem('harbored_waitlist') || '[]');
     existing.push({ firstName, email, ts: new Date().toISOString() });
     localStorage.setItem('harbored_waitlist', JSON.stringify(existing));

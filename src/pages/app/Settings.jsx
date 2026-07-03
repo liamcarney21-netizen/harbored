@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { User, Bell, Link2, Zap, Trash2, Check, Compass } from 'lucide-react'
+import { User, Bell, Link2, Zap, Trash2, Check, Compass, Database } from 'lucide-react'
+import { useDataStore } from '../../store/dataStore'
 
 const fadeUp = { initial: { opacity: 0, y: 10 }, animate: { opacity: 1, y: 0 } }
 const stagger = { animate: { transition: { staggerChildren: 0.06 } } }
@@ -74,6 +75,10 @@ const PLATFORMS = [
 ]
 
 export default function Settings() {
+  const contacts = useDataStore(s => s.contacts)
+  const clearSampleData = useDataStore(s => s.clearSampleData)
+  const restoreSampleData = useDataStore(s => s.restoreSampleData)
+  const sampleCount = contacts.filter(c => c.seed).length
   const [profile, setProfile] = useState({ name: 'Liam Carney', email: 'liamcarney21@gmail.com', timezone: 'America/Chicago' })
   const [notifToggles, setNotifToggles] = useState({ email: true, sms: true, slack: false, whatsapp: false, teams: false })
   const [notifValues, setNotifValues] = useState({ email: 'liamcarney21@gmail.com', sms: '', slack: '', whatsapp: '', teams: '' })
@@ -246,6 +251,33 @@ export default function Settings() {
             >
               Replay walkthrough
             </button>
+          </div>
+        </motion.section>
+
+        {/* Sample Data */}
+        <motion.section variants={fadeUp} style={{ borderRadius: '16px', padding: '24px', background: '#FFFFFF', border: '1px solid #E8EAED' }}>
+          <SectionHeader icon={Database} title="Sample Data" />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '24px', flexWrap: 'wrap' }}>
+            <p style={{ fontSize: '13px', lineHeight: 1.6, color: '#5E6774', flex: 1, minWidth: '220px' }}>
+              {sampleCount > 0
+                ? `${sampleCount} sample contacts (and their themes, messages, and meetings) are loaded so you can explore. Clearing them never touches anything you added yourself.`
+                : 'Sample data is cleared. Restore it any time to explore with example contacts.'}
+            </p>
+            {sampleCount > 0 ? (
+              <button
+                onClick={clearSampleData}
+                style={{ fontSize: '12px', padding: '8px 16px', borderRadius: '8px', fontWeight: 500, cursor: 'pointer', flexShrink: 0, background: 'none', color: '#44484D', border: '1px solid #CDD3D9', fontFamily: 'Inter, sans-serif' }}
+              >
+                Clear sample data
+              </button>
+            ) : (
+              <button
+                onClick={restoreSampleData}
+                style={{ fontSize: '12px', padding: '8px 16px', borderRadius: '8px', fontWeight: 500, cursor: 'pointer', flexShrink: 0, background: 'rgba(10,102,194,0.1)', color: '#0A66C2', border: '1px solid rgba(10,102,194,0.25)', fontFamily: 'Inter, sans-serif' }}
+              >
+                Restore sample data
+              </button>
+            )}
           </div>
         </motion.section>
 

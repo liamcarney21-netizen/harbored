@@ -26,6 +26,9 @@ Runs on http://localhost:5178
 - `src/data/` — appData (alerts/messages seeds), commonGround (curated theme updates + SIGNIFICANCE_THRESHOLD)
 - `server/newsHandler.js` — keyless Google News RSS fetcher, shared by vite dev middleware (vite.config.js) and the Vercel function `api/news.js`
 - `server/discoverHandler.js` — Common Ground discovery (POST /api/discover): extracts shared themes from pasted conversation text. Uses the Claude API when ANTHROPIC_API_KEY is set (shell env in dev, Vercel project env in prod; model override via ANTHROPIC_MODEL), otherwise a keyword-taxonomy fallback. UI entry: "Discover" button on contact profiles (DiscoverThemesModal).
+- `server/waitlistHandler.js` — waitlist signups (POST /api/waitlist): emails the owner via Resend when RESEND_API_KEY is set, otherwise logs to function logs. Landing WaitlistModal POSTs here (localStorage kept as client backup).
+- `server/rateLimit.js` — per-IP in-memory rate limiting on the Vercel functions (discover 10/hr, news 120/hr, waitlist 5/hr). Not applied in dev middleware.
+- Sample data: seed contacts are tagged `seed: true` (persist migration v2); Settings has clear/restore controls. Alerts page is marked as sample until real event detection exists.
 - `public/` — static assets
 
 ## Key Behaviors

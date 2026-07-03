@@ -1,7 +1,12 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { inject } from '@vercel/analytics'
 import './index.css'
 import App from './App.jsx'
+
+// Vercel Analytics — no-ops in dev, reports page views in production once
+// Analytics is enabled on the Vercel project.
+inject()
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
