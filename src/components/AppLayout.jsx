@@ -9,6 +9,7 @@ import Alerts from '../pages/app/Alerts'
 import Network from '../pages/app/Network'
 import CommonGround from '../pages/app/CommonGround'
 import ContactProfile from '../pages/app/ContactProfile'
+import PrepBrief from '../pages/app/PrepBrief'
 import Digest from '../pages/app/Digest'
 import Messages from '../pages/app/Messages'
 import Analytics from '../pages/app/Analytics'
@@ -52,6 +53,7 @@ export default function AppLayout() {
           <Route path="alerts"    element={<Alerts />} />
           <Route path="network"   element={<Network onAddContact={() => setShowAddContact(true)} />} />
           <Route path="contact/:id" element={<ContactProfile />} />
+          <Route path="prep/:id" element={<PrepBrief />} />
           <Route path="digest"    element={<Digest />} />
           <Route path="common-ground" element={<Navigate to="/dashboard" replace />} />
           <Route path="messages"  element={<Messages />} />

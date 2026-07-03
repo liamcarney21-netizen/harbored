@@ -5,6 +5,11 @@ import { sharedThemes as seedThemes } from '../data/commonGround'
 
 const DAY = 86400000
 const daysAgo = n => new Date(Date.now() - n * DAY).toISOString()
+const daysFromNow = (n, hour = 9, min = 30) => {
+  const d = new Date(Date.now() + n * DAY)
+  d.setHours(hour, min, 0, 0)
+  return d.toISOString()
+}
 
 // Days since last touch → relationship health. This is the single source of
 // truth for health everywhere in the app.
@@ -50,12 +55,26 @@ const SEED_TOUCHES = [
   { id: 'touch-5', contactId: 5, date: daysAgo(65), channel: 'email', message: "Connor! 3 years at Goldman — that's a real milestone. Hope you're celebrating. What are you working on these days?", trigger: '3-year work anniversary at Goldman Sachs' },
 ]
 
+const SEED_MEETINGS = [
+  { id: 'mtg-1', contactId: 13, title: 'Coffee — Spyhouse on Hennepin', datetime: daysFromNow(2, 9, 30) },
+  { id: 'mtg-2', contactId: 2,  title: 'Catch-up call',                datetime: daysFromNow(5, 15, 0) },
+]
+
 export const useDataStore = create(
   persist(
     (set, get) => ({
       contacts: buildSeedContacts(),
       themesByContact: buildSeedThemes(),
       touches: SEED_TOUCHES,
+      meetings: SEED_MEETINGS,
+
+      addMeeting: (contactId, { title, datetime }) => {
+        const meeting = { id: `mtg-${Date.now()}`, contactId, title, datetime }
+        set(s => ({ meetings: [...s.meetings, meeting] }))
+        return meeting
+      },
+
+      removeMeeting: id => set(s => ({ meetings: s.meetings.filter(m => m.id !== id) })),
 
       addContact: ({ name, role, company, email, phone, themes = [] }) => {
         const id = Date.now()

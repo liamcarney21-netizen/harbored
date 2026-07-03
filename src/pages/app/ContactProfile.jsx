@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ChevronLeft, Mail, Phone, Send, Check, Plus, X, MessageCircle, Compass, StickyNote, Sparkles } from 'lucide-react'
+import { ChevronLeft, Mail, Phone, Send, Check, Plus, X, MessageCircle, Compass, StickyNote, Sparkles, Calendar, FileText } from 'lucide-react'
 import Avatar from '../../components/Avatar'
 import PlatformBadge from '../../components/PlatformBadge'
 import DiscoverThemesModal from '../../components/DiscoverThemesModal'
@@ -30,9 +30,14 @@ export default function ContactProfile() {
   const removeTheme = useDataStore(s => s.removeTheme)
   const recordTouch = useDataStore(s => s.recordTouch)
   const saveNote = useDataStore(s => s.saveNote)
+  const addMeeting = useDataStore(s => s.addMeeting)
+  const meetings = useDataStore(s => s.meetings)
 
   const [noteDraft, setNoteDraft] = useState(contact?.notes ?? '')
   const [noteSaved, setNoteSaved] = useState(false)
+  const [scheduling, setScheduling] = useState(false)
+  const [mtgTitle, setMtgTitle] = useState('Coffee catch-up')
+  const [mtgWhen, setMtgWhen] = useState('')
   const [adding, setAdding] = useState(false)
   const [newLabel, setNewLabel] = useState('')
   const [newCategory, setNewCategory] = useState('sports')
@@ -107,17 +112,99 @@ export default function ContactProfile() {
               )}
             </div>
           </div>
-          <button
-            onClick={handleReachOut}
-            style={{
-              display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0,
-              padding: '10px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
-              background: '#0A66C2', color: '#FFFFFF', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
-            }}
-          >
-            <Send style={{ width: '13px', height: '13px' }} /> Reach out now
-          </button>
+          <div style={{ display: 'flex', gap: '10px', flexShrink: 0, flexWrap: 'wrap' }}>
+            <button
+              onClick={handleReachOut}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '8px',
+                padding: '10px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
+                background: '#0A66C2', color: '#FFFFFF', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+              }}
+            >
+              <Send style={{ width: '13px', height: '13px' }} /> Reach out now
+            </button>
+            <button
+              onClick={() => navigate(`/dashboard/prep/${contact.id}`)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '8px',
+                padding: '10px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 500,
+                background: 'rgba(10,102,194,0.1)', color: '#0A66C2', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+              }}
+            >
+              <FileText style={{ width: '13px', height: '13px' }} /> Prep brief
+            </button>
+            <button
+              onClick={() => setScheduling(v => !v)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '8px',
+                padding: '10px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 500,
+                background: 'none', color: '#44484D', border: '1px solid #CDD3D9', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+              }}
+            >
+              <Calendar style={{ width: '13px', height: '13px' }} /> Schedule catch-up
+            </button>
+          </div>
         </div>
+
+        {/* Schedule mini-form */}
+        {scheduling && (
+          <div style={{ marginTop: '16px', display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center', padding: '14px 16px', borderRadius: '10px', background: 'rgba(10,102,194,0.04)', border: '1px solid rgba(10,102,194,0.2)' }}>
+            <input
+              value={mtgTitle}
+              onChange={e => setMtgTitle(e.target.value)}
+              aria-label="Meeting title"
+              style={{ flex: 1, minWidth: '160px', padding: '9px 12px', borderRadius: '8px', fontSize: '13px', outline: 'none', background: '#FFFFFF', border: '1px solid #CDD3D9', color: '#1D2226', fontFamily: 'Inter, sans-serif' }}
+            />
+            <input
+              type="datetime-local"
+              value={mtgWhen}
+              onChange={e => setMtgWhen(e.target.value)}
+              aria-label="Meeting date and time"
+              style={{ padding: '8px 12px', borderRadius: '8px', fontSize: '13px', outline: 'none', background: '#FFFFFF', border: '1px solid #CDD3D9', color: '#1D2226', fontFamily: 'Inter, sans-serif' }}
+            />
+            <button
+              onClick={() => {
+                if (!mtgWhen) return
+                const dt = new Date(mtgWhen)
+                addMeeting(contact.id, { title: mtgTitle.trim() || 'Catch-up', datetime: dt.toISOString() })
+                // Prefilled Google Calendar event — same zero-infra pattern as sending
+                const gcal = (d) => d.toISOString().replace(/[-:]|\.\d{3}/g, '')
+                const end = new Date(dt.getTime() + 3600000)
+                window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(`${mtgTitle} with ${contact.name}`)}&dates=${gcal(dt)}/${gcal(end)}`, '_blank')
+                setScheduling(false)
+              }}
+              disabled={!mtgWhen}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 16px', borderRadius: '8px',
+                fontSize: '13px', fontWeight: 600, border: 'none', fontFamily: 'Inter, sans-serif',
+                background: mtgWhen ? '#0A66C2' : '#C7CDD3', color: '#FFFFFF', cursor: mtgWhen ? 'pointer' : 'default',
+              }}
+            >
+              <Check style={{ width: '12px', height: '12px' }} /> Save & add to calendar
+            </button>
+          </div>
+        )}
+
+        {/* Upcoming meeting strip */}
+        {(() => {
+          const next = meetings
+            .filter(m => m.contactId === contact.id && new Date(m.datetime) > new Date())
+            .sort((a, b) => new Date(a.datetime) - new Date(b.datetime))[0]
+          return next ? (
+            <div style={{ marginTop: '16px', display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', borderRadius: '10px', background: 'rgba(5,118,66,0.06)', border: '1px solid rgba(5,118,66,0.2)' }}>
+              <Calendar style={{ width: '13px', height: '13px', color: '#057642', flexShrink: 0 }} />
+              <span style={{ fontSize: '12.5px', color: '#1D2226', flex: 1 }}>
+                <strong>{next.title}</strong> · {new Date(next.datetime).toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' })} at {new Date(next.datetime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+              </span>
+              <button
+                onClick={() => navigate(`/dashboard/prep/${contact.id}`)}
+                style={{ fontSize: '12px', fontWeight: 600, color: '#057642', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}
+              >
+                View brief →
+              </button>
+            </div>
+          ) : null
+        })()}
 
         {/* Health */}
         <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #EEEFF1' }}>

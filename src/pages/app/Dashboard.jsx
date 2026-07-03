@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Users, Bell, MessageSquare, AlertTriangle, Plus, ChevronRight, ExternalLink } from 'lucide-react'
+import { Users, Bell, MessageSquare, AlertTriangle, Plus, ChevronRight, ExternalLink, Calendar, FileText } from 'lucide-react'
 import Avatar from '../../components/Avatar'
 import PlatformBadge from '../../components/PlatformBadge'
 import { alerts, contacts } from '../../data/appData'
@@ -120,6 +120,14 @@ export default function Dashboard({ onAddContact }) {
   const navigate = useNavigate()
   const storeContacts = useDataStore(s => s.contacts)
   const touches = useDataStore(s => s.touches)
+  const meetings = useDataStore(s => s.meetings)
+
+  const upcoming = meetings
+    .filter(m => new Date(m.datetime) > new Date())
+    .sort((a, b) => new Date(a.datetime) - new Date(b.datetime))
+    .slice(0, 3)
+    .map(m => ({ ...m, contact: storeContacts.find(c => c.id === m.contactId) }))
+    .filter(m => m.contact)
 
   const atRisk = storeContacts.filter(c => healthFromLastTouch(c.lastTouch).key === 'at-risk').length
   const sentLast30 = touches.filter(t => daysSince(t.date) < 30).length
@@ -166,6 +174,45 @@ export default function Dashboard({ onAddContact }) {
       <motion.div variants={stagger} style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '16px', marginBottom: '48px' }}>
         {stats.map(s => <StatCard key={s.title} {...s} />)}
       </motion.div>
+
+      {/* Upcoming catch-ups */}
+      {upcoming.length > 0 && (
+        <motion.div variants={fadeUp} style={{ marginBottom: '48px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+            <Calendar style={{ width: '14px', height: '14px', color: '#0A66C2' }} />
+            <h2 style={{ fontSize: '15px', fontWeight: 600, color: '#1D2226' }}>Upcoming Catch-ups</h2>
+          </div>
+          <div style={{ borderRadius: '12px', overflow: 'hidden', background: '#FFFFFF', border: '1px solid #E8EAED' }}>
+            {upcoming.map((m, i) => (
+              <div
+                key={m.id}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 20px',
+                  borderBottom: i < upcoming.length - 1 ? '1px solid #EEEFF1' : 'none',
+                }}
+              >
+                <Avatar initials={m.contact.initials} color={m.contact.color} size="sm" />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#1D2226' }}>{m.title}</span>
+                  <p style={{ fontSize: '12px', color: '#5E6774' }}>
+                    with {m.contact.name} · {new Date(m.datetime).toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' })} at {new Date(m.datetime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+                  </p>
+                </div>
+                <button
+                  onClick={() => navigate(`/dashboard/prep/${m.contactId}`)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0,
+                    fontSize: '12px', fontWeight: 500, padding: '7px 14px', borderRadius: '8px',
+                    background: 'rgba(10,102,194,0.1)', color: '#0A66C2', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+                  }}
+                >
+                  <FileText style={{ width: '12px', height: '12px' }} /> Prep brief
+                </button>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+      )}
 
       {/* Recent Alerts */}
       <motion.div variants={fadeUp} style={{ marginBottom: '48px' }}>
