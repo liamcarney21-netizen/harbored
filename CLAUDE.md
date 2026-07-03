@@ -19,7 +19,7 @@ Runs on http://localhost:5178
 
 ## Project Structure
 - `src/pages/` — Landing, Login, Signup (routed) + legacy Feed/Jobs/Messages/Network/Profile (unrouted)
-- `src/pages/app/` — the app: CommonGround (home at /dashboard), Dashboard (as /dashboard/overview), Alerts, Network, ContactProfile (/dashboard/contact/:id), Digest (/dashboard/digest), Messages, Analytics, Settings
+- `src/pages/app/` — the app: CommonGround (home at /dashboard), Dashboard (as /dashboard/overview), Alerts, Network, ContactProfile (/dashboard/contact/:id), PrepBrief (/dashboard/prep/:id — meeting one-pager with live theme updates + talking points; meetings stored in dataStore, scheduled from profiles with a Google Calendar deep link), Digest (/dashboard/digest), Messages, Analytics, Settings
 - `src/components/` — AppLayout, AppSidebar, Onboarding (first-login walkthrough → hands off to AddContactModal), AddContactModal, Avatar, PlatformBadge, LakeScene
 - `src/store/` — dataStore (Zustand + localStorage persist: contacts, themes, touches, notes; health derived from days-since-last-touch in `healthFromLastTouch`), authStore (legacy)
 - `src/services/` — monitoring (live theme updates: /api/news fetch + heuristic significance scoring + template drafts; swap for a Claude call to go full AI), outreach (mailto/sms deep-link sending), discovery (client for /api/discover)
