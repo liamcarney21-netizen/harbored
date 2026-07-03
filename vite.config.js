@@ -2,8 +2,9 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { handleNewsRequest } from './server/newsHandler.js'
+import { handleDiscoverRequest } from './server/discoverHandler.js'
 
-// Mirrors api/news.js so /api/news works under `npm run dev` without Vercel.
+// Mirrors the api/ functions so /api/* works under `npm run dev` without Vercel.
 function harboredApi() {
   return {
     name: 'harbored-api',
@@ -14,6 +15,16 @@ function harboredApi() {
           url.searchParams.get('q'),
           Number(url.searchParams.get('limit')) || 5
         )
+        res.statusCode = status
+        res.setHeader('content-type', 'application/json')
+        res.end(JSON.stringify(body))
+      })
+      server.middlewares.use('/api/discover', async (req, res) => {
+        let raw = ''
+        for await (const chunk of req) raw += chunk
+        let payload = {}
+        try { payload = JSON.parse(raw || '{}') } catch { /* handled below as empty */ }
+        const { status, body } = await handleDiscoverRequest(payload)
         res.statusCode = status
         res.setHeader('content-type', 'application/json')
         res.end(JSON.stringify(body))

@@ -22,9 +22,10 @@ Runs on http://localhost:5178
 - `src/pages/app/` — the app: CommonGround (home at /dashboard), Dashboard (as /dashboard/overview), Alerts, Network, ContactProfile (/dashboard/contact/:id), Digest (/dashboard/digest), Messages, Analytics, Settings
 - `src/components/` — AppLayout, AppSidebar, Onboarding (first-login walkthrough → hands off to AddContactModal), AddContactModal, Avatar, PlatformBadge, LakeScene
 - `src/store/` — dataStore (Zustand + localStorage persist: contacts, themes, touches, notes; health derived from days-since-last-touch in `healthFromLastTouch`), authStore (legacy)
-- `src/services/` — monitoring (live theme updates: /api/news fetch + heuristic significance scoring + template drafts; swap for a Claude call to go full AI), outreach (mailto/sms deep-link sending)
+- `src/services/` — monitoring (live theme updates: /api/news fetch + heuristic significance scoring + template drafts; swap for a Claude call to go full AI), outreach (mailto/sms deep-link sending), discovery (client for /api/discover)
 - `src/data/` — appData (alerts/messages seeds), commonGround (curated theme updates + SIGNIFICANCE_THRESHOLD)
 - `server/newsHandler.js` — keyless Google News RSS fetcher, shared by vite dev middleware (vite.config.js) and the Vercel function `api/news.js`
+- `server/discoverHandler.js` — Common Ground discovery (POST /api/discover): extracts shared themes from pasted conversation text. Uses the Claude API when ANTHROPIC_API_KEY is set (shell env in dev, Vercel project env in prod; model override via ANTHROPIC_MODEL), otherwise a keyword-taxonomy fallback. UI entry: "Discover" button on contact profiles (DiscoverThemesModal).
 - `public/` — static assets
 
 ## Key Behaviors

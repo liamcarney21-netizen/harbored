@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ChevronLeft, Mail, Phone, Send, Check, Plus, X, MessageCircle, Compass, StickyNote } from 'lucide-react'
+import { ChevronLeft, Mail, Phone, Send, Check, Plus, X, MessageCircle, Compass, StickyNote, Sparkles } from 'lucide-react'
 import Avatar from '../../components/Avatar'
 import PlatformBadge from '../../components/PlatformBadge'
+import DiscoverThemesModal from '../../components/DiscoverThemesModal'
 import { useDataStore, healthFromLastTouch } from '../../store/dataStore'
 import { openSend } from '../../services/outreach'
 
@@ -35,6 +36,7 @@ export default function ContactProfile() {
   const [adding, setAdding] = useState(false)
   const [newLabel, setNewLabel] = useState('')
   const [newCategory, setNewCategory] = useState('sports')
+  const [showDiscover, setShowDiscover] = useState(false)
 
   if (!contact) {
     return (
@@ -135,9 +137,22 @@ export default function ContactProfile() {
         {/* Left column: themes + notes */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <div style={card}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
-              <Compass style={{ width: '13px', height: '13px', color: '#0A66C2' }} />
-              <span style={{ ...sectionTitle, marginBottom: 0 }}>Common Ground</span>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Compass style={{ width: '13px', height: '13px', color: '#0A66C2' }} />
+                <span style={{ ...sectionTitle, marginBottom: 0 }}>Common Ground</span>
+              </div>
+              <button
+                onClick={() => setShowDiscover(true)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '5px',
+                  fontSize: '12px', fontWeight: 500, padding: '5px 12px', borderRadius: '8px',
+                  background: 'rgba(10,102,194,0.1)', color: '#0A66C2', border: 'none', cursor: 'pointer',
+                  fontFamily: 'Inter, sans-serif',
+                }}
+              >
+                <Sparkles style={{ width: '11px', height: '11px' }} /> Discover
+              </button>
             </div>
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
               {themes.map(t => (
@@ -251,6 +266,8 @@ export default function ContactProfile() {
           </div>
         </div>
       </div>
+
+      <DiscoverThemesModal open={showDiscover} onClose={() => setShowDiscover(false)} contact={contact} />
     </motion.div>
   )
 }
