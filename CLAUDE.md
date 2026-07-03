@@ -1,0 +1,59 @@
+# Harbored — Project Context
+
+## What is this?
+Harbored is a React + Vite landing page for a network intelligence app. Tagline: "Your network is growing. Don't lose touch." It tracks life events, promotions, and milestones so you can stay connected with your network.
+
+## Stack
+- React 19 + Vite 8
+- Tailwind CSS v4
+- Framer Motion (animations)
+- React Router DOM (routing)
+- Zustand (state management)
+
+## Local Development
+```bash
+cd ~/harbored
+npm run dev
+```
+Runs on http://localhost:5178
+
+## Project Structure
+- `src/pages/` — Landing, Login, Signup (routed) + legacy Feed/Jobs/Messages/Network/Profile (unrouted)
+- `src/pages/app/` — the app: CommonGround (home at /dashboard), Dashboard (as /dashboard/overview), Alerts, Network, ContactProfile (/dashboard/contact/:id), Digest (/dashboard/digest), Messages, Analytics, Settings
+- `src/components/` — AppLayout, AppSidebar, Onboarding (first-login walkthrough → hands off to AddContactModal), AddContactModal, Avatar, PlatformBadge, LakeScene
+- `src/store/` — dataStore (Zustand + localStorage persist: contacts, themes, touches, notes; health derived from days-since-last-touch in `healthFromLastTouch`), authStore (legacy)
+- `src/services/` — monitoring (live theme updates: /api/news fetch + heuristic significance scoring + template drafts; swap for a Claude call to go full AI), outreach (mailto/sms deep-link sending)
+- `src/data/` — appData (alerts/messages seeds), commonGround (curated theme updates + SIGNIFICANCE_THRESHOLD)
+- `server/newsHandler.js` — keyless Google News RSS fetcher, shared by vite dev middleware (vite.config.js) and the Vercel function `api/news.js`
+- `public/` — static assets
+
+## Key Behaviors
+- Sending is real: Send buttons open prefilled mailto:/sms: links and record a touch in the store; touches drive relationship health and appear in Messages + profile timelines.
+- Zustand gotcha: never subscribe with selectors that build new arrays (causes "getSnapshot should be cached" loop) — select stable slices, derive in render.
+
+## Design System
+Light professional CRM theme (LinkedIn-inspired): canvas #F3F2EF, white cards, accent #0A66C2,
+text #1D2226 / #5E6774, Inter only (no serifs). Common Ground is the product's core feature:
+per-contact shared themes → AI significance scoring (threshold 70) → reach-out prompts with drafted messages.
+
+## Live Deployment
+- **Live URL:** https://harbored-three.vercel.app
+- **Vercel project:** liamcarney21-netizens-projects/harbored
+- **GitHub repo:** https://github.com/liamcarney21-netizen/harbored
+
+## How to Redeploy
+```bash
+cd ~/harbored
+npx vercel --prod
+```
+
+## GitHub Push (when needed)
+The remote is set up but auth was tricky. Use the token-embedded URL:
+```bash
+git remote set-url origin https://liamcarney21-netizen:TOKEN@github.com/liamcarney21-netizen/harbored.git
+git push
+```
+Replace TOKEN with a fresh Personal Access Token from github.com/settings/tokens.
+
+## Owner
+Liam Carney — liamcarney21@gmail.com

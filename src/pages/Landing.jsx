@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, useInView, AnimatePresence } from 'framer-motion';
 import LakeScene from '../components/LakeScene';
 
@@ -38,11 +39,11 @@ function RevealGroup({ children, style = {} }) {
 const C = {
   navy:      '#0a1628',
   navyLight: '#1a3558',
-  gold:      '#c8882e',
-  goldLight: '#e8a83c',
-  goldPale:  '#f5c56a',
-  sand:      '#f5ead8',
-  cream:     '#faf8f4',
+  gold:      '#0A66C2',
+  goldLight: '#378FE9',
+  goldPale:  '#70B5F9',
+  sand:      '#EDF3F8',
+  cream:     '#F8FAFC',
   white:     '#ffffff',
   muted:     '#6b7280',
   faint:     '#9ca3af',
@@ -55,8 +56,8 @@ function Label({ children, light = false, center = false }) {
     <div style={{
       display: 'inline-flex', alignItems: 'center', gap: 6,
       padding: '5px 14px', borderRadius: 20,
-      background: light ? 'rgba(245,197,106,0.12)' : 'rgba(200,136,46,0.1)',
-      border: `1px solid ${light ? 'rgba(245,197,106,0.25)' : 'rgba(200,136,46,0.22)'}`,
+      background: light ? 'rgba(112,181,249,0.12)' : 'rgba(10,102,194,0.1)',
+      border: `1px solid ${light ? 'rgba(112,181,249,0.25)' : 'rgba(10,102,194,0.22)'}`,
       fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600,
       letterSpacing: '0.22em', textTransform: 'uppercase',
       color: light ? C.goldPale : C.gold,
@@ -171,12 +172,12 @@ function MockCard() {
         padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(245,197,106,0.9)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(112,181,249,0.9)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="5" r="2.5"/><line x1="12" y1="7.5" x2="12" y2="22"/><path d="M4 14 Q12 18 20 14"/>
           </svg>
-          <span style={{ color: 'rgba(253,248,238,0.85)', fontSize: 12, fontWeight: 600, letterSpacing: '0.1em' }}>HARBORED</span>
+          <span style={{ color: 'rgba(248,250,252,0.85)', fontSize: 12, fontWeight: 600, letterSpacing: '0.1em' }}>HARBORED</span>
         </div>
-        <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase', color: C.goldPale, background: 'rgba(245,197,106,0.12)', padding: '3px 8px', borderRadius: 10, border: '1px solid rgba(245,197,106,0.2)' }}>New event</span>
+        <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase', color: C.goldPale, background: 'rgba(112,181,249,0.12)', padding: '3px 8px', borderRadius: 10, border: '1px solid rgba(112,181,249,0.2)' }}>New event</span>
       </div>
 
       <div style={{ padding: '20px 20px 16px' }}>
@@ -238,7 +239,7 @@ function MockCard() {
 
         {status === 'idle' && (
           <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
-            <button onClick={handleSend} style={{ flex: 1, padding: '10px 0', background: 'linear-gradient(135deg, #0a1628, #1a3558)', color: '#fdf8ee', border: 'none', borderRadius: 8, fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, transition: 'opacity 0.15s' }}
+            <button onClick={handleSend} style={{ flex: 1, padding: '10px 0', background: 'linear-gradient(135deg, #0a1628, #1a3558)', color: '#F8FAFC', border: 'none', borderRadius: 8, fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, transition: 'opacity 0.15s' }}
               onMouseEnter={e => e.currentTarget.style.opacity = '0.88'} onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
               Send
@@ -255,7 +256,7 @@ function MockCard() {
           </div>
         )}
 
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', background: autoSend ? 'rgba(200,136,46,0.06)' : '#f9fafb', borderRadius: 10, border: `1px solid ${autoSend ? 'rgba(200,136,46,0.2)' : '#f3f4f6'}`, transition: 'all 0.2s ease' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', background: autoSend ? 'rgba(10,102,194,0.06)' : '#f9fafb', borderRadius: 10, border: `1px solid ${autoSend ? 'rgba(10,102,194,0.2)' : '#f3f4f6'}`, transition: 'all 0.2s ease' }}>
           <div>
             <div style={{ fontSize: 12, fontWeight: 600, color: '#1f2937' }}>Auto-Send</div>
             <div style={{ fontSize: 11, color: C.faint, marginTop: 1 }}>{autoSend ? 'On — Harbored will send automatically' : 'Off — you approve each message'}</div>
@@ -270,7 +271,7 @@ function MockCard() {
 }
 
 /* ─── Waitlist Modal ────────────────────────────────────── */
-function WaitlistModal({ isOpen, onClose }) {
+function WaitlistModal({ isOpen, onClose, onPreviewApp }) {
   const [firstName, setFirstName] = useState('');
   const [email, setEmail]         = useState('');
   const [submitted, setSubmitted] = useState(false);
@@ -304,7 +305,7 @@ function WaitlistModal({ isOpen, onClose }) {
     border: '1px solid rgba(255,255,255,0.1)',
     borderRadius: 8,
     fontFamily: 'Inter, sans-serif', fontSize: 14,
-    color: '#fdf8ee', outline: 'none',
+    color: '#F8FAFC', outline: 'none',
     boxSizing: 'border-box',
     transition: 'border-color 0.18s',
   };
@@ -337,7 +338,7 @@ function WaitlistModal({ isOpen, onClose }) {
             style={{
               background: '#0a1628',
               borderRadius: 20,
-              border: '1px solid rgba(200,136,46,0.22)',
+              border: '1px solid rgba(10,102,194,0.22)',
               boxShadow: '0 40px 100px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.04)',
               width: '100%', maxWidth: 420,
               padding: 'clamp(32px, 6vw, 48px)',
@@ -354,11 +355,11 @@ function WaitlistModal({ isOpen, onClose }) {
                 background: 'rgba(255,255,255,0.05)',
                 border: '1px solid rgba(255,255,255,0.08)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer', color: 'rgba(253,248,238,0.45)',
+                cursor: 'pointer', color: 'rgba(248,250,252,0.45)',
                 transition: 'background 0.15s, color 0.15s',
               }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#fdf8ee'; }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = 'rgba(253,248,238,0.45)'; }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#F8FAFC'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = 'rgba(248,250,252,0.45)'; }}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                 <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
@@ -373,16 +374,16 @@ function WaitlistModal({ isOpen, onClose }) {
                 <line x1="12" y1="7.2" x2="12" y2="21"/>
                 <path d="M4.5 14.5 Q12 18.5 19.5 14.5"/>
               </svg>
-              <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 17, fontWeight: 600, color: '#fdf8ee', letterSpacing: '0.02em' }}>Harbored</span>
+              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 17, fontWeight: 600, color: '#F8FAFC', letterSpacing: '0.02em' }}>Harbored</span>
             </div>
 
             <AnimatePresence mode="wait">
               {!submitted ? (
                 <motion.div key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }}>
-                  <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 'clamp(22px, 4vw, 28px)', fontWeight: 500, color: '#fdf8ee', lineHeight: 1.2, marginBottom: 10 }}>
+                  <h2 style={{ fontFamily: 'Inter, sans-serif', fontSize: 'clamp(22px, 4vw, 28px)', fontWeight: 500, color: '#F8FAFC', lineHeight: 1.2, marginBottom: 10 }}>
                     Be the first to know.
                   </h2>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 300, fontSize: 14, color: 'rgba(253,248,238,0.48)', lineHeight: 1.65, marginBottom: 28 }}>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 300, fontSize: 14, color: 'rgba(248,250,252,0.48)', lineHeight: 1.65, marginBottom: 28 }}>
                     Harbored is coming soon. Drop your info and we'll reach out when it's ready.
                   </p>
 
@@ -394,7 +395,7 @@ function WaitlistModal({ isOpen, onClose }) {
                         value={firstName}
                         onChange={e => setFirstName(e.target.value)}
                         style={inputStyle}
-                        onFocus={e => e.target.style.borderColor = 'rgba(200,136,46,0.5)'}
+                        onFocus={e => e.target.style.borderColor = 'rgba(10,102,194,0.5)'}
                         onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
                       />
                       <input
@@ -404,7 +405,7 @@ function WaitlistModal({ isOpen, onClose }) {
                         onChange={e => setEmail(e.target.value)}
                         required
                         style={inputStyle}
-                        onFocus={e => e.target.style.borderColor = 'rgba(200,136,46,0.5)'}
+                        onFocus={e => e.target.style.borderColor = 'rgba(10,102,194,0.5)'}
                         onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
                       />
                     </div>
@@ -416,7 +417,7 @@ function WaitlistModal({ isOpen, onClose }) {
                         color: C.navy,
                         fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 14,
                         border: 'none', borderRadius: 8, cursor: 'pointer',
-                        boxShadow: '0 4px 20px rgba(200,136,46,0.38)',
+                        boxShadow: '0 4px 20px rgba(10,102,194,0.38)',
                         transition: 'opacity 0.18s',
                       }}
                       onMouseEnter={e => e.currentTarget.style.opacity = '0.88'}
@@ -426,7 +427,7 @@ function WaitlistModal({ isOpen, onClose }) {
                     </button>
                   </form>
 
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(253,248,238,0.2)', textAlign: 'center', marginTop: 14 }}>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(248,250,252,0.2)', textAlign: 'center', marginTop: 14 }}>
                     No spam. We'll only reach out when Harbored is ready.
                   </p>
                 </motion.div>
@@ -438,17 +439,33 @@ function WaitlistModal({ isOpen, onClose }) {
                   transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
                   style={{ textAlign: 'center', padding: '24px 0 8px' }}
                 >
-                  <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(200,136,46,0.1)', border: '1px solid rgba(200,136,46,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+                  <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(10,102,194,0.1)', border: '1px solid rgba(10,102,194,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={C.gold} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="20 6 9 17 4 12"/>
                     </svg>
                   </div>
-                  <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 'clamp(20px, 3.5vw, 26px)', fontWeight: 500, color: '#fdf8ee', marginBottom: 10, lineHeight: 1.2 }}>
+                  <h3 style={{ fontFamily: 'Inter, sans-serif', fontSize: 'clamp(20px, 3.5vw, 26px)', fontWeight: 500, color: '#F8FAFC', marginBottom: 10, lineHeight: 1.2 }}>
                     You're on the list.
                   </h3>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 300, fontSize: 14, color: 'rgba(253,248,238,0.48)', lineHeight: 1.65 }}>
-                    We'll be in touch.
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 300, fontSize: 14, color: 'rgba(248,250,252,0.48)', lineHeight: 1.65, marginBottom: 28 }}>
+                    We'll reach out when Harbored is ready. In the meantime, take a look inside.
                   </p>
+                  <button
+                    onClick={onPreviewApp}
+                    style={{
+                      width: '100%', padding: '14px',
+                      background: 'linear-gradient(135deg, #0A66C2, #378FE9)',
+                      color: '#0a1628',
+                      fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 14,
+                      border: 'none', borderRadius: 8, cursor: 'pointer',
+                      boxShadow: '0 4px 20px rgba(10,102,194,0.38)',
+                      transition: 'opacity 0.18s',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.opacity = '0.88'}
+                    onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+                  >
+                    Preview the App
+                  </button>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -475,24 +492,28 @@ function Nav({ scrolled, openModal }) {
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.gold} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="5" r="2.2"/><line x1="12" y1="7.2" x2="12" y2="21"/><path d="M4.5 14.5 Q12 18.5 19.5 14.5"/>
         </svg>
-        <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 19, fontWeight: 600, color: '#fdf8ee', letterSpacing: '0.03em' }}>Harbored</span>
+        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 19, fontWeight: 600, color: '#F8FAFC', letterSpacing: '0.03em' }}>Harbored</span>
       </a>
 
       <nav style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
         {['How It Works', 'Features', 'Pricing'].map(label => (
           <a key={label}
             href={`#${label.toLowerCase().replace(/ /g,'-')}`}
-            style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 500, color: 'rgba(253,248,238,0.62)', textDecoration: 'none', transition: 'color 0.18s', display: 'none' }}
+            style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 500, color: 'rgba(248,250,252,0.62)', textDecoration: 'none', transition: 'color 0.18s', display: 'none' }}
             className="nav-link"
-            onMouseEnter={e => e.currentTarget.style.color = '#fdf8ee'}
-            onMouseLeave={e => e.currentTarget.style.color = 'rgba(253,248,238,0.62)'}
+            onMouseEnter={e => e.currentTarget.style.color = '#F8FAFC'}
+            onMouseLeave={e => e.currentTarget.style.color = 'rgba(248,250,252,0.62)'}
           >{label}</a>
         ))}
+        <a href="/login" style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 500, color: 'rgba(248,250,252,0.62)', textDecoration: 'none', transition: 'color 0.18s', marginRight: 8 }}
+          onMouseEnter={e => e.currentTarget.style.color = '#F8FAFC'}
+          onMouseLeave={e => e.currentTarget.style.color = 'rgba(248,250,252,0.62)'}
+        >Login</a>
         <button
           onClick={openModal}
           style={{
             padding: '9px 22px',
-            background: 'linear-gradient(135deg, #c8882e, #e8a83c)',
+            background: 'linear-gradient(135deg, #0A66C2, #378FE9)',
             color: '#0a1628',
             fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: 13,
             letterSpacing: '0.03em', textDecoration: 'none',
@@ -511,9 +532,15 @@ function Nav({ scrolled, openModal }) {
    MAIN COMPONENT
    ══════════════════════════════════════════════════════════ */
 export default function Landing() {
+  const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const openModal = () => setIsModalOpen(true);
+
+  const handlePreviewApp = () => {
+    localStorage.setItem('harbored_loggedin', 'true');
+    navigate('/dashboard');
+  };
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 44);
@@ -537,7 +564,7 @@ export default function Landing() {
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         gap: 'clamp(12px, 3vw, 36px)', flexWrap: 'wrap',
       }}>
-        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 500, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(253,248,238,0.28)', whiteSpace: 'nowrap' }}>
+        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 500, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(248,250,252,0.28)', whiteSpace: 'nowrap' }}>
           Monitors your world via
         </span>
         {PLATFORMS.map(({ name, bg, icon }) => (
@@ -548,7 +575,7 @@ export default function Landing() {
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               flexShrink: 0,
             }}>{icon}</div>
-            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 500, color: 'rgba(253,248,238,0.52)' }}>{name}</span>
+            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 500, color: 'rgba(248,250,252,0.52)' }}>{name}</span>
           </div>
         ))}
       </div>
@@ -558,7 +585,7 @@ export default function Landing() {
         <div style={{ maxWidth: 1060, margin: '0 auto' }}>
           <Reveal style={{ textAlign: 'center', marginBottom: 'clamp(52px, 8vw, 88px)' }}>
             <Label center>How It Works</Label>
-            <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 'clamp(32px, 5vw, 60px)', fontWeight: 500, lineHeight: 1.1, letterSpacing: '-0.025em', margin: '0 auto 18px' }}>
+            <h2 style={{ fontFamily: 'Inter, sans-serif', fontSize: 'clamp(32px, 5vw, 60px)', fontWeight: 500, lineHeight: 1.1, letterSpacing: '-0.025em', margin: '0 auto 18px' }}>
               Set it up once.<br />
               <em style={{ fontStyle: 'italic', color: C.gold }}>Stay present forever.</em>
             </h2>
@@ -575,10 +602,10 @@ export default function Landing() {
             ].map(({ n, icon, title, body, dark }) => (
               <motion.div key={n} variants={fadeUp} custom={0}>
                 <div style={{ padding: 'clamp(28px, 4vw, 44px) clamp(24px, 3vw, 38px)', background: dark ? C.navy : '#fff', height: '100%', position: 'relative', overflow: 'hidden', borderRadius: n === '01' ? '12px 0 0 12px' : n === '03' ? '0 12px 12px 0' : 0 }}>
-                  <span style={{ position: 'absolute', top: 18, right: 22, fontFamily: "'Playfair Display', serif", fontSize: 68, fontWeight: 700, lineHeight: 1, color: dark ? 'rgba(245,197,106,0.08)' : 'rgba(10,22,40,0.04)', userSelect: 'none' }}>{n}</span>
+                  <span style={{ position: 'absolute', top: 18, right: 22, fontFamily: 'Inter, sans-serif', fontSize: 68, fontWeight: 700, lineHeight: 1, color: dark ? 'rgba(112,181,249,0.08)' : 'rgba(10,22,40,0.04)', userSelect: 'none' }}>{n}</span>
                   <div style={{ marginBottom: 20 }}>{icon}</div>
-                  <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 'clamp(19px, 2.2vw, 23px)', fontWeight: 600, lineHeight: 1.3, marginBottom: 14, color: dark ? '#fdf8ee' : C.navy }}>{title}</h3>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 300, fontSize: 'clamp(13px, 1.4vw, 15px)', lineHeight: 1.72, color: dark ? 'rgba(253,248,238,0.55)' : '#4a5a70' }}>{body}</p>
+                  <h3 style={{ fontFamily: 'Inter, sans-serif', fontSize: 'clamp(19px, 2.2vw, 23px)', fontWeight: 600, lineHeight: 1.3, marginBottom: 14, color: dark ? '#F8FAFC' : C.navy }}>{title}</h3>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 300, fontSize: 'clamp(13px, 1.4vw, 15px)', lineHeight: 1.72, color: dark ? 'rgba(248,250,252,0.55)' : '#4a5a70' }}>{body}</p>
                   {dark && <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg, ${C.gold}, ${C.goldLight})` }} />}
                 </div>
               </motion.div>
@@ -588,11 +615,11 @@ export default function Landing() {
       </section>
 
       {/* ══════════════════ NEVER MISS A MOMENT ══════════════════ */}
-      <section id="features" style={{ ...sec, background: `linear-gradient(180deg, ${C.sand} 0%, #fdf8f0 100%)`, borderTop: '1px solid #ede0c4', borderBottom: '1px solid #ede0c4' }}>
+      <section id="features" style={{ ...sec, background: `linear-gradient(180deg, ${C.sand} 0%, #F4F8FB 100%)`, borderTop: '1px solid #DCE6F1', borderBottom: '1px solid #DCE6F1' }}>
         <div style={{ maxWidth: 1060, margin: '0 auto' }}>
           <Reveal style={{ textAlign: 'center', marginBottom: 'clamp(52px, 7vw, 80px)' }}>
             <Label center>Event Detection</Label>
-            <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 'clamp(32px, 5vw, 60px)', fontWeight: 500, lineHeight: 1.1, letterSpacing: '-0.025em', margin: '0 auto 16px' }}>
+            <h2 style={{ fontFamily: 'Inter, sans-serif', fontSize: 'clamp(32px, 5vw, 60px)', fontWeight: 500, lineHeight: 1.1, letterSpacing: '-0.025em', margin: '0 auto 16px' }}>
               Never miss a moment<br />
               <em style={{ fontStyle: 'italic', color: C.gold }}>that matters.</em>
             </h2>
@@ -604,12 +631,12 @@ export default function Landing() {
           <RevealGroup style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 14 }}>
             {EVENTS.map(({ key, icon, label, desc }) => (
               <motion.div key={key} variants={fadeUp} custom={0}
-                style={{ padding: 'clamp(20px, 2.8vw, 28px)', background: '#fff', borderRadius: 12, border: '1px solid #ede8de', transition: 'box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease' }}
-                onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 8px 32px rgba(10,22,40,0.08)'; e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.borderColor = '#d4b88a'; }}
-                onMouseLeave={e => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = '#ede8de'; }}
+                style={{ padding: 'clamp(20px, 2.8vw, 28px)', background: '#fff', borderRadius: 12, border: '1px solid #E2E8EE', transition: 'box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease' }}
+                onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 8px 32px rgba(10,22,40,0.08)'; e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.borderColor = '#9CC3E5'; }}
+                onMouseLeave={e => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = '#E2E8EE'; }}
               >
-                <div style={{ width: 46, height: 46, borderRadius: 12, background: 'rgba(200,136,46,0.08)', border: '1px solid rgba(200,136,46,0.14)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>{icon}</div>
-                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 'clamp(15px, 1.7vw, 17px)', fontWeight: 600, marginBottom: 8, color: C.navy, lineHeight: 1.3 }}>{label}</div>
+                <div style={{ width: 46, height: 46, borderRadius: 12, background: 'rgba(10,102,194,0.08)', border: '1px solid rgba(10,102,194,0.14)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>{icon}</div>
+                <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 'clamp(15px, 1.7vw, 17px)', fontWeight: 600, marginBottom: 8, color: C.navy, lineHeight: 1.3 }}>{label}</div>
                 <div style={{ fontFamily: 'Inter, sans-serif', fontWeight: 300, fontSize: 13, lineHeight: 1.65, color: '#6b7280' }}>{desc}</div>
               </motion.div>
             ))}
@@ -622,7 +649,7 @@ export default function Landing() {
         <div style={{ maxWidth: 1060, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 'clamp(40px, 7vw, 80px)', alignItems: 'center' }}>
           <Reveal>
             <Label>AI Message Drafting</Label>
-            <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 'clamp(30px, 4.5vw, 54px)', fontWeight: 500, lineHeight: 1.12, letterSpacing: '-0.025em', marginBottom: 20 }}>
+            <h2 style={{ fontFamily: 'Inter, sans-serif', fontSize: 'clamp(30px, 4.5vw, 54px)', fontWeight: 500, lineHeight: 1.12, letterSpacing: '-0.025em', marginBottom: 20 }}>
               Your voice.<br />
               <em style={{ fontStyle: 'italic', color: C.gold }}>Not a robot's.</em>
             </h2>
@@ -631,13 +658,13 @@ export default function Landing() {
             </p>
             {['Trained on your own message history', 'Sounds casual when you are, formal when you need to be', 'Editable before it goes — always your call', 'Auto-Send for the moments you want to stay effortless'].map(point => (
               <div key={point} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', marginBottom: 14 }}>
-                <div style={{ width: 20, height: 20, borderRadius: '50%', background: 'rgba(200,136,46,0.12)', border: '1px solid rgba(200,136,46,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+                <div style={{ width: 20, height: 20, borderRadius: '50%', background: 'rgba(10,102,194,0.12)', border: '1px solid rgba(10,102,194,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={C.gold} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                 </div>
                 <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 400, color: '#374151', lineHeight: 1.55 }}>{point}</span>
               </div>
             ))}
-            <p style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', fontSize: 16, color: '#4a5a70', marginTop: 28, maxWidth: 360, lineHeight: 1.6 }}>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontStyle: 'italic', fontSize: 16, color: '#4a5a70', marginTop: 28, maxWidth: 360, lineHeight: 1.6 }}>
               "Every message sounds like you — because it is."
             </p>
           </Reveal>
@@ -652,11 +679,11 @@ export default function Landing() {
         <div style={{ maxWidth: 820, margin: '0 auto' }}>
           <Reveal>
             <Label light center>Notifications</Label>
-            <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 'clamp(30px, 4.5vw, 54px)', fontWeight: 500, lineHeight: 1.1, letterSpacing: '-0.025em', color: '#fdf8ee', marginBottom: 16 }}>
+            <h2 style={{ fontFamily: 'Inter, sans-serif', fontSize: 'clamp(30px, 4.5vw, 54px)', fontWeight: 500, lineHeight: 1.1, letterSpacing: '-0.025em', color: '#F8FAFC', marginBottom: 16 }}>
               Get notified however you<br />
               <em style={{ fontStyle: 'italic', color: C.goldPale }}>actually pay attention.</em>
             </h2>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 300, fontSize: 'clamp(14px, 1.6vw, 17px)', color: 'rgba(253,248,238,0.52)', maxWidth: 440, margin: '0 auto 56px', lineHeight: 1.68 }}>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 300, fontSize: 'clamp(14px, 1.6vw, 17px)', color: 'rgba(248,250,252,0.52)', maxWidth: 440, margin: '0 auto 56px', lineHeight: 1.68 }}>
               Set your preference per contact, per event type, or all at once. Harbored fits into your life — not the other way around.
             </p>
           </Reveal>
@@ -665,17 +692,17 @@ export default function Landing() {
             {CHANNELS.map(({ name, icon }) => (
               <motion.div key={name} variants={fadeUp} custom={0}
                 style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: '24px 20px', borderRadius: 14, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', minWidth: 100, transition: 'background 0.2s ease, border-color 0.2s ease, transform 0.2s ease' }}
-                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.borderColor = 'rgba(200,136,46,0.3)'; e.currentTarget.style.transform = 'translateY(-3px)'; }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.borderColor = 'rgba(10,102,194,0.3)'; e.currentTarget.style.transform = 'translateY(-3px)'; }}
                 onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.transform = 'translateY(0)'; }}
               >
                 {icon}
-                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 500, color: 'rgba(253,248,238,0.6)', whiteSpace: 'nowrap' }}>{name}</span>
+                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 500, color: 'rgba(248,250,252,0.6)', whiteSpace: 'nowrap' }}>{name}</span>
               </motion.div>
             ))}
           </RevealGroup>
 
           <Reveal delay={0.1}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '11px 20px', background: 'rgba(200,136,46,0.1)', border: '1px solid rgba(200,136,46,0.2)', borderRadius: 8, fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 400, color: 'rgba(253,248,238,0.6)' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '11px 20px', background: 'rgba(10,102,194,0.1)', border: '1px solid rgba(10,102,194,0.2)', borderRadius: 8, fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 400, color: 'rgba(248,250,252,0.6)' }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.gold} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
               You control frequency — daily digest, real-time, or weekly summary
             </div>
@@ -688,7 +715,7 @@ export default function Landing() {
         <div style={{ maxWidth: 860, margin: '0 auto' }}>
           <Reveal style={{ textAlign: 'center', marginBottom: 'clamp(48px, 7vw, 72px)' }}>
             <Label center>Pricing</Label>
-            <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 'clamp(30px, 4.5vw, 54px)', fontWeight: 500, lineHeight: 1.1, letterSpacing: '-0.025em', marginBottom: 14 }}>
+            <h2 style={{ fontFamily: 'Inter, sans-serif', fontSize: 'clamp(30px, 4.5vw, 54px)', fontWeight: 500, lineHeight: 1.1, letterSpacing: '-0.025em', marginBottom: 14 }}>
               Simple, honest pricing.
             </h2>
             <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 300, fontSize: 16, color: '#4a5a70', lineHeight: 1.65 }}>Start free. Upgrade when you're ready.</p>
@@ -697,22 +724,22 @@ export default function Landing() {
           <RevealGroup style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(310px, 1fr))', gap: 20 }}>
             {/* Free */}
             <motion.div variants={fadeUp} custom={0}>
-              <div style={{ background: '#fff', border: '1px solid #e8e0d0', borderRadius: 16, padding: 'clamp(28px, 4vw, 40px)', height: '100%', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ background: '#fff', border: '1px solid #DDE3EA', borderRadius: 16, padding: 'clamp(28px, 4vw, 40px)', height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ marginBottom: 24 }}>
                   <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: C.muted, marginBottom: 10 }}>Free</div>
-                  <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 42, fontWeight: 600, color: C.navy, lineHeight: 1 }}>$0<span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 300, fontSize: 16, color: C.faint }}>/mo</span></div>
+                  <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 42, fontWeight: 600, color: C.navy, lineHeight: 1 }}>$0<span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 300, fontSize: 16, color: C.faint }}>/mo</span></div>
                   <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 300, fontSize: 13, color: '#6b7280', marginTop: 10, lineHeight: 1.5 }}>A great way to see how Harbored works before going all in.</p>
                 </div>
-                <div style={{ borderTop: '1px solid #f0ece4', paddingTop: 24, flex: 1 }}>
+                <div style={{ borderTop: '1px solid #E8ECF1', paddingTop: 24, flex: 1 }}>
                   {['Monitor up to 25 contacts', 'Email notifications', 'Manual send only', 'Basic event detection'].map(f => (
                     <div key={f} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 12 }}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}><polyline points="20 6 9 17 4 12"/></svg>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#057642" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}><polyline points="20 6 9 17 4 12"/></svg>
                       <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, color: '#374151' }}>{f}</span>
                     </div>
                   ))}
                 </div>
                 <button onClick={openModal} style={{ display: 'block', marginTop: 28, padding: '13px', textAlign: 'center', background: 'transparent', border: '1px solid #0a1628', borderRadius: 8, fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: 14, color: C.navy, cursor: 'pointer', transition: 'background 0.18s, color 0.18s' }}
-                  onMouseEnter={e => { e.currentTarget.style.background = C.navy; e.currentTarget.style.color = '#fdf8ee'; }}
+                  onMouseEnter={e => { e.currentTarget.style.background = C.navy; e.currentTarget.style.color = '#F8FAFC'; }}
                   onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = C.navy; }}>
                   Start Free
                 </button>
@@ -725,18 +752,18 @@ export default function Landing() {
                 <div style={{ position: 'absolute', top: 22, right: 22, padding: '4px 12px', background: `linear-gradient(135deg, ${C.gold}, ${C.goldLight})`, borderRadius: 20, fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.navy }}>Most Popular</div>
                 <div style={{ marginBottom: 24 }}>
                   <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: C.goldPale, marginBottom: 10, opacity: 0.8 }}>Harbored Pro</div>
-                  <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 42, fontWeight: 600, color: '#fdf8ee', lineHeight: 1 }}>$12<span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 300, fontSize: 16, color: 'rgba(253,248,238,0.45)' }}>/mo</span></div>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 300, fontSize: 13, color: 'rgba(253,248,238,0.5)', marginTop: 10, lineHeight: 1.5 }}>For professionals who want their relationships to keep up with their careers.</p>
+                  <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 42, fontWeight: 600, color: '#F8FAFC', lineHeight: 1 }}>$12<span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 300, fontSize: 16, color: 'rgba(248,250,252,0.45)' }}>/mo</span></div>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 300, fontSize: 13, color: 'rgba(248,250,252,0.5)', marginTop: 10, lineHeight: 1.5 }}>For professionals who want their relationships to keep up with their careers.</p>
                 </div>
                 <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 24, flex: 1 }}>
                   {['Unlimited contacts', 'All notification channels', 'AI message drafting', 'Auto-Send mode', 'Priority event detection', 'Custom message tone profiles'].map(f => (
                     <div key={f} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 12 }}>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.goldPale} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}><polyline points="20 6 9 17 4 12"/></svg>
-                      <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, color: 'rgba(253,248,238,0.78)' }}>{f}</span>
+                      <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, color: 'rgba(248,250,252,0.78)' }}>{f}</span>
                     </div>
                   ))}
                 </div>
-                <button onClick={openModal} style={{ display: 'block', marginTop: 28, padding: '14px', textAlign: 'center', background: `linear-gradient(135deg, ${C.gold}, ${C.goldLight})`, borderRadius: 8, fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 14, color: C.navy, border: 'none', cursor: 'pointer', boxShadow: '0 4px 20px rgba(200,136,46,0.4)', transition: 'opacity 0.18s' }}
+                <button onClick={openModal} style={{ display: 'block', marginTop: 28, padding: '14px', textAlign: 'center', background: `linear-gradient(135deg, ${C.gold}, ${C.goldLight})`, borderRadius: 8, fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 14, color: C.navy, border: 'none', cursor: 'pointer', boxShadow: '0 4px 20px rgba(10,102,194,0.4)', transition: 'opacity 0.18s' }}
                   onMouseEnter={e => e.currentTarget.style.opacity = '0.88'}
                   onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
                   Get Harbored Pro
@@ -748,11 +775,11 @@ export default function Landing() {
       </section>
 
       {/* ══════════════════ TESTIMONIALS ══════════════════ */}
-      <section style={{ ...sec, background: `linear-gradient(180deg, #fdf8f0 0%, ${C.cream} 100%)`, borderTop: '1px solid #ede8de' }}>
+      <section style={{ ...sec, background: `linear-gradient(180deg, #F4F8FB 0%, ${C.cream} 100%)`, borderTop: '1px solid #E2E8EE' }}>
         <div style={{ maxWidth: 1060, margin: '0 auto' }}>
           <Reveal style={{ textAlign: 'center', marginBottom: 'clamp(48px, 7vw, 72px)' }}>
             <Label center>Real People</Label>
-            <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 'clamp(30px, 4.5vw, 54px)', fontWeight: 500, lineHeight: 1.1, letterSpacing: '-0.025em' }}>
+            <h2 style={{ fontFamily: 'Inter, sans-serif', fontSize: 'clamp(30px, 4.5vw, 54px)', fontWeight: 500, lineHeight: 1.1, letterSpacing: '-0.025em' }}>
               Thoughtful people.<br />
               <em style={{ fontStyle: 'italic', color: C.gold }}>Busy schedules.</em>
             </h2>
@@ -765,11 +792,11 @@ export default function Landing() {
               { quote: "I've reconnected with 6 people from my first job in the last 3 months. Harbored noticed things I completely missed.", name: 'Connor B.', role: 'Associate, Goldman Sachs', avatar: 'https://i.pravatar.cc/80?img=53' },
             ].map(({ quote, name, role, avatar }) => (
               <motion.div key={name} variants={fadeUp} custom={0}>
-                <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #ede8de', padding: 'clamp(26px, 3.5vw, 38px)', display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}>
+                <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #E2E8EE', padding: 'clamp(26px, 3.5vw, 38px)', display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}>
                   <div style={{ position: 'absolute', left: 0, top: 28, bottom: 28, width: 3, borderRadius: '0 2px 2px 0', background: `linear-gradient(180deg, ${C.gold}, ${C.goldLight})` }} />
-                  <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 64, lineHeight: 0.7, color: C.goldPale, marginBottom: 18, opacity: 0.7, userSelect: 'none' }}>"</div>
+                  <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 64, lineHeight: 0.7, color: C.goldPale, marginBottom: 18, opacity: 0.7, userSelect: 'none' }}>"</div>
                   <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 300, fontSize: 'clamp(13.5px, 1.4vw, 15.5px)', fontStyle: 'italic', lineHeight: 1.74, color: '#374151', flex: 1, marginBottom: 24 }}>{quote}</p>
-                  <div style={{ height: 1, background: '#f0ece4', marginBottom: 20 }} />
+                  <div style={{ height: 1, background: '#E8ECF1', marginBottom: 20 }} />
                   <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                     <img src={avatar} alt={name} width={42} height={42} style={{ borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
                     <div>
@@ -791,10 +818,10 @@ export default function Landing() {
         </svg>
         <Reveal>
           <Label light center>Get Started</Label>
-          <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 'clamp(36px, 6vw, 76px)', fontWeight: 500, lineHeight: 1.08, letterSpacing: '-0.025em', color: '#fdf8ee', maxWidth: 640, margin: '0 auto 18px' }}>
+          <h2 style={{ fontFamily: 'Inter, sans-serif', fontSize: 'clamp(36px, 6vw, 76px)', fontWeight: 500, lineHeight: 1.08, letterSpacing: '-0.025em', color: '#F8FAFC', maxWidth: 640, margin: '0 auto 18px' }}>
             Always in your corner.
           </h2>
-          <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 300, fontSize: 'clamp(15px, 1.7vw, 18px)', color: 'rgba(253,248,238,0.48)', maxWidth: 380, margin: '0 auto 48px', lineHeight: 1.65 }}>
+          <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 300, fontSize: 'clamp(15px, 1.7vw, 18px)', color: 'rgba(248,250,252,0.48)', maxWidth: 380, margin: '0 auto 48px', lineHeight: 1.65 }}>
             Join the waitlist. Be the first to show up when it counts.
           </p>
           <button
@@ -806,27 +833,27 @@ export default function Landing() {
               fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 15,
               letterSpacing: '0.02em',
               border: 'none', borderRadius: 2, cursor: 'pointer',
-              boxShadow: '0 6px 28px rgba(200,136,46,0.45)',
+              boxShadow: '0 6px 28px rgba(10,102,194,0.45)',
               transition: 'transform 0.18s ease, box-shadow 0.18s ease',
             }}
-            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 10px 36px rgba(200,136,46,0.6)'; }}
-            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 6px 28px rgba(200,136,46,0.45)'; }}
+            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 10px 36px rgba(10,102,194,0.6)'; }}
+            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 6px 28px rgba(10,102,194,0.45)'; }}
           >
             Join the Waitlist
           </button>
-          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(253,248,238,0.24)', marginTop: 18 }}>
+          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(248,250,252,0.24)', marginTop: 18 }}>
             No credit card. No spam. Cancel anytime.
           </p>
         </Reveal>
       </section>
 
       {/* ══════════════════ FOOTER ══════════════════ */}
-      <footer style={{ background: '#060c18', padding: 'clamp(40px, 6vw, 60px) clamp(20px, 6vw, 80px) clamp(24px, 4vw, 32px)', color: 'rgba(253,248,238,0.36)' }}>
+      <footer style={{ background: '#060c18', padding: 'clamp(40px, 6vw, 60px) clamp(20px, 6vw, 80px) clamp(24px, 4vw, 32px)', color: 'rgba(248,250,252,0.36)' }}>
         <div style={{ maxWidth: 1060, margin: '0 auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 36, marginBottom: 40 }}>
             <div style={{ maxWidth: 240 }}>
-              <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 19, fontWeight: 600, color: '#fdf8ee', marginBottom: 6 }}>⚓ Harbored</div>
-              <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 300, color: 'rgba(253,248,238,0.4)', lineHeight: 1.5 }}>Always in your corner.</div>
+              <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 19, fontWeight: 600, color: '#F8FAFC', marginBottom: 6 }}>Harbored</div>
+              <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 300, color: 'rgba(248,250,252,0.4)', lineHeight: 1.5 }}>Always in your corner.</div>
             </div>
             <div style={{ display: 'flex', gap: 'clamp(28px, 5vw, 72px)', flexWrap: 'wrap' }}>
               {[
@@ -835,12 +862,12 @@ export default function Landing() {
                 { heading: 'Legal',   links: ['Privacy', 'Terms'] },
               ].map(({ heading, links }) => (
                 <div key={heading}>
-                  <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(253,248,238,0.22)', marginBottom: 16 }}>{heading}</div>
+                  <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(248,250,252,0.22)', marginBottom: 16 }}>{heading}</div>
                   {links.map(l => (
                     <div key={l} style={{ marginBottom: 10 }}>
-                      <a href="#" style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 300, color: 'rgba(253,248,238,0.4)', textDecoration: 'none', transition: 'color 0.18s' }}
-                        onMouseEnter={e => e.currentTarget.style.color = 'rgba(253,248,238,0.8)'}
-                        onMouseLeave={e => e.currentTarget.style.color = 'rgba(253,248,238,0.4)'}
+                      <a href="#" style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 300, color: 'rgba(248,250,252,0.4)', textDecoration: 'none', transition: 'color 0.18s' }}
+                        onMouseEnter={e => e.currentTarget.style.color = 'rgba(248,250,252,0.8)'}
+                        onMouseLeave={e => e.currentTarget.style.color = 'rgba(248,250,252,0.4)'}
                       >{l}</a>
                     </div>
                   ))}
@@ -856,9 +883,9 @@ export default function Landing() {
                 { label: 'LinkedIn', path: 'M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6zM2 9h4v12H2z', fill: false },
                 { label: 'Instagram', path: null, fill: false },
               ].map(({ label, path, fill }) => (
-                <a key={label} href="#" aria-label={label} style={{ color: 'rgba(253,248,238,0.3)', transition: 'color 0.18s', display: 'flex', alignItems: 'center' }}
-                  onMouseEnter={e => e.currentTarget.style.color = 'rgba(245,197,106,0.8)'}
-                  onMouseLeave={e => e.currentTarget.style.color = 'rgba(253,248,238,0.3)'}
+                <a key={label} href="#" aria-label={label} style={{ color: 'rgba(248,250,252,0.3)', transition: 'color 0.18s', display: 'flex', alignItems: 'center' }}
+                  onMouseEnter={e => e.currentTarget.style.color = 'rgba(112,181,249,0.8)'}
+                  onMouseLeave={e => e.currentTarget.style.color = 'rgba(248,250,252,0.3)'}
                 >
                   {label === 'Instagram' ? (
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
@@ -881,11 +908,11 @@ export default function Landing() {
       </footer>
 
       {/* ══════════════════ MODAL ══════════════════ */}
-      <WaitlistModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <WaitlistModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onPreviewApp={handlePreviewApp} />
 
       <style>{`
         @media (min-width: 768px) { .nav-link { display: inline !important; } }
-        ::placeholder { color: rgba(253,248,238,0.28); }
+        ::placeholder { color: rgba(248,250,252,0.28); }
         @keyframes bobVertical { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
       `}</style>
     </div>

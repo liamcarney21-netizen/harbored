@@ -1,193 +1,134 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useAuthStore } from '../store/authStore';
+import { Anchor } from 'lucide-react';
+
+const inputStyle = {
+  width: '100%', padding: '12px 16px', boxSizing: 'border-box',
+  background: '#FFFFFF',
+  border: '1px solid #CDD3D9',
+  borderRadius: 8,
+  fontFamily: 'Inter, sans-serif', fontSize: 15,
+  color: '#1D2226', outline: 'none',
+  transition: 'border-color 0.2s, box-shadow 0.2s',
+};
+
+const labelStyle = {
+  display: 'block', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600,
+  color: '#44484D', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 8,
+};
+
+function focusRing(e) {
+  e.target.style.borderColor = '#0A66C2';
+  e.target.style.boxShadow = '0 0 0 3px rgba(10,102,194,0.15)';
+}
+function blurRing(e) {
+  e.target.style.borderColor = '#CDD3D9';
+  e.target.style.boxShadow = 'none';
+}
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
   const navigate = useNavigate();
-  const { login, demoLogin } = useAuthStore();
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const ok = login(email, password);
-    if (ok) navigate('/feed');
-    else setError('Invalid email or password. Try the demo account.');
-  };
-
-  const handleDemo = () => {
-    demoLogin();
-    navigate('/feed');
+    localStorage.setItem('harbored_loggedin', 'true');
+    navigate('/dashboard');
   };
 
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #0f2040 0%, #1a3558 60%, #c9933a22 100%)',
+      background: '#F3F2EF',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       padding: '24px 16px',
     }}>
-      {/* Background lake decoration */}
-      <div style={{
-        position: 'fixed', bottom: 0, left: 0, right: 0, height: '30vh',
-        background: 'linear-gradient(180deg, transparent, rgba(15,32,64,0.6))',
-        pointerEvents: 'none',
-      }} />
-
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: 'easeOut' }}
+        transition={{ duration: 0.5, ease: 'easeOut' }}
         style={{
           width: '100%', maxWidth: 420,
-          background: 'rgba(255,255,255,0.05)',
-          backdropFilter: 'blur(20px)',
-          border: '1px solid rgba(255,255,255,0.12)',
-          borderRadius: 16,
+          background: '#FFFFFF',
+          border: '1px solid #E8EAED',
+          borderRadius: 12,
+          boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
           padding: '48px 40px',
-          position: 'relative',
-          zIndex: 1,
         }}
       >
         <Link to="/" style={{ textDecoration: 'none' }}>
           <div style={{
-            fontFamily: 'Cormorant Garamond, serif',
-            fontSize: 22, fontWeight: 600,
-            color: '#fdf6e3',
-            letterSpacing: '0.06em',
-            textAlign: 'center',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             marginBottom: 32,
-          }}>⚓ Harbored</div>
+          }}>
+            <Anchor style={{ width: 18, height: 18, color: '#0A66C2' }} />
+            <span style={{
+              fontFamily: 'Inter, sans-serif', fontSize: 18, fontWeight: 700,
+              letterSpacing: '0.1em', color: '#1D2226',
+            }}>HARBORED</span>
+          </div>
         </Link>
 
         <h1 style={{
-          fontFamily: 'Cormorant Garamond, serif',
-          fontSize: 32, fontWeight: 500,
-          color: '#fdf6e3',
-          marginBottom: 8, textAlign: 'center',
+          fontFamily: 'Inter, sans-serif', fontSize: 24, fontWeight: 700,
+          color: '#1D2226', marginBottom: 8, textAlign: 'center',
         }}>Welcome back</h1>
         <p style={{
-          fontFamily: 'Inter, sans-serif',
-          fontSize: 14, color: 'rgba(253,246,227,0.5)',
-          textAlign: 'center', marginBottom: 32, fontWeight: 300,
+          fontFamily: 'Inter, sans-serif', fontSize: 14, color: '#5E6774',
+          textAlign: 'center', marginBottom: 32,
         }}>Your network missed you.</p>
 
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: 16 }}>
-            <label style={{ display: 'block', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, color: 'rgba(253,246,227,0.5)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 }}>
-              Email
-            </label>
+            <label htmlFor="login-email" style={labelStyle}>Email</label>
             <input
+              id="login-email"
               type="email" value={email}
               onChange={e => setEmail(e.target.value)}
               placeholder="you@example.com"
-              style={{
-                width: '100%', padding: '12px 16px',
-                background: 'rgba(255,255,255,0.06)',
-                border: '1px solid rgba(255,255,255,0.14)',
-                borderRadius: 8,
-                fontFamily: 'Inter, sans-serif', fontSize: 15,
-                color: '#fdf6e3', outline: 'none',
-                transition: 'border-color 0.2s',
-              }}
-              onFocus={e => e.target.style.borderColor = 'rgba(201,147,58,0.6)'}
-              onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.14)'}
+              style={inputStyle}
+              onFocus={focusRing} onBlur={blurRing}
             />
           </div>
-          <div style={{ marginBottom: 24 }}>
-            <label style={{ display: 'block', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, color: 'rgba(253,246,227,0.5)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 }}>
-              Password
-            </label>
+          <div style={{ marginBottom: 28 }}>
+            <label htmlFor="login-password" style={labelStyle}>Password</label>
             <input
+              id="login-password"
               type="password" value={password}
               onChange={e => setPassword(e.target.value)}
               placeholder="••••••••"
-              style={{
-                width: '100%', padding: '12px 16px',
-                background: 'rgba(255,255,255,0.06)',
-                border: '1px solid rgba(255,255,255,0.14)',
-                borderRadius: 8,
-                fontFamily: 'Inter, sans-serif', fontSize: 15,
-                color: '#fdf6e3', outline: 'none',
-                transition: 'border-color 0.2s',
-              }}
-              onFocus={e => e.target.style.borderColor = 'rgba(201,147,58,0.6)'}
-              onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.14)'}
+              style={inputStyle}
+              onFocus={focusRing} onBlur={blurRing}
             />
           </div>
 
-          {error && (
-            <div style={{
-              padding: '10px 14px',
-              background: 'rgba(220,50,50,0.15)',
-              border: '1px solid rgba(220,50,50,0.3)',
-              borderRadius: 6,
-              fontFamily: 'Inter, sans-serif', fontSize: 13,
-              color: '#f87171',
-              marginBottom: 16,
-            }}>{error}</div>
-          )}
-
           <button type="submit" style={{
             width: '100%', padding: '13px',
-            background: 'linear-gradient(135deg, #c9933a, #e8b86d)',
-            color: '#0f2040',
+            background: '#0A66C2',
+            color: '#FFFFFF',
             fontFamily: 'Inter, sans-serif',
-            fontWeight: 700, fontSize: 14,
-            letterSpacing: '0.06em', textTransform: 'uppercase',
-            border: 'none', borderRadius: 8,
-            cursor: 'pointer', marginBottom: 12,
-            transition: 'opacity 0.2s',
-          }}>Sign In</button>
+            fontWeight: 600, fontSize: 15,
+            border: 'none', borderRadius: 24,
+            cursor: 'pointer',
+            transition: 'background 0.2s',
+          }}
+          onMouseEnter={e => e.currentTarget.style.background = '#084D92'}
+          onMouseLeave={e => e.currentTarget.style.background = '#0A66C2'}
+          >Sign In</button>
         </form>
-
-        <div style={{ position: 'relative', textAlign: 'center', margin: '16px 0' }}>
-          <div style={{ height: 1, background: 'rgba(255,255,255,0.1)' }} />
-          <span style={{
-            position: 'absolute', top: '50%', left: '50%',
-            transform: 'translate(-50%, -50%)',
-            background: 'transparent',
-            padding: '0 12px',
-            fontFamily: 'Inter, sans-serif', fontSize: 11,
-            color: 'rgba(253,246,227,0.3)',
-          }}>or</span>
-        </div>
-
-        <button onClick={handleDemo} style={{
-          width: '100%', padding: '12px',
-          background: 'transparent',
-          border: '1px solid rgba(255,255,255,0.18)',
-          borderRadius: 8,
-          fontFamily: 'Inter, sans-serif',
-          fontWeight: 500, fontSize: 14,
-          color: 'rgba(253,246,227,0.7)',
-          cursor: 'pointer',
-          transition: 'all 0.2s',
-        }}
-          onMouseEnter={e => { e.target.style.borderColor = 'rgba(201,147,58,0.5)'; e.target.style.color = '#fdf6e3'; }}
-          onMouseLeave={e => { e.target.style.borderColor = 'rgba(255,255,255,0.18)'; e.target.style.color = 'rgba(253,246,227,0.7)'; }}
-        >
-          Continue as Demo User
-        </button>
 
         <p style={{
           fontFamily: 'Inter, sans-serif', fontSize: 13,
-          color: 'rgba(253,246,227,0.4)',
+          color: '#5E6774',
           textAlign: 'center', marginTop: 24,
         }}>
-          Don't have an account?{' '}
-          <Link to="/signup" style={{ color: '#f5c878', textDecoration: 'none', fontWeight: 500 }}>
-            Join Harbored
+          New to Harbored?{' '}
+          <Link to="/signup" style={{ color: '#0A66C2', textDecoration: 'none', fontWeight: 600 }}>
+            Create an account
           </Link>
         </p>
-
-        <div style={{ marginTop: 20, padding: '12px', background: 'rgba(201,147,58,0.08)', borderRadius: 6, border: '1px solid rgba(201,147,58,0.2)' }}>
-          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(253,246,227,0.45)', textAlign: 'center', lineHeight: 1.5 }}>
-            Demo: <strong style={{ color: 'rgba(245,200,100,0.7)' }}>maya@example.com</strong> / <strong style={{ color: 'rgba(245,200,100,0.7)' }}>password</strong>
-          </p>
-        </div>
       </motion.div>
     </div>
   );

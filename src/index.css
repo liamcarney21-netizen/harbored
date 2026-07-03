@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Inter:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 /* ─── Reset ─────────────────────────────────────────────── */
@@ -8,8 +8,8 @@ html { scroll-behavior: smooth; }
 
 body {
   font-family: 'Inter', system-ui, sans-serif;
-  background: #faf8f4;
-  color: #0f2040;
+  background: #F3F2EF;
+  color: #1D2226;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -20,12 +20,12 @@ body {
   --navy:       #0a1628;
   --navy-mid:   #0f2040;
   --navy-light: #1a3558;
-  --gold:       #c8882e;
-  --gold-light: #e8a83c;
-  --gold-pale:  #f5c56a;
-  --sand:       #f5ead8;
-  --sand-light: #fdf8f0;
-  --white:      #faf8f4;
+  --accent:       #0A66C2;
+  --accent-light: #378FE9;
+  --accent-pale:  #70B5F9;
+  --canvas:       #F3F2EF;
+  --surface:      #FFFFFF;
+  --border:       #E0DFDC;
 }
 
 /* ─── Sailboat keyframes ─────────────────────────────────── */
@@ -90,5 +90,5 @@ body {
 
 /* ─── Scrollbar ─────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 5px; }
-::-webkit-scrollbar-track { background: #f1ede5; }
-::-webkit-scrollbar-thumb { background: #1a3558; border-radius: 3px; }
+::-webkit-scrollbar-track { background: #EFEEEB; }
+::-webkit-scrollbar-thumb { background: #B8BEC4; border-radius: 3px; }
