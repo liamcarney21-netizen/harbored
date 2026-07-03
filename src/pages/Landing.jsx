@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, useInView, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import LakeScene from '../components/LakeScene';
 
 /* ─── Animation helpers ─────────────────────────────────── */
@@ -14,22 +14,48 @@ const stagger = {
   visible: { transition: { staggerChildren: 0.11 } },
 };
 
-function Reveal({ children, delay = 0, style = {}, as = 'div' }) {
+// Scroll-position visibility check instead of IntersectionObserver — IO is
+// unavailable in some embedded/preview contexts, and content must never be
+// stuck invisible just because the observer didn't fire.
+function useRevealed(margin = 72) {
   const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: '-72px' });
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const check = () => {
+      const el = ref.current;
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      if (r.top < window.innerHeight - margin && r.bottom > 0) {
+        setVisible(true);
+        window.removeEventListener('scroll', check);
+        window.removeEventListener('resize', check);
+      }
+    };
+    check();
+    window.addEventListener('scroll', check, { passive: true });
+    window.addEventListener('resize', check);
+    return () => {
+      window.removeEventListener('scroll', check);
+      window.removeEventListener('resize', check);
+    };
+  }, [margin]);
+  return [ref, visible];
+}
+
+function Reveal({ children, delay = 0, style = {}, as = 'div' }) {
+  const [ref, visible] = useRevealed(72);
   const Tag = motion[as] ?? motion.div;
   return (
-    <Tag ref={ref} variants={fadeUp} custom={delay} initial="hidden" animate={inView ? 'visible' : 'hidden'} style={style}>
+    <Tag ref={ref} variants={fadeUp} custom={delay} initial="hidden" animate={visible ? 'visible' : 'hidden'} style={style}>
       {children}
     </Tag>
   );
 }
 
 function RevealGroup({ children, style = {} }) {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: '-56px' });
+  const [ref, visible] = useRevealed(56);
   return (
-    <motion.div ref={ref} variants={stagger} initial="hidden" animate={inView ? 'visible' : 'hidden'} style={style}>
+    <motion.div ref={ref} variants={stagger} initial="hidden" animate={visible ? 'visible' : 'hidden'} style={style}>
       {children}
     </motion.div>
   );
@@ -496,7 +522,7 @@ function Nav({ scrolled, openModal }) {
       </a>
 
       <nav style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
-        {['How It Works', 'Features', 'Pricing'].map(label => (
+        {['How It Works', 'Common Ground', 'Pricing'].map(label => (
           <a key={label}
             href={`#${label.toLowerCase().replace(/ /g,'-')}`}
             style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 500, color: 'rgba(248,250,252,0.62)', textDecoration: 'none', transition: 'color 0.18s', display: 'none' }}
@@ -590,15 +616,15 @@ export default function Landing() {
               <em style={{ fontStyle: 'italic', color: C.gold }}>Stay present forever.</em>
             </h2>
             <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 300, fontSize: 'clamp(15px, 1.7vw, 18px)', color: '#4a5a70', maxWidth: 440, margin: '0 auto', lineHeight: 1.68 }}>
-              Harbored does the watching so you can focus on what actually matters.
+              Harbored does the watching so you can focus on the people.
             </p>
           </Reveal>
 
           <RevealGroup style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 2 }}>
             {[
-              { n: '01', icon: <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke={C.gold} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>, title: 'Connect Your World', body: "Link LinkedIn, import your contacts, or add people manually. Harbored builds your network map automatically — no spreadsheet required.", dark: false },
-              { n: '02', icon: <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke={C.goldPale} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>, title: 'We Watch. You Live.', body: "Our AI monitors your network 24/7 — promotions, new roles, birthdays, moves, life milestones, and more. You won't miss a thing.", dark: true },
-              { n: '03', icon: <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke={C.gold} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>, title: 'Show Up When It Counts', body: 'Get notified your way — text, email, Slack. We draft the message in your voice. You approve and send, or let Harbored handle it automatically.', dark: false },
+              { n: '01', icon: <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke={C.gold} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>, title: 'Map Your Common Ground', body: "Add the people worth keeping close — and what you share with each of them. Villanova hoops. Pickleball in Charleston. The Minneapolis market. Or paste a conversation and Harbored finds it for you.", dark: false },
+              { n: '02', icon: <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke={C.goldPale} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>, title: 'We Watch Every Theme', body: "Harbored monitors your shared themes around the clock and scores every development for significance. Routine news gets logged quietly. Only a real reason to reach out makes it through.", dark: true },
+              { n: '03', icon: <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke={C.gold} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>, title: 'Show Up at the Right Moment', body: 'When something clears the bar, you get the update, the why, and a message drafted in your voice. One click and you\'re back in touch — for a reason, not a "just checking in."', dark: false },
             ].map(({ n, icon, title, body, dark }) => (
               <motion.div key={n} variants={fadeUp} custom={0}>
                 <div style={{ padding: 'clamp(28px, 4vw, 44px) clamp(24px, 3vw, 38px)', background: dark ? C.navy : '#fff', height: '100%', position: 'relative', overflow: 'hidden', borderRadius: n === '01' ? '12px 0 0 12px' : n === '03' ? '0 12px 12px 0' : 0 }}>
@@ -614,17 +640,89 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* ══════════════════ COMMON GROUND ══════════════════ */}
+      <section id="common-ground" style={{ ...sec, background: '#fff' }}>
+        <div style={{ maxWidth: 1060, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 'clamp(40px, 7vw, 80px)', alignItems: 'center' }}>
+          <Reveal>
+            <Label>Common Ground</Label>
+            <h2 style={{ fontFamily: 'Inter, sans-serif', fontSize: 'clamp(30px, 4.5vw, 54px)', fontWeight: 500, lineHeight: 1.12, letterSpacing: '-0.025em', marginBottom: 20 }}>
+              Signal,<br />
+              <em style={{ fontStyle: 'italic', color: C.gold }}>not noise.</em>
+            </h2>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 300, fontSize: 'clamp(14px, 1.5vw, 17px)', color: '#4a5a70', lineHeight: 1.72, marginBottom: 28, maxWidth: 400 }}>
+              Every development on your shared themes gets a significance score.
+              Below the reach-out bar, it's logged quietly. Above it, you get the
+              story, the why, and a message ready to send.
+            </p>
+            {[
+              'Themes across sports, places, markets, hobbies, and industries',
+              'A visible reach-out bar — you\'re only interrupted when it clears',
+              'Paste a conversation and Harbored discovers your common ground',
+              'Live monitoring across news sources, around the clock',
+            ].map(point => (
+              <div key={point} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', marginBottom: 14 }}>
+                <div style={{ width: 20, height: 20, borderRadius: '50%', background: 'rgba(10,102,194,0.12)', border: '1px solid rgba(10,102,194,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={C.gold} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 400, color: '#374151', lineHeight: 1.55 }}>{point}</span>
+              </div>
+            ))}
+          </Reveal>
+          <Reveal delay={0.15} style={{ display: 'flex', justifyContent: 'center' }}>
+            <div style={{
+              background: '#fff', borderRadius: 20, maxWidth: 440, width: '100%',
+              boxShadow: '0 24px 80px rgba(10,22,40,0.14), 0 4px 20px rgba(10,22,40,0.06)',
+              overflow: 'hidden', fontFamily: 'Inter, sans-serif',
+            }}>
+              <div style={{ background: `linear-gradient(135deg, ${C.navy} 0%, #1a3558 100%)`, padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ color: 'rgba(248,250,252,0.85)', fontSize: 12, fontWeight: 600, letterSpacing: '0.1em' }}>COMMON GROUND</span>
+                <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.goldPale, background: 'rgba(112,181,249,0.12)', padding: '3px 8px', borderRadius: 10, border: '1px solid rgba(112,181,249,0.2)' }}>Worth reaching out</span>
+              </div>
+              <div style={{ padding: '20px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
+                  <span style={{ fontWeight: 700, fontSize: 14, color: C.navy }}>John Sullivan</span>
+                  <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 20, background: 'rgba(5,118,66,0.08)', color: '#057642' }}>Villanova Basketball</span>
+                </div>
+                <p style={{ fontSize: 14, color: '#374151', lineHeight: 1.55, marginBottom: 16 }}>
+                  Villanova lands five-star transfer guard Jalen Reyes — biggest portal win since 2018
+                </p>
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <span style={{ fontSize: 11, color: '#6b7280' }}>Significance</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: C.gold }}>92</span>
+                  </div>
+                  <div style={{ position: 'relative', height: 6, borderRadius: 3, background: '#E8ECF1' }}>
+                    <div style={{ width: '92%', height: '100%', borderRadius: 3, background: `linear-gradient(90deg, ${C.gold}, ${C.goldLight})` }} />
+                    <div style={{ position: 'absolute', left: '70%', top: -4, width: 2, height: 14, background: 'rgba(10,22,40,0.4)', borderRadius: 1 }} />
+                  </div>
+                  <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 6 }}>Reach-out bar: 70</div>
+                </div>
+                <div style={{ background: '#f9fafb', border: '1px solid #f0f0f0', borderRadius: 12, padding: '14px 16px', marginBottom: 16 }}>
+                  <p style={{ fontSize: 14, lineHeight: 1.65, color: '#1f2937', margin: 0 }}>
+                    "John — did you see Nova just landed Jalen Reyes?? Biggest portal win in years. What's your read?"
+                  </p>
+                </div>
+                <button onClick={openModal} style={{ width: '100%', padding: '11px 0', background: `linear-gradient(135deg, ${C.navy}, #1a3558)`, color: '#F8FAFC', border: 'none', borderRadius: 8, fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: 13, cursor: 'pointer', transition: 'opacity 0.15s' }}
+                  onMouseEnter={e => e.currentTarget.style.opacity = '0.88'} onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
+                  Send
+                </button>
+              </div>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
       {/* ══════════════════ NEVER MISS A MOMENT ══════════════════ */}
       <section id="features" style={{ ...sec, background: `linear-gradient(180deg, ${C.sand} 0%, #F4F8FB 100%)`, borderTop: '1px solid #DCE6F1', borderBottom: '1px solid #DCE6F1' }}>
         <div style={{ maxWidth: 1060, margin: '0 auto' }}>
           <Reveal style={{ textAlign: 'center', marginBottom: 'clamp(52px, 7vw, 80px)' }}>
-            <Label center>Event Detection</Label>
+            <Label center>Beyond Your Themes</Label>
             <h2 style={{ fontFamily: 'Inter, sans-serif', fontSize: 'clamp(32px, 5vw, 60px)', fontWeight: 500, lineHeight: 1.1, letterSpacing: '-0.025em', margin: '0 auto 16px' }}>
               Never miss a moment<br />
               <em style={{ fontStyle: 'italic', color: C.gold }}>that matters.</em>
             </h2>
             <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 300, fontSize: 'clamp(14px, 1.6vw, 17px)', color: '#4a5a70', maxWidth: 420, margin: '0 auto', lineHeight: 1.68 }}>
-              Harbored is always watching for the moments your network deserves acknowledgment.
+              Common ground is the heartbeat — and Harbored still catches every life event across your network.
             </p>
           </Reveal>
 
@@ -731,7 +829,7 @@ export default function Landing() {
                   <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 300, fontSize: 13, color: '#6b7280', marginTop: 10, lineHeight: 1.5 }}>A great way to see how Harbored works before going all in.</p>
                 </div>
                 <div style={{ borderTop: '1px solid #E8ECF1', paddingTop: 24, flex: 1 }}>
-                  {['Monitor up to 25 contacts', 'Email notifications', 'Manual send only', 'Basic event detection'].map(f => (
+                  {['Monitor up to 25 contacts', '3 Common Ground themes per contact', 'Email notifications', 'Manual send only'].map(f => (
                     <div key={f} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 12 }}>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#057642" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}><polyline points="20 6 9 17 4 12"/></svg>
                       <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, color: '#374151' }}>{f}</span>
@@ -756,7 +854,7 @@ export default function Landing() {
                   <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 300, fontSize: 13, color: 'rgba(248,250,252,0.5)', marginTop: 10, lineHeight: 1.5 }}>For professionals who want their relationships to keep up with their careers.</p>
                 </div>
                 <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 24, flex: 1 }}>
-                  {['Unlimited contacts', 'All notification channels', 'AI message drafting', 'Auto-Send mode', 'Priority event detection', 'Custom message tone profiles'].map(f => (
+                  {['Unlimited contacts & Common Ground themes', 'Common Ground discovery from your conversations', 'AI message drafting in your voice', 'Auto-Send mode', 'All notification channels', 'Priority event detection'].map(f => (
                     <div key={f} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 12 }}>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.goldPale} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}><polyline points="20 6 9 17 4 12"/></svg>
                       <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, color: 'rgba(248,250,252,0.78)' }}>{f}</span>
@@ -787,7 +885,7 @@ export default function Landing() {
 
           <RevealGroup style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
             {[
-              { quote: "I got a text from Harbored saying my old manager just made partner. I sent her a message in 10 seconds. She replied within the hour. That's a relationship I almost let go cold.", name: 'Jake M.', role: 'Account Executive', avatar: 'https://i.pravatar.cc/80?img=11' },
+              { quote: "My college roommate and I share exactly one thing: Villanova basketball. Harbored pinged me the second the transfer news broke, message already written. We hadn't talked in months — now we're going to a game.", name: 'Jake M.', role: 'Account Executive', avatar: 'https://i.pravatar.cc/80?img=11' },
               { quote: 'I turned on Auto-Send for birthdays and work anniversaries. People think I\'m incredibly thoughtful. I\'m just busy.', name: 'Priya S.', role: 'Product Manager', avatar: 'https://i.pravatar.cc/80?img=46' },
               { quote: "I've reconnected with 6 people from my first job in the last 3 months. Harbored noticed things I completely missed.", name: 'Connor B.', role: 'Associate, Goldman Sachs', avatar: 'https://i.pravatar.cc/80?img=53' },
             ].map(({ quote, name, role, avatar }) => (

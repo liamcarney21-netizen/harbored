@@ -171,7 +171,7 @@ export default function LakeScene({ onCtaClick }) {
             animation: 'fadeUp 0.7s 0.05s ease both',
           }}
         >
-          Network Intelligence
+          Common Ground, by Harbored
         </div>
 
         {/* Main headline */}
@@ -179,7 +179,7 @@ export default function LakeScene({ onCtaClick }) {
           style={{
             fontFamily: 'Inter, system-ui, sans-serif',
             fontWeight: 500,
-            fontSize: 'clamp(46px, 8.2vw, 112px)',
+            fontSize: 'clamp(40px, 6.4vw, 84px)',
             lineHeight: 1.03,
             letterSpacing: '-0.03em',
             color: '#F8FAFC',
@@ -187,8 +187,8 @@ export default function LakeScene({ onCtaClick }) {
             animation: 'fadeUp 0.85s 0.15s ease both',
           }}
         >
-          Your network is growing.<br />
-          <em style={{ fontStyle: 'italic' }}>Don't lose touch.</em>
+          Every relationship<br />
+          runs on <em style={{ fontStyle: 'italic' }}>common ground.</em>
         </h1>
 
         {/* Subheadline */}
@@ -205,8 +205,9 @@ export default function LakeScene({ onCtaClick }) {
             animation: 'fadeUp 0.85s 0.28s ease both',
           }}
         >
-          Harbored tracks the moments that matter — promotions, milestones,
-          life events — and helps you show up every time.
+          Tell Harbored what you share with each person — the team, the city,
+          the market. It watches those themes around the clock and tells you
+          the moment there's a real reason to reach out, message drafted.
         </p>
 
         {/* CTA buttons */}
@@ -222,7 +223,7 @@ export default function LakeScene({ onCtaClick }) {
             style={{
               padding: '15px 40px',
               background: 'linear-gradient(135deg, #0A66C2, #378FE9)',
-              color: '#0a0f1e',
+              color: '#FFFFFF',
               fontFamily: 'Inter, sans-serif',
               fontWeight: 600, fontSize: 14,
               letterSpacing: '0.03em',
