@@ -18,7 +18,7 @@ npm run dev
 Runs on http://localhost:5178
 
 ## Project Structure
-- `src/pages/` — Landing, Login, Signup (routed) + legacy Feed/Jobs/Messages/Network/Profile (unrouted)
+- `src/pages/` — Landing (platform-page architecture: compact product-forward hero, sticky "The Platform" sub-nav, one alternating feature section per capability with in-JSX browser-window product mocks, stats band, single large testimonial; LakeScene.jsx is retired/unused), Login, Signup (routed) + legacy Feed/Jobs/Messages/Network/Profile (unrouted)
 - `src/pages/app/` — the app: CommonGround (home at /dashboard), Dashboard (as /dashboard/overview), Alerts, Network, ContactProfile (/dashboard/contact/:id), PrepBrief (/dashboard/prep/:id — meeting one-pager with live theme updates + talking points; meetings stored in dataStore, scheduled from profiles with a Google Calendar deep link), Digest (/dashboard/digest), Messages, Analytics, Settings
 - `src/components/` — AppLayout, AppSidebar, Onboarding (first-login walkthrough → hands off to AddContactModal), AddContactModal, Avatar, PlatformBadge, LakeScene
 - `src/store/` — dataStore (Zustand + localStorage persist: contacts, themes, touches, notes; health derived from days-since-last-touch in `healthFromLastTouch`), authStore (legacy)
