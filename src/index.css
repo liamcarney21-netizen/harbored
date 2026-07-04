@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap');
 @import "tailwindcss";
 
 /* ─── Reset ─────────────────────────────────────────────── */
@@ -8,24 +8,25 @@ html { scroll-behavior: smooth; }
 
 body {
   font-family: 'Inter', system-ui, sans-serif;
-  background: #F3F2EF;
-  color: #1D2226;
+  background: #F6F4EF;
+  color: #1C2B33;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ─── Design tokens ──────────────────────────────────────── */
+/* ─── Design tokens: Editorial Harbor ───────────────────── */
 :root {
   --navy:       #0a1628;
   --navy-mid:   #0f2040;
   --navy-light: #1a3558;
-  --accent:       #0A66C2;
-  --accent-light: #378FE9;
-  --accent-pale:  #70B5F9;
-  --canvas:       #F3F2EF;
+  --accent:       #0D5C63;   /* deep harbor teal */
+  --accent-light: #177E8A;
+  --brass:        #A97E2F;   /* brass highlight */
+  --brass-pale:   #D3A95C;
+  --canvas:       #F6F4EF;   /* warm paper */
   --surface:      #FFFFFF;
-  --border:       #E0DFDC;
+  --border:       #E6E2D8;
 }
 
 /* ─── Sailboat keyframes ─────────────────────────────────── */

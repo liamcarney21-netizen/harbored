@@ -8,11 +8,11 @@ const stagger = { animate: { transition: { staggerChildren: 0.06 } } }
 
 function SectionHeader({ icon: Icon, title }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px', borderBottom: '1px solid #E8EAED', paddingBottom: '12px' }}>
-      <div style={{ width: '28px', height: '28px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(10,102,194,0.1)' }}>
-        <Icon style={{ width: '14px', height: '14px', color: '#0A66C2' }} />
+    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px', borderBottom: '1px solid #E6E2D8', paddingBottom: '12px' }}>
+      <div style={{ width: '28px', height: '28px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(13,92,99,0.1)' }}>
+        <Icon style={{ width: '14px', height: '14px', color: '#0D5C63' }} />
       </div>
-      <h2 style={{ fontSize: '14px', fontWeight: 600, color: '#1D2226', fontFamily: 'Inter, sans-serif' }}>{title}</h2>
+      <h2 style={{ fontSize: '14px', fontWeight: 600, color: '#1C2B33', fontFamily: 'Inter, sans-serif' }}>{title}</h2>
     </div>
   )
 }
@@ -24,7 +24,7 @@ function Toggle({ checked, onChange }) {
       style={{
         position: 'relative', width: '40px', height: '22px', borderRadius: '11px',
         border: 'none', cursor: 'pointer', flexShrink: 0, transition: 'background 0.2s',
-        background: checked ? '#0A66C2' : '#C7CDD3',
+        background: checked ? '#0D5C63' : '#C6C0B3',
       }}
     >
       <span style={{
@@ -39,7 +39,7 @@ function Toggle({ checked, onChange }) {
 function InputField({ label, value, onChange, type = 'text', placeholder }) {
   return (
     <div>
-      <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, marginBottom: '6px', color: '#5E6774', fontFamily: 'Inter, sans-serif' }}>{label}</label>
+      <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, marginBottom: '6px', color: '#5C6B73', fontFamily: 'Inter, sans-serif' }}>{label}</label>
       <input
         type={type}
         value={value}
@@ -47,11 +47,11 @@ function InputField({ label, value, onChange, type = 'text', placeholder }) {
         placeholder={placeholder}
         style={{
           width: '100%', padding: '10px 14px', borderRadius: '10px', fontSize: '13px', outline: 'none',
-          background: '#F3F4F6', border: '1px solid #DCE0E4',
-          color: '#1D2226', fontFamily: 'Inter, sans-serif', boxSizing: 'border-box', transition: 'border-color 0.15s',
+          background: '#F2F0EA', border: '1px solid #DEDACF',
+          color: '#1C2B33', fontFamily: 'Inter, sans-serif', boxSizing: 'border-box', transition: 'border-color 0.15s',
         }}
-        onFocus={e => e.target.style.borderColor = 'rgba(10,102,194,0.4)'}
-        onBlur={e => e.target.style.borderColor = '#DCE0E4'}
+        onFocus={e => e.target.style.borderColor = 'rgba(13,92,99,0.4)'}
+        onBlur={e => e.target.style.borderColor = '#DEDACF'}
       />
     </div>
   )
@@ -101,18 +101,18 @@ export default function Settings() {
       {/* Header */}
       <motion.div variants={fadeUp} style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '32px' }}>
         <div>
-          <h1 style={{ fontFamily: 'Inter, sans-serif', fontSize: '24px', fontWeight: 700, color: '#1D2226', marginBottom: '4px' }}>
+          <h1 style={{ fontFamily: '"Fraunces", Georgia, serif', fontSize: '27px', fontWeight: 600, color: '#1C2B33', marginBottom: '4px' }}>
             Settings
           </h1>
-          <p style={{ fontSize: '13px', color: '#5E6774' }}>Manage your account and preferences</p>
+          <p style={{ fontSize: '13px', color: '#5C6B73' }}>Manage your account and preferences</p>
         </div>
         <button
           onClick={handleSave}
           style={{
             display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 18px',
             borderRadius: '8px', fontSize: '13px', fontWeight: 600, border: 'none', cursor: 'pointer', transition: 'all 0.2s',
-            background: saved ? 'rgba(5,118,66,0.15)' : '#0A66C2',
-            color: saved ? '#057642' : '#FFFFFF',
+            background: saved ? 'rgba(46,125,91,0.15)' : '#0D5C63',
+            color: saved ? '#2E7D5B' : '#FFFFFF',
           }}
         >
           {saved ? <><Check style={{ width: '14px', height: '14px' }} /> Saved</> : 'Save Changes'}
@@ -122,13 +122,13 @@ export default function Settings() {
       <div style={{ maxWidth: '640px', display: 'flex', flexDirection: 'column', gap: '32px' }}>
 
         {/* Profile */}
-        <motion.section variants={fadeUp} style={{ borderRadius: '16px', padding: '24px', background: '#FFFFFF', border: '1px solid #E8EAED' }}>
+        <motion.section variants={fadeUp} style={{ borderRadius: '16px', padding: '24px', background: '#FFFFFF', border: '1px solid #E6E2D8' }}>
           <SectionHeader icon={User} title="Profile" />
           <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '24px' }}>
-            <div style={{ width: '64px', height: '64px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', fontWeight: 600, background: 'rgba(10,102,194,0.15)', color: '#0A66C2' }}>
+            <div style={{ width: '64px', height: '64px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', fontWeight: 600, background: 'rgba(13,92,99,0.15)', color: '#0D5C63' }}>
               LC
             </div>
-            <button style={{ fontSize: '13px', padding: '6px 14px', borderRadius: '8px', border: '1px solid #D5DADF', color: '#1D2226', background: 'none', cursor: 'pointer' }}>
+            <button style={{ fontSize: '13px', padding: '6px 14px', borderRadius: '8px', border: '1px solid #D6D1C5', color: '#1C2B33', background: 'none', cursor: 'pointer' }}>
               Change photo
             </button>
           </div>
@@ -136,11 +136,11 @@ export default function Settings() {
             <InputField label="Full name" value={profile.name} onChange={v => setProfile(p => ({ ...p, name: v }))} placeholder="Your name" />
             <InputField label="Email" type="email" value={profile.email} onChange={v => setProfile(p => ({ ...p, email: v }))} placeholder="you@email.com" />
             <div style={{ gridColumn: '1 / -1' }}>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, marginBottom: '6px', color: '#5E6774' }}>Timezone</label>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, marginBottom: '6px', color: '#5C6B73' }}>Timezone</label>
               <select
                 value={profile.timezone}
                 onChange={e => setProfile(p => ({ ...p, timezone: e.target.value }))}
-                style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', fontSize: '13px', outline: 'none', background: '#F3F4F6', border: '1px solid #DCE0E4', color: '#1D2226', fontFamily: 'Inter, sans-serif' }}
+                style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', fontSize: '13px', outline: 'none', background: '#F2F0EA', border: '1px solid #DEDACF', color: '#1C2B33', fontFamily: 'Inter, sans-serif' }}
               >
                 <option value="America/Chicago">America/Chicago (CT)</option>
                 <option value="America/New_York">America/New_York (ET)</option>
@@ -153,13 +153,13 @@ export default function Settings() {
         </motion.section>
 
         {/* Notification Preferences */}
-        <motion.section variants={fadeUp} style={{ borderRadius: '16px', padding: '24px', background: '#FFFFFF', border: '1px solid #E8EAED' }}>
+        <motion.section variants={fadeUp} style={{ borderRadius: '16px', padding: '24px', background: '#FFFFFF', border: '1px solid #E6E2D8' }}>
           <SectionHeader icon={Bell} title="Notification Preferences" />
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {NOTIFICATIONS.map(n => (
               <div key={n.key}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-                  <span style={{ fontSize: '13px', fontWeight: 500, color: '#1D2226' }}>{n.label}</span>
+                  <span style={{ fontSize: '13px', fontWeight: 500, color: '#1C2B33' }}>{n.label}</span>
                   <Toggle checked={notifToggles[n.key]} onChange={v => setNotifToggles(t => ({ ...t, [n.key]: v }))} />
                 </div>
                 {notifToggles[n.key] && (
@@ -172,14 +172,14 @@ export default function Settings() {
                     />
                   </motion.div>
                 )}
-                <div style={{ borderBottom: '1px solid #EEEFF1', marginTop: '12px' }} />
+                <div style={{ borderBottom: '1px solid #EEEBE3', marginTop: '12px' }} />
               </div>
             ))}
           </div>
         </motion.section>
 
         {/* Connected Platforms */}
-        <motion.section variants={fadeUp} style={{ borderRadius: '16px', padding: '24px', background: '#FFFFFF', border: '1px solid #E8EAED' }}>
+        <motion.section variants={fadeUp} style={{ borderRadius: '16px', padding: '24px', background: '#FFFFFF', border: '1px solid #E6E2D8' }}>
           <SectionHeader icon={Link2} title="Connected Platforms" />
           <div>
             {PLATFORMS.map((p, i) => {
@@ -187,18 +187,18 @@ export default function Settings() {
               return (
                 <div
                   key={p.key}
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: i < PLATFORMS.length - 1 ? '1px solid #EEEFF1' : 'none' }}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: i < PLATFORMS.length - 1 ? '1px solid #EEEBE3' : 'none' }}
                 >
-                  <span style={{ fontSize: '13px', fontWeight: 500, color: '#1D2226' }}>{p.label}</span>
+                  <span style={{ fontSize: '13px', fontWeight: 500, color: '#1C2B33' }}>{p.label}</span>
                   {connected ? (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontSize: '12px', padding: '4px 10px', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(5,118,66,0.1)', color: '#057642' }}>
-                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#057642', display: 'inline-block' }} />
+                      <span style={{ fontSize: '12px', padding: '4px 10px', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(46,125,91,0.1)', color: '#2E7D5B' }}>
+                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#2E7D5B', display: 'inline-block' }} />
                         Connected
                       </span>
                       <button
                         onClick={() => setConnectedPlatforms(cp => ({ ...cp, [p.key]: false }))}
-                        style={{ fontSize: '12px', color: '#5E6774', background: 'none', border: 'none', cursor: 'pointer' }}
+                        style={{ fontSize: '12px', color: '#5C6B73', background: 'none', border: 'none', cursor: 'pointer' }}
                       >
                         Disconnect
                       </button>
@@ -206,7 +206,7 @@ export default function Settings() {
                   ) : (
                     <button
                       onClick={() => setConnectedPlatforms(cp => ({ ...cp, [p.key]: true }))}
-                      style={{ fontSize: '12px', padding: '6px 14px', borderRadius: '8px', fontWeight: 500, cursor: 'pointer', background: 'rgba(10,102,194,0.12)', color: '#0A66C2', border: '1px solid rgba(10,102,194,0.2)', fontFamily: 'Inter, sans-serif' }}
+                      style={{ fontSize: '12px', padding: '6px 14px', borderRadius: '8px', fontWeight: 500, cursor: 'pointer', background: 'rgba(13,92,99,0.12)', color: '#0D5C63', border: '1px solid rgba(13,92,99,0.2)', fontFamily: 'Inter, sans-serif' }}
                     >
                       Connect
                     </button>
@@ -218,10 +218,10 @@ export default function Settings() {
         </motion.section>
 
         {/* Auto-Send */}
-        <motion.section variants={fadeUp} style={{ borderRadius: '16px', padding: '24px', background: '#FFFFFF', border: '1px solid #E8EAED' }}>
+        <motion.section variants={fadeUp} style={{ borderRadius: '16px', padding: '24px', background: '#FFFFFF', border: '1px solid #E6E2D8' }}>
           <SectionHeader icon={Zap} title="Auto-Send" />
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '24px' }}>
-            <p style={{ fontSize: '13px', lineHeight: 1.6, color: '#5E6774' }}>
+            <p style={{ fontSize: '13px', lineHeight: 1.6, color: '#5C6B73' }}>
               When enabled, Harbored will automatically send drafted messages without requiring your approval.
               You can customize this per contact in My Network.
             </p>
@@ -231,7 +231,7 @@ export default function Settings() {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              style={{ marginTop: '16px', padding: '12px 16px', borderRadius: '10px', fontSize: '13px', background: 'rgba(10,102,194,0.08)', color: '#0A66C2', border: '1px solid rgba(10,102,194,0.15)' }}
+              style={{ marginTop: '16px', padding: '12px 16px', borderRadius: '10px', fontSize: '13px', background: 'rgba(13,92,99,0.08)', color: '#0D5C63', border: '1px solid rgba(13,92,99,0.15)' }}
             >
               Auto-Send is active. Messages will be sent automatically when Harbored detects an event.
             </motion.div>
@@ -239,15 +239,15 @@ export default function Settings() {
         </motion.section>
 
         {/* Product Tour */}
-        <motion.section variants={fadeUp} style={{ borderRadius: '16px', padding: '24px', background: '#FFFFFF', border: '1px solid #E8EAED' }}>
+        <motion.section variants={fadeUp} style={{ borderRadius: '16px', padding: '24px', background: '#FFFFFF', border: '1px solid #E6E2D8' }}>
           <SectionHeader icon={Compass} title="Product Tour" />
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '24px' }}>
-            <p style={{ fontSize: '13px', lineHeight: 1.6, color: '#5E6774' }}>
+            <p style={{ fontSize: '13px', lineHeight: 1.6, color: '#5C6B73' }}>
               Replay the welcome walkthrough covering Common Ground and everything else Harbored does for your network.
             </p>
             <button
               onClick={() => { localStorage.removeItem('harbored_onboarded'); window.location.href = '/dashboard' }}
-              style={{ fontSize: '12px', padding: '8px 16px', borderRadius: '8px', fontWeight: 500, cursor: 'pointer', flexShrink: 0, background: 'rgba(10,102,194,0.1)', color: '#0A66C2', border: '1px solid rgba(10,102,194,0.25)', fontFamily: 'Inter, sans-serif' }}
+              style={{ fontSize: '12px', padding: '8px 16px', borderRadius: '8px', fontWeight: 500, cursor: 'pointer', flexShrink: 0, background: 'rgba(13,92,99,0.1)', color: '#0D5C63', border: '1px solid rgba(13,92,99,0.25)', fontFamily: 'Inter, sans-serif' }}
             >
               Replay walkthrough
             </button>
@@ -255,10 +255,10 @@ export default function Settings() {
         </motion.section>
 
         {/* Sample Data */}
-        <motion.section variants={fadeUp} style={{ borderRadius: '16px', padding: '24px', background: '#FFFFFF', border: '1px solid #E8EAED' }}>
+        <motion.section variants={fadeUp} style={{ borderRadius: '16px', padding: '24px', background: '#FFFFFF', border: '1px solid #E6E2D8' }}>
           <SectionHeader icon={Database} title="Sample Data" />
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '24px', flexWrap: 'wrap' }}>
-            <p style={{ fontSize: '13px', lineHeight: 1.6, color: '#5E6774', flex: 1, minWidth: '220px' }}>
+            <p style={{ fontSize: '13px', lineHeight: 1.6, color: '#5C6B73', flex: 1, minWidth: '220px' }}>
               {sampleCount > 0
                 ? `${sampleCount} sample contacts (and their themes, messages, and meetings) are loaded so you can explore. Clearing them never touches anything you added yourself.`
                 : 'Sample data is cleared. Restore it any time to explore with example contacts.'}
@@ -266,14 +266,14 @@ export default function Settings() {
             {sampleCount > 0 ? (
               <button
                 onClick={clearSampleData}
-                style={{ fontSize: '12px', padding: '8px 16px', borderRadius: '8px', fontWeight: 500, cursor: 'pointer', flexShrink: 0, background: 'none', color: '#44484D', border: '1px solid #CDD3D9', fontFamily: 'Inter, sans-serif' }}
+                style={{ fontSize: '12px', padding: '8px 16px', borderRadius: '8px', fontWeight: 500, cursor: 'pointer', flexShrink: 0, background: 'none', color: '#3E4B52', border: '1px solid #CCC6B9', fontFamily: 'Inter, sans-serif' }}
               >
                 Clear sample data
               </button>
             ) : (
               <button
                 onClick={restoreSampleData}
-                style={{ fontSize: '12px', padding: '8px 16px', borderRadius: '8px', fontWeight: 500, cursor: 'pointer', flexShrink: 0, background: 'rgba(10,102,194,0.1)', color: '#0A66C2', border: '1px solid rgba(10,102,194,0.25)', fontFamily: 'Inter, sans-serif' }}
+                style={{ fontSize: '12px', padding: '8px 16px', borderRadius: '8px', fontWeight: 500, cursor: 'pointer', flexShrink: 0, background: 'rgba(13,92,99,0.1)', color: '#0D5C63', border: '1px solid rgba(13,92,99,0.25)', fontFamily: 'Inter, sans-serif' }}
               >
                 Restore sample data
               </button>
@@ -282,17 +282,17 @@ export default function Settings() {
         </motion.section>
 
         {/* Danger Zone */}
-        <motion.section variants={fadeUp} style={{ borderRadius: '16px', padding: '24px', background: 'rgba(204,16,22,0.03)', border: '1px solid rgba(204,16,22,0.1)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px', borderBottom: '1px solid rgba(204,16,22,0.1)', paddingBottom: '12px' }}>
-            <Trash2 style={{ width: '16px', height: '16px', color: '#CC1016' }} />
-            <h2 style={{ fontSize: '14px', fontWeight: 600, color: '#CC1016', fontFamily: 'Inter, sans-serif' }}>Danger Zone</h2>
+        <motion.section variants={fadeUp} style={{ borderRadius: '16px', padding: '24px', background: 'rgba(180,66,58,0.03)', border: '1px solid rgba(180,66,58,0.1)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px', borderBottom: '1px solid rgba(180,66,58,0.1)', paddingBottom: '12px' }}>
+            <Trash2 style={{ width: '16px', height: '16px', color: '#B4423A' }} />
+            <h2 style={{ fontSize: '14px', fontWeight: 600, color: '#B4423A', fontFamily: 'Inter, sans-serif' }}>Danger Zone</h2>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
-              <p style={{ fontSize: '13px', fontWeight: 500, color: '#1D2226', marginBottom: '4px' }}>Delete Account</p>
-              <p style={{ fontSize: '12px', color: '#5E6774' }}>Permanently delete your account and all data. This cannot be undone.</p>
+              <p style={{ fontSize: '13px', fontWeight: 500, color: '#1C2B33', marginBottom: '4px' }}>Delete Account</p>
+              <p style={{ fontSize: '12px', color: '#5C6B73' }}>Permanently delete your account and all data. This cannot be undone.</p>
             </div>
-            <button style={{ padding: '8px 16px', borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', marginLeft: '16px', flexShrink: 0, background: 'none', border: '1px solid rgba(204,16,22,0.3)', color: '#CC1016', fontFamily: 'Inter, sans-serif' }}>
+            <button style={{ padding: '8px 16px', borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', marginLeft: '16px', flexShrink: 0, background: 'none', border: '1px solid rgba(180,66,58,0.3)', color: '#B4423A', fontFamily: 'Inter, sans-serif' }}>
               Delete Account
             </button>
           </div>

@@ -52,8 +52,8 @@ function ThemesVisual() {
           transition={{ delay: 0.3 + i * 0.15, duration: 0.3 }}
           style={{
             padding: '6px 14px', borderRadius: '20px', fontSize: '12px', fontWeight: 600,
-            background: 'rgba(10,102,194,0.08)', color: '#0A66C2',
-            border: '1px solid rgba(10,102,194,0.2)', fontFamily: 'Inter, sans-serif',
+            background: 'rgba(13,92,99,0.08)', color: '#0D5C63',
+            border: '1px solid rgba(13,92,99,0.2)', fontFamily: 'Inter, sans-serif',
           }}
         >
           {c}
@@ -67,26 +67,26 @@ function GaugeVisual() {
   return (
     <div style={{ maxWidth: '300px', margin: '0 auto', width: '100%' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-        <span style={{ fontSize: '11px', color: '#5E6774', fontFamily: 'Inter, sans-serif' }}>Significance</span>
+        <span style={{ fontSize: '11px', color: '#5C6B73', fontFamily: 'Inter, sans-serif' }}>Significance</span>
         <motion.span
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.1 }}
-          style={{ fontSize: '13px', fontWeight: 700, color: '#0A66C2', fontFamily: 'Inter, sans-serif' }}
+          style={{ fontSize: '13px', fontWeight: 700, color: '#0D5C63', fontFamily: 'Inter, sans-serif' }}
         >
           92 — worth reaching out
         </motion.span>
       </div>
-      <div style={{ position: 'relative', height: '6px', borderRadius: '3px', background: '#E4E6E9' }}>
+      <div style={{ position: 'relative', height: '6px', borderRadius: '3px', background: '#E5E1D7' }}>
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: '92%' }}
           transition={{ delay: 0.4, duration: 0.8, ease: 'easeOut' }}
-          style={{ height: '100%', borderRadius: '3px', background: '#0A66C2' }}
+          style={{ height: '100%', borderRadius: '3px', background: 'linear-gradient(90deg, #0D5C63 55%, #A97E2F)' }}
         />
         <div style={{ position: 'absolute', left: '70%', top: '-4px', width: '2px', height: '14px', background: 'rgba(29,34,38,0.4)', borderRadius: '1px' }} />
       </div>
-      <div style={{ fontSize: '11px', color: '#5E6774', marginTop: '6px', textAlign: 'left', fontFamily: 'Inter, sans-serif' }}>
+      <div style={{ fontSize: '11px', color: '#5C6B73', marginTop: '6px', textAlign: 'left', fontFamily: 'Inter, sans-serif' }}>
         Reach-out threshold: 70
       </div>
     </div>
@@ -122,14 +122,14 @@ export default function Onboarding({ onFinish }) {
         }}
       >
         {/* Top bar */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderBottom: '1px solid #EEEFF1' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderBottom: '1px solid #EEEBE3' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Anchor style={{ width: '14px', height: '14px', color: '#0A66C2' }} />
-            <span style={{ fontSize: '13px', fontWeight: 700, letterSpacing: '0.1em', color: '#1D2226' }}>HARBORED</span>
+            <Anchor style={{ width: '14px', height: '14px', color: '#0D5C63' }} />
+            <span style={{ fontFamily: '"Fraunces", Georgia, serif', fontSize: '16px', fontWeight: 600, color: '#1C2B33' }}>Harbored</span>
           </div>
           <button
             onClick={onFinish}
-            style={{ fontSize: '12px', fontWeight: 500, color: '#5E6774', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}
+            style={{ fontSize: '12px', fontWeight: 500, color: '#5C6B73', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}
           >
             Skip tour
           </button>
@@ -149,17 +149,17 @@ export default function Onboarding({ onFinish }) {
               <div style={{
                 width: '56px', height: '56px', borderRadius: '50%',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: 'rgba(10,102,194,0.08)', marginBottom: '20px',
+                background: 'rgba(13,92,99,0.08)', marginBottom: '20px',
               }}>
-                <Icon style={{ width: '26px', height: '26px', color: '#0A66C2' }} />
+                <Icon style={{ width: '26px', height: '26px', color: '#0D5C63' }} />
               </div>
-              <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 600, color: '#0A66C2', marginBottom: '10px' }}>
+              <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 600, color: '#0D5C63', marginBottom: '10px' }}>
                 {current.kicker}
               </div>
-              <h2 style={{ fontSize: '22px', fontWeight: 700, color: '#1D2226', marginBottom: '14px', lineHeight: 1.3 }}>
+              <h2 style={{ fontFamily: '"Fraunces", Georgia, serif', fontSize: '24px', fontWeight: 600, color: '#1C2B33', marginBottom: '14px', lineHeight: 1.3 }}>
                 {current.title}
               </h2>
-              <p style={{ fontSize: '14px', lineHeight: 1.65, color: '#5E6774', maxWidth: '440px', marginBottom: current.visual ? '24px' : 0 }}>
+              <p style={{ fontSize: '14px', lineHeight: 1.65, color: '#5C6B73', maxWidth: '440px', marginBottom: current.visual ? '24px' : 0 }}>
                 {current.body}
               </p>
               {current.visual === 'themes' && <ThemesVisual />}
@@ -169,7 +169,7 @@ export default function Onboarding({ onFinish }) {
         </div>
 
         {/* Footer */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderTop: '1px solid #EEEFF1' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderTop: '1px solid #EEEBE3' }}>
           <button
             onClick={() => setStep(s => Math.max(0, s - 1))}
             disabled={step === 0}
@@ -177,8 +177,8 @@ export default function Onboarding({ onFinish }) {
             style={{
               display: 'flex', alignItems: 'center', gap: '6px',
               padding: '9px 16px', borderRadius: '8px', fontSize: '13px', fontWeight: 500,
-              background: 'none', border: '1px solid #DCE0E4', cursor: step === 0 ? 'default' : 'pointer',
-              color: step === 0 ? '#C7CDD3' : '#44484D', fontFamily: 'Inter, sans-serif',
+              background: 'none', border: '1px solid #DEDACF', cursor: step === 0 ? 'default' : 'pointer',
+              color: step === 0 ? '#C6C0B3' : '#3E4B52', fontFamily: 'Inter, sans-serif',
               opacity: step === 0 ? 0.6 : 1, transition: 'all 0.15s',
             }}
           >
@@ -194,7 +194,7 @@ export default function Onboarding({ onFinish }) {
                 aria-label={`Go to step ${i + 1}`}
                 style={{
                   width: i === step ? '20px' : '7px', height: '7px', borderRadius: '4px',
-                  background: i === step ? '#0A66C2' : i < step ? 'rgba(10,102,194,0.4)' : '#DCE0E4',
+                  background: i === step ? '#0D5C63' : i < step ? 'rgba(13,92,99,0.4)' : '#DEDACF',
                   border: 'none', cursor: 'pointer', padding: 0, transition: 'all 0.25s ease',
                 }}
               />
@@ -206,11 +206,11 @@ export default function Onboarding({ onFinish }) {
             style={{
               display: 'flex', alignItems: 'center', gap: '6px',
               padding: '9px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
-              background: '#0A66C2', color: '#FFFFFF', border: 'none', cursor: 'pointer',
+              background: '#0D5C63', color: '#FFFFFF', border: 'none', cursor: 'pointer',
               fontFamily: 'Inter, sans-serif', transition: 'background 0.15s',
             }}
-            onMouseEnter={e => e.currentTarget.style.background = '#084D92'}
-            onMouseLeave={e => e.currentTarget.style.background = '#0A66C2'}
+            onMouseEnter={e => e.currentTarget.style.background = '#09454B'}
+            onMouseLeave={e => e.currentTarget.style.background = '#0D5C63'}
           >
             {isLast ? (
               <>Add your first contact <Check style={{ width: '13px', height: '13px' }} /></>

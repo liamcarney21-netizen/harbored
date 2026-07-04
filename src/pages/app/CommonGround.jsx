@@ -11,11 +11,11 @@ import { openSend, sendChannelFor } from '../../services/outreach'
 const TABS = ['Opportunities', 'Shared Themes']
 
 const categoryConfig = {
-  sports:   { label: 'Sports',   icon: Trophy,     color: '#057642', bg: 'rgba(5,118,66,0.08)' },
-  place:    { label: 'Place',    icon: MapPin,     color: '#0A66C2', bg: 'rgba(10,102,194,0.08)' },
-  market:   { label: 'Market',   icon: TrendingUp, color: '#915907', bg: 'rgba(145,89,7,0.08)' },
-  hobby:    { label: 'Hobby',    icon: Activity,   color: '#7A3FA8', bg: 'rgba(122,63,168,0.08)' },
-  industry: { label: 'Industry', icon: Briefcase,  color: '#B5560F', bg: 'rgba(181,86,15,0.08)' },
+  sports:   { label: 'Sports',   icon: Trophy,     color: '#2E7D5B', bg: 'rgba(46,125,91,0.08)' },
+  place:    { label: 'Place',    icon: MapPin,     color: '#0D5C63', bg: 'rgba(13,92,99,0.08)' },
+  market:   { label: 'Market',   icon: TrendingUp, color: '#A97E2F', bg: 'rgba(169,126,47,0.08)' },
+  hobby:    { label: 'Hobby',    icon: Activity,   color: '#6E5A8E', bg: 'rgba(110,90,142,0.08)' },
+  industry: { label: 'Industry', icon: Briefcase,  color: '#A65B33', bg: 'rgba(166,91,51,0.08)' },
 }
 
 function ThemeChip({ label, category, onRemove }) {
@@ -26,7 +26,7 @@ function ThemeChip({ label, category, onRemove }) {
       display: 'inline-flex', alignItems: 'center', gap: '6px',
       padding: '5px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 500,
       background: cfg.bg, color: cfg.color, fontFamily: 'Inter, sans-serif',
-      border: '1px solid #E4E6E9',
+      border: '1px solid #E5E1D7',
     }}>
       <Icon style={{ width: '11px', height: '11px', flexShrink: 0 }} />
       {label}
@@ -49,26 +49,28 @@ function ThemeChip({ label, category, onRemove }) {
 
 function SignificanceGauge({ score, compact = false }) {
   const above = score >= SIGNIFICANCE_THRESHOLD
-  const color = above ? '#0A66C2' : '#5E6774'
+  // Signature "tide line": teal water that crests into brass past the bar
+  const numColor = above ? '#A97E2F' : '#5C6B73'
+  const fill = above ? 'linear-gradient(90deg, #0D5C63 55%, #A97E2F)' : '#9AA69F'
   return (
     <div style={{ width: compact ? '120px' : '100%' }}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: '5px' }}>
-        <span style={{ fontSize: '11px', color: '#5E6774', fontFamily: 'Inter, sans-serif' }}>
+        <span style={{ fontSize: '11px', color: '#5C6B73', fontFamily: 'Inter, sans-serif' }}>
           {compact ? 'Significance' : 'Significance score'}
         </span>
-        <span style={{ fontSize: compact ? '12px' : '14px', fontWeight: 600, color, fontFamily: 'Inter, sans-serif' }}>
+        <span style={{ fontSize: compact ? '13px' : '16px', fontWeight: 600, color: numColor, fontFamily: '"Fraunces", Georgia, serif' }}>
           {score}
         </span>
       </div>
-      <div style={{ position: 'relative', height: '4px', borderRadius: '2px', background: '#E4E6E9' }}>
-        <div style={{ width: `${score}%`, height: '100%', borderRadius: '2px', background: color, transition: 'width 0.3s ease' }} />
+      <div style={{ position: 'relative', height: '4px', borderRadius: '2px', background: '#E5E1D7' }}>
+        <div style={{ width: `${score}%`, height: '100%', borderRadius: '2px', background: fill, transition: 'width 0.3s ease' }} />
         <div style={{
           position: 'absolute', left: `${SIGNIFICANCE_THRESHOLD}%`, top: '-3px',
-          width: '1px', height: '10px', background: 'rgba(29,34,38,0.35)',
+          width: '1px', height: '10px', background: 'rgba(28,43,51,0.4)',
         }} />
       </div>
       {!compact && (
-        <div style={{ fontSize: '11px', color: '#5E6774', marginTop: '5px', fontFamily: 'Inter, sans-serif' }}>
+        <div style={{ fontSize: '11px', color: '#5C6B73', marginTop: '5px', fontFamily: 'Inter, sans-serif' }}>
           Reach-out threshold: {SIGNIFICANCE_THRESHOLD}
         </div>
       )}
@@ -81,9 +83,9 @@ function LiveBadge() {
       display: 'inline-flex', alignItems: 'center', gap: '4px',
       fontSize: '10px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase',
       padding: '2px 7px', borderRadius: '20px',
-      background: 'rgba(5,118,66,0.1)', color: '#057642', fontFamily: 'Inter, sans-serif',
+      background: 'rgba(46,125,91,0.1)', color: '#2E7D5B', fontFamily: 'Inter, sans-serif',
     }}>
-      <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#057642', display: 'inline-block' }} />
+      <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#2E7D5B', display: 'inline-block' }} />
       Live
     </span>
   )
@@ -185,10 +187,10 @@ export default function CommonGround() {
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap', marginBottom: '28px' }}>
           <div style={{ minWidth: '260px' }}>
-            <h1 style={{ fontFamily: 'Inter, sans-serif', fontSize: '24px', fontWeight: 700, color: '#1D2226', marginBottom: '4px' }}>
+            <h1 style={{ fontFamily: '"Fraunces", Georgia, serif', fontSize: '27px', fontWeight: 600, color: '#1C2B33', marginBottom: '4px' }}>
               Common Ground
             </h1>
-            <p style={{ fontSize: '13px', color: '#5E6774' }}>
+            <p style={{ fontSize: '13px', color: '#5C6B73' }}>
               {themeCount} shared themes monitored across {monitoredContacts.length} contacts · flagged only when it clears the bar
             </p>
           </div>
@@ -199,8 +201,8 @@ export default function CommonGround() {
               style={{
                 display: 'flex', alignItems: 'center', gap: '8px',
                 padding: '10px 16px', borderRadius: '8px', fontSize: '13px', fontWeight: 500,
-                background: '#FFFFFF', color: scanning ? '#5E6774' : '#0A66C2',
-                border: '1px solid #CDD3D9', cursor: scanning ? 'default' : 'pointer',
+                background: '#FFFFFF', color: scanning ? '#5C6B73' : '#0D5C63',
+                border: '1px solid #CCC6B9', cursor: scanning ? 'default' : 'pointer',
                 fontFamily: 'Inter, sans-serif', whiteSpace: 'nowrap',
               }}
             >
@@ -212,7 +214,7 @@ export default function CommonGround() {
               style={{
                 display: 'flex', alignItems: 'center', gap: '8px',
                 padding: '10px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
-                background: '#0A66C2', color: '#FFFFFF', border: 'none', cursor: 'pointer',
+                background: '#0D5C63', color: '#FFFFFF', border: 'none', cursor: 'pointer',
                 fontFamily: 'Inter, sans-serif', whiteSpace: 'nowrap',
               }}
             >
@@ -230,16 +232,16 @@ export default function CommonGround() {
               style={{
                 padding: '6px 14px', borderRadius: '20px', fontSize: '12px', fontWeight: 500,
                 fontFamily: 'Inter, sans-serif', cursor: 'pointer', transition: 'all 0.15s',
-                background: activeTab === t ? '#0A66C2' : '#FFFFFF',
-                color: activeTab === t ? '#FFFFFF' : '#5E6774',
-                border: `1px solid ${activeTab === t ? '#0A66C2' : '#D5DADF'}`,
+                background: activeTab === t ? '#0D5C63' : '#FFFFFF',
+                color: activeTab === t ? '#FFFFFF' : '#5C6B73',
+                border: `1px solid ${activeTab === t ? '#0D5C63' : '#D6D1C5'}`,
               }}
             >
               {t}
             </button>
           ))}
           {scannedAt && (
-            <span style={{ fontSize: '11px', color: '#5E6774', marginLeft: 'auto' }}>
+            <span style={{ fontSize: '11px', color: '#5C6B73', marginLeft: 'auto' }}>
               {liveUpdates.length > 0
                 ? `Live scan found ${liveUpdates.length} update${liveUpdates.length === 1 ? '' : 's'} · ${scannedAt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`
                 : 'Live scan: no fresh updates right now'}
@@ -250,12 +252,12 @@ export default function CommonGround() {
         {activeTab === 'Opportunities' && (
           <>
             {/* Reach-out opportunities */}
-            <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 500, color: '#5E6774', marginBottom: '12px' }}>
+            <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 500, color: '#5C6B73', marginBottom: '12px' }}>
               Worth reaching out — {opportunities.length}
             </div>
-            <div style={{ borderRadius: '12px', overflow: 'hidden', background: '#FFFFFF', border: '1px solid #E8EAED', marginBottom: '32px' }}>
+            <div style={{ borderRadius: '12px', overflow: 'hidden', background: '#FFFFFF', border: '1px solid #E6E2D8', marginBottom: '32px' }}>
               {opportunities.length === 0 && (
-                <div style={{ padding: '64px 0', textAlign: 'center', color: '#5E6774' }}>
+                <div style={{ padding: '64px 0', textAlign: 'center', color: '#5C6B73' }}>
                   Nothing above the reach-out bar right now. Harbored is watching.
                 </div>
               )}
@@ -272,9 +274,9 @@ export default function CommonGround() {
                     style={{
                       display: 'flex', alignItems: 'center', gap: '16px',
                       padding: '16px 20px', cursor: 'pointer',
-                      borderBottom: i < opportunities.length - 1 ? '1px solid #EEEFF1' : 'none',
+                      borderBottom: i < opportunities.length - 1 ? '1px solid #EEEBE3' : 'none',
                     }}
-                    whileHover={{ background: '#F7FAFD' }}
+                    whileHover={{ background: '#F8F6F0' }}
                   >
                     <button
                       onClick={e => { e.stopPropagation(); navigate(`/dashboard/contact/${u.contactId}`) }}
@@ -285,7 +287,7 @@ export default function CommonGround() {
                     </button>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px', flexWrap: 'wrap' }}>
-                        <span style={{ fontWeight: 600, fontSize: '13px', color: '#1D2226' }}>{u.contactName}</span>
+                        <span style={{ fontWeight: 600, fontSize: '13px', color: '#1C2B33' }}>{u.contactName}</span>
                         <span style={{
                           display: 'inline-flex', alignItems: 'center', gap: '5px',
                           fontSize: '11px', fontWeight: 500, padding: '2px 8px', borderRadius: '20px',
@@ -296,22 +298,22 @@ export default function CommonGround() {
                         </span>
                         {u.live && <LiveBadge />}
                         {sent.includes(u.id) && (
-                          <span style={{ fontSize: '11px', padding: '2px 6px', borderRadius: '20px', background: 'rgba(5,118,66,0.1)', color: '#057642' }}>
+                          <span style={{ fontSize: '11px', padding: '2px 6px', borderRadius: '20px', background: 'rgba(46,125,91,0.1)', color: '#2E7D5B' }}>
                             Sent ✓
                           </span>
                         )}
                       </div>
-                      <p style={{ fontSize: '13px', color: '#5E6774', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <p style={{ fontSize: '13px', color: '#5C6B73', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {u.headline}
                       </p>
-                      <p style={{ fontSize: '11px', color: '#5E6774', opacity: 0.7, marginTop: '2px' }}>
+                      <p style={{ fontSize: '11px', color: '#5C6B73', opacity: 0.7, marginTop: '2px' }}>
                         {u.source} · {u.time}
                       </p>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexShrink: 0 }}>
                       <SignificanceGauge score={u.score} compact />
                       <button
-                        style={{ fontSize: '12px', fontWeight: 500, padding: '6px 12px', borderRadius: '8px', background: 'rgba(10,102,194,0.1)', color: '#0A66C2', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}
+                        style={{ fontSize: '12px', fontWeight: 500, padding: '6px 12px', borderRadius: '8px', background: 'rgba(13,92,99,0.1)', color: '#0D5C63', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}
                         onClick={e => { e.stopPropagation(); openUpdate(u) }}
                       >
                         Review
@@ -326,18 +328,18 @@ export default function CommonGround() {
             {nudges.length > 0 && (
               <>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                  <Waves style={{ width: '13px', height: '13px', color: '#915907' }} />
-                  <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 500, color: '#5E6774' }}>
+                  <Waves style={{ width: '13px', height: '13px', color: '#A97E2F' }} />
+                  <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 500, color: '#5C6B73' }}>
                     Drifting quietly — no news, but too long since you talked
                   </span>
                 </div>
-                <div style={{ borderRadius: '12px', overflow: 'hidden', background: '#FFFFFF', border: '1px solid #E8EAED', marginBottom: '32px' }}>
+                <div style={{ borderRadius: '12px', overflow: 'hidden', background: '#FFFFFF', border: '1px solid #E6E2D8', marginBottom: '32px' }}>
                   {nudges.slice(0, 4).map((n, i) => (
                     <div
                       key={n.contact.id}
                       style={{
                         display: 'flex', alignItems: 'center', gap: '16px', padding: '14px 20px',
-                        borderBottom: i < Math.min(nudges.length, 4) - 1 ? '1px solid #EEEFF1' : 'none',
+                        borderBottom: i < Math.min(nudges.length, 4) - 1 ? '1px solid #EEEBE3' : 'none',
                       }}
                     >
                       <button
@@ -349,12 +351,12 @@ export default function CommonGround() {
                       </button>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
-                          <span style={{ fontWeight: 600, fontSize: '13px', color: '#1D2226' }}>{n.contact.name}</span>
+                          <span style={{ fontWeight: 600, fontSize: '13px', color: '#1C2B33' }}>{n.contact.name}</span>
                           <span style={{ fontSize: '11px', fontWeight: 500, padding: '2px 8px', borderRadius: '20px', background: n.health.bg, color: n.health.color }}>
                             {n.health.days} days quiet
                           </span>
                         </div>
-                        <p style={{ fontSize: '12px', color: '#5E6774', fontStyle: 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <p style={{ fontSize: '12px', color: '#5C6B73', fontStyle: 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           "{n.opener}"
                         </p>
                       </div>
@@ -363,7 +365,7 @@ export default function CommonGround() {
                         style={{
                           display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0,
                           fontSize: '12px', fontWeight: 500, padding: '7px 14px', borderRadius: '8px',
-                          background: 'rgba(10,102,194,0.1)', color: '#0A66C2', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+                          background: 'rgba(13,92,99,0.1)', color: '#0D5C63', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
                         }}
                       >
                         <Send style={{ width: '12px', height: '12px' }} /> Reach out
@@ -376,40 +378,40 @@ export default function CommonGround() {
 
             {/* Monitored, below threshold */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-              <Radar style={{ width: '13px', height: '13px', color: '#5E6774' }} />
-              <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 500, color: '#5E6774' }}>
+              <Radar style={{ width: '13px', height: '13px', color: '#5C6B73' }} />
+              <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 500, color: '#5C6B73' }}>
                 Monitored, not flagged — below the reach-out bar
               </span>
             </div>
-            <div style={{ borderRadius: '12px', overflow: 'hidden', background: '#FBFBFA', border: '1px solid #EEEFF1' }}>
+            <div style={{ borderRadius: '12px', overflow: 'hidden', background: '#FAF9F5', border: '1px solid #EEEBE3' }}>
               {logged.map((u, i) => (
                 <div
                   key={u.id}
                   style={{
                     display: 'flex', alignItems: 'center', gap: '14px', padding: '13px 20px',
-                    borderBottom: i < logged.length - 1 ? '1px solid #F1F2F4' : 'none',
+                    borderBottom: i < logged.length - 1 ? '1px solid #F0EEE7' : 'none',
                   }}
                 >
                   <span style={{
-                    fontSize: '11px', fontWeight: 600, color: '#5E6774', flexShrink: 0,
+                    fontSize: '11px', fontWeight: 600, color: '#5C6B73', flexShrink: 0,
                     width: '30px', height: '30px', borderRadius: '50%',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    background: '#F3F4F6', border: '1px solid #E4E6E9',
+                    background: '#F2F0EA', border: '1px solid #E5E1D7',
                   }}>
                     {u.score}
                   </span>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: '12px', color: '#5E6774', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      <span style={{ color: '#44484D', fontWeight: 500 }}>{u.themeLabel}</span>
+                    <p style={{ fontSize: '12px', color: '#5C6B73', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <span style={{ color: '#3E4B52', fontWeight: 500 }}>{u.themeLabel}</span>
                       <span style={{ opacity: 0.6 }}> · {u.contactName} · </span>
                       {u.headline}
                       {u.live && <span style={{ marginLeft: '6px' }}><LiveBadge /></span>}
                     </p>
-                    <p style={{ fontSize: '11px', color: '#5E6774', opacity: 0.65, marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <p style={{ fontSize: '11px', color: '#5C6B73', opacity: 0.65, marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {u.holdReason}
                     </p>
                   </div>
-                  <span style={{ fontSize: '11px', color: '#5E6774', opacity: 0.6, flexShrink: 0 }}>{u.time}</span>
+                  <span style={{ fontSize: '11px', color: '#5C6B73', opacity: 0.6, flexShrink: 0 }}>{u.time}</span>
                 </div>
               ))}
             </div>
@@ -428,7 +430,7 @@ export default function CommonGround() {
                   transition={{ delay: Math.min(i * 0.04, 0.3), duration: 0.25 }}
                   style={{
                     borderRadius: '12px', padding: '20px',
-                    background: '#FFFFFF', border: '1px solid #E8EAED',
+                    background: '#FFFFFF', border: '1px solid #E6E2D8',
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px' }}>
@@ -443,13 +445,13 @@ export default function CommonGround() {
                       <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '2px' }}>
                         <button
                           onClick={() => navigate(`/dashboard/contact/${c.id}`)}
-                          style={{ fontWeight: 600, fontSize: '13px', color: '#1D2226', background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}
+                          style={{ fontWeight: 600, fontSize: '13px', color: '#1C2B33', background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}
                         >
                           {c.name}
                         </button>
-                        <span style={{ fontSize: '12px', color: '#5E6774' }}>{c.role} · {c.company}</span>
+                        <span style={{ fontSize: '12px', color: '#5C6B73' }}>{c.role} · {c.company}</span>
                       </div>
-                      <p style={{ fontSize: '11px', color: '#5E6774', marginBottom: '12px' }}>
+                      <p style={{ fontSize: '11px', color: '#5C6B73', marginBottom: '12px' }}>
                         {themes.reduce((n, t) => n + (t.updatesThisMonth || 0), 0)} updates detected this month
                       </p>
                       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
@@ -460,7 +462,7 @@ export default function CommonGround() {
                           <span style={{
                             display: 'inline-flex', alignItems: 'center', gap: '6px',
                             padding: '4px 6px 4px 12px', borderRadius: '20px',
-                            background: '#F3F4F6', border: '1px solid rgba(10,102,194,0.4)',
+                            background: '#F2F0EA', border: '1px solid rgba(13,92,99,0.4)',
                           }}>
                             <input
                               autoFocus
@@ -472,7 +474,7 @@ export default function CommonGround() {
                               aria-label="New shared theme"
                               style={{
                                 background: 'transparent', border: 'none', outline: 'none',
-                                fontSize: '12px', color: '#1D2226', width: '180px', fontFamily: 'Inter, sans-serif',
+                                fontSize: '12px', color: '#1C2B33', width: '180px', fontFamily: 'Inter, sans-serif',
                               }}
                             />
                             <select
@@ -480,8 +482,8 @@ export default function CommonGround() {
                               onChange={e => setNewThemeCategory(e.target.value)}
                               aria-label="Theme category"
                               style={{
-                                background: '#FFFFFF', border: '1px solid #D5DADF',
-                                borderRadius: '6px', color: '#5E6774', fontSize: '11px', padding: '3px 4px',
+                                background: '#FFFFFF', border: '1px solid #D6D1C5',
+                                borderRadius: '6px', color: '#5C6B73', fontSize: '11px', padding: '3px 4px',
                                 outline: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
                               }}
                             >
@@ -495,7 +497,7 @@ export default function CommonGround() {
                               style={{
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                                 width: '22px', height: '22px', borderRadius: '50%',
-                                background: '#0A66C2', color: '#FFFFFF', border: 'none', cursor: 'pointer',
+                                background: '#0D5C63', color: '#FFFFFF', border: 'none', cursor: 'pointer',
                               }}
                             >
                               <Check style={{ width: '12px', height: '12px' }} />
@@ -506,7 +508,7 @@ export default function CommonGround() {
                               style={{
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                                 width: '22px', height: '22px', borderRadius: '50%',
-                                background: 'none', color: '#5E6774', border: 'none', cursor: 'pointer',
+                                background: 'none', color: '#5C6B73', border: 'none', cursor: 'pointer',
                               }}
                             >
                               <X style={{ width: '12px', height: '12px' }} />
@@ -518,8 +520,8 @@ export default function CommonGround() {
                             style={{
                               display: 'inline-flex', alignItems: 'center', gap: '5px',
                               padding: '5px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 500,
-                              background: 'none', color: '#5E6774', fontFamily: 'Inter, sans-serif',
-                              border: '1px dashed #C2C8CE', cursor: 'pointer', transition: 'all 0.15s',
+                              background: 'none', color: '#5C6B73', fontFamily: 'Inter, sans-serif',
+                              border: '1px dashed #C2BCAF', cursor: 'pointer', transition: 'all 0.15s',
                             }}
                           >
                             <Plus style={{ width: '11px', height: '11px' }} /> Add theme
@@ -535,14 +537,14 @@ export default function CommonGround() {
             {/* Start monitoring another contact */}
             {contacts.some(c => (themesByContact[c.id] || []).length === 0 && addingFor !== c.id) && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '4px 2px' }}>
-                <span style={{ fontSize: '12px', color: '#5E6774' }}>Start monitoring themes for:</span>
+                <span style={{ fontSize: '12px', color: '#5C6B73' }}>Start monitoring themes for:</span>
                 <select
                   value=""
                   onChange={e => { if (e.target.value) { setAddingFor(Number(e.target.value)); setNewThemeLabel(''); } }}
                   aria-label="Pick a contact to add themes for"
                   style={{
-                    background: '#FFFFFF', border: '1px solid #CDD3D9', borderRadius: '8px',
-                    color: '#1D2226', fontSize: '12px', padding: '7px 10px', outline: 'none', cursor: 'pointer',
+                    background: '#FFFFFF', border: '1px solid #CCC6B9', borderRadius: '8px',
+                    color: '#1C2B33', fontSize: '12px', padding: '7px 10px', outline: 'none', cursor: 'pointer',
                     fontFamily: 'Inter, sans-serif',
                   }}
                 >
@@ -554,7 +556,7 @@ export default function CommonGround() {
               </div>
             )}
 
-            <p style={{ fontSize: '12px', color: '#5E6774', opacity: 0.7, marginTop: '4px' }}>
+            <p style={{ fontSize: '12px', color: '#5C6B73', opacity: 0.7, marginTop: '4px' }}>
               Harbored monitors each theme across live news sources — you'll only hear about it when an update clears the reach-out bar.
             </p>
           </div>
@@ -576,17 +578,17 @@ export default function CommonGround() {
               style={{
                 position: 'fixed', right: 0, top: 0, bottom: 0, zIndex: 20,
                 width: '440px', display: 'flex', flexDirection: 'column',
-                background: '#FFFFFF', borderLeft: '1px solid #DCE0E4',
+                background: '#FFFFFF', borderLeft: '1px solid #DEDACF',
               }}
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 28, stiffness: 280 }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderBottom: '1px solid #EEEFF1' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderBottom: '1px solid #EEEBE3' }}>
                 <button
                   onClick={() => setSelected(null)}
-                  style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#5E6774', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#5C6B73', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}
                 >
                   <ChevronLeft style={{ width: '16px', height: '16px' }} /> Back
                 </button>
@@ -604,42 +606,42 @@ export default function CommonGround() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
                   <Avatar initials={selected.contactInitials} color={selected.contactColor} size="xl" />
                   <div>
-                    <h2 style={{ fontFamily: 'Inter, sans-serif', fontSize: '20px', fontWeight: 700, color: '#1D2226', marginBottom: '4px' }}>
+                    <h2 style={{ fontFamily: '"Fraunces", Georgia, serif', fontSize: '22px', fontWeight: 600, color: '#1C2B33', marginBottom: '4px' }}>
                       {selected.contactName}
                     </h2>
-                    <span style={{ fontSize: '12px', color: '#5E6774' }}>
+                    <span style={{ fontSize: '12px', color: '#5C6B73' }}>
                       {selected.source} · {selected.time}
                     </span>
                   </div>
                 </div>
 
-                <div style={{ borderRadius: '12px', padding: '16px', marginBottom: '20px', background: '#F7F8F9', border: '1px solid #E4E6E9' }}>
+                <div style={{ borderRadius: '12px', padding: '16px', marginBottom: '20px', background: '#F7F5F0', border: '1px solid #E5E1D7' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 500, color: '#5E6774' }}>
+                    <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 500, color: '#5C6B73' }}>
                       Update Detected {selected.live ? '· Live' : ''}
                     </div>
                     {selected.link && (
                       <a href={selected.link} target="_blank" rel="noreferrer" aria-label="Open article"
-                        style={{ color: '#0A66C2', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', textDecoration: 'none', fontWeight: 500 }}>
+                        style={{ color: '#0D5C63', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', textDecoration: 'none', fontWeight: 500 }}>
                         Read <ExternalLink style={{ width: '11px', height: '11px' }} />
                       </a>
                     )}
                   </div>
-                  <p style={{ fontSize: '14px', color: '#1D2226', lineHeight: 1.5 }}>{selected.headline}</p>
+                  <p style={{ fontSize: '14px', color: '#1C2B33', lineHeight: 1.5 }}>{selected.headline}</p>
                 </div>
 
-                <div style={{ borderRadius: '12px', padding: '16px', marginBottom: '20px', background: 'rgba(10,102,194,0.05)', border: '1px solid rgba(10,102,194,0.15)' }}>
+                <div style={{ borderRadius: '12px', padding: '16px', marginBottom: '20px', background: 'rgba(13,92,99,0.05)', border: '1px solid rgba(13,92,99,0.15)' }}>
                   <SignificanceGauge score={selected.score} />
                   {selected.factors && (
                     <div style={{ marginTop: '14px' }}>
-                      <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '10px', fontWeight: 500, color: '#5E6774' }}>
+                      <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '10px', fontWeight: 500, color: '#5C6B73' }}>
                         Why Harbored flagged this
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         {selected.factors.map((f, i) => (
                           <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                            <Check style={{ width: '13px', height: '13px', color: '#0A66C2', flexShrink: 0, marginTop: '2px' }} />
-                            <span style={{ fontSize: '13px', color: '#1D2226', lineHeight: 1.5 }}>{f}</span>
+                            <Check style={{ width: '13px', height: '13px', color: '#0D5C63', flexShrink: 0, marginTop: '2px' }} />
+                            <span style={{ fontSize: '13px', color: '#1C2B33', lineHeight: 1.5 }}>{f}</span>
                           </div>
                         ))}
                       </div>
@@ -649,10 +651,10 @@ export default function CommonGround() {
 
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                    <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 500, color: '#5E6774' }}>
+                    <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 500, color: '#5C6B73' }}>
                       Drafted Message
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#0A66C2' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#0D5C63' }}>
                       <Zap style={{ width: '12px', height: '12px' }} />
                       <span style={{ fontSize: '12px' }}>Harbored AI</span>
                     </div>
@@ -666,20 +668,20 @@ export default function CommonGround() {
                       style={{
                         width: '100%', borderRadius: '12px', padding: '16px', fontSize: '13px',
                         resize: 'none', outline: 'none', boxSizing: 'border-box',
-                        background: '#F3F4F6', border: '1px solid rgba(10,102,194,0.4)',
-                        color: '#1D2226', fontFamily: 'Inter, sans-serif',
+                        background: '#F2F0EA', border: '1px solid rgba(13,92,99,0.4)',
+                        color: '#1C2B33', fontFamily: 'Inter, sans-serif',
                       }}
                     />
                   ) : (
                     <div style={{
                       borderRadius: '12px', padding: '16px', fontSize: '13px', lineHeight: 1.6,
-                      background: '#F3F4F6', border: '1px solid #E0E3E7',
-                      color: '#1D2226',
+                      background: '#F2F0EA', border: '1px solid #E3DFD5',
+                      color: '#1C2B33',
                     }}>
                       {msgText}
                     </div>
                   )}
-                  <p style={{ fontSize: '12px', marginTop: '8px', color: '#5E6774' }}>
+                  <p style={{ fontSize: '12px', marginTop: '8px', color: '#5C6B73' }}>
                     {selectedContact?.email
                       ? `Send opens a prefilled email to ${selectedContact.email}`
                       : 'Drafted from your shared interest in ' + selected.themeLabel}
@@ -687,14 +689,14 @@ export default function CommonGround() {
                 </div>
               </div>
 
-              <div style={{ padding: '20px 24px', borderTop: '1px solid #EEEFF1' }}>
+              <div style={{ padding: '20px 24px', borderTop: '1px solid #EEEBE3' }}>
                 <div style={{ display: 'flex', gap: '12px' }}>
                   <button
                     onClick={handleSend}
                     style={{
                       flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                       padding: '10px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
-                      background: '#0A66C2', color: '#FFFFFF', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+                      background: '#0D5C63', color: '#FFFFFF', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
                     }}
                   >
                     <Send style={{ width: '14px', height: '14px' }} /> Send
@@ -704,14 +706,14 @@ export default function CommonGround() {
                     style={{
                       flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                       padding: '10px', borderRadius: '8px', fontSize: '13px', fontWeight: 500,
-                      background: 'none', color: '#1D2226', border: '1px solid #CDD3D9', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+                      background: 'none', color: '#1C2B33', border: '1px solid #CCC6B9', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
                     }}
                   >
                     <Edit3 style={{ width: '14px', height: '14px' }} /> {editingMsg ? 'Done' : 'Edit'}
                   </button>
                   <button
                     onClick={handleSkip}
-                    style={{ padding: '10px 16px', borderRadius: '8px', fontSize: '13px', fontWeight: 500, background: 'none', color: '#5E6774', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}
+                    style={{ padding: '10px 16px', borderRadius: '8px', fontSize: '13px', fontWeight: 500, background: 'none', color: '#5C6B73', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}
                   >
                     Skip
                   </button>

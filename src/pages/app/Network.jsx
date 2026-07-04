@@ -20,30 +20,30 @@ function ContactCard({ contact, themeCount, onOpen }) {
       style={{
         position: 'relative', borderRadius: '12px', padding: '20px',
         display: 'flex', flexDirection: 'column', gap: '12px',
-        background: '#FFFFFF', border: '1px solid #E4E6E9',
+        background: '#FFFFFF', border: '1px solid #E5E1D7',
         overflow: 'hidden', transition: 'border-color 0.2s',
         cursor: 'pointer', height: '100%', boxSizing: 'border-box',
       }}
-      whileHover={{ scale: 1.015, borderColor: 'rgba(10,102,194,0.35)' }}
+      whileHover={{ scale: 1.015, borderColor: 'rgba(13,92,99,0.35)' }}
     >
       {/* Avatar + info */}
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
         <Avatar initials={contact.initials} color={contact.color} size="lg" />
         <div style={{ flex: 1, minWidth: 0 }}>
-          <h3 style={{ fontWeight: 600, fontSize: '13px', color: '#1D2226', fontFamily: 'Inter, sans-serif', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <h3 style={{ fontWeight: 600, fontSize: '13px', color: '#1C2B33', fontFamily: 'Inter, sans-serif', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {contact.name}
           </h3>
-          <p style={{ fontSize: '12px', color: '#5E6774', fontFamily: 'Inter, sans-serif', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <p style={{ fontSize: '12px', color: '#5C6B73', fontFamily: 'Inter, sans-serif', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {contact.role}
           </p>
-          <p style={{ fontSize: '12px', color: '#5E6774', fontFamily: 'Inter, sans-serif', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <p style={{ fontSize: '12px', color: '#5C6B73', fontFamily: 'Inter, sans-serif', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {contact.company}
           </p>
         </div>
       </div>
 
       {/* Last touch / themes line */}
-      <div style={{ fontSize: '11px', padding: '6px 10px', borderRadius: '8px', textAlign: 'center', background: 'rgba(10,102,194,0.06)', color: '#0A66C2', fontFamily: 'Inter, sans-serif' }}>
+      <div style={{ fontSize: '11px', padding: '6px 10px', borderRadius: '8px', textAlign: 'center', background: 'rgba(13,92,99,0.06)', color: '#0D5C63', fontFamily: 'Inter, sans-serif' }}>
         {themeCount > 0
           ? `${themeCount} shared theme${themeCount === 1 ? '' : 's'} monitored`
           : contact.lastTouch
@@ -54,10 +54,10 @@ function ContactCard({ contact, themeCount, onOpen }) {
       {/* Relationship health */}
       <div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
-          <span style={{ fontSize: '11px', color: '#5E6774', fontFamily: 'Inter, sans-serif' }}>Relationship Health</span>
+          <span style={{ fontSize: '11px', color: '#5C6B73', fontFamily: 'Inter, sans-serif' }}>Relationship Health</span>
           <span style={{ fontSize: '11px', fontWeight: 500, color: health.color, fontFamily: 'Inter, sans-serif' }}>{health.label}</span>
         </div>
-        <div style={{ height: '4px', borderRadius: '2px', overflow: 'hidden', background: '#E4E6E9' }}>
+        <div style={{ height: '4px', borderRadius: '2px', overflow: 'hidden', background: '#E5E1D7' }}>
           <div style={{ width: `${health.pct}%`, height: '100%', borderRadius: '2px', background: health.color }} />
         </div>
       </div>
@@ -96,10 +96,10 @@ export default function Network({ onAddContact }) {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap', marginBottom: '28px' }}>
         <div>
-          <h1 style={{ fontFamily: 'Inter, sans-serif', fontSize: '24px', fontWeight: 700, color: '#1D2226', marginBottom: '4px' }}>
+          <h1 style={{ fontFamily: '"Fraunces", Georgia, serif', fontSize: '27px', fontWeight: 600, color: '#1C2B33', marginBottom: '4px' }}>
             My Network
           </h1>
-          <p style={{ fontSize: '13px', color: '#5E6774' }}>
+          <p style={{ fontSize: '13px', color: '#5C6B73' }}>
             {contacts.length} people being tracked across 4 platforms
           </p>
         </div>
@@ -108,7 +108,7 @@ export default function Network({ onAddContact }) {
           style={{
             display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0,
             padding: '10px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
-            background: '#0A66C2', color: '#FFFFFF', border: 'none', cursor: 'pointer',
+            background: '#0D5C63', color: '#FFFFFF', border: 'none', cursor: 'pointer',
             fontFamily: 'Inter, sans-serif',
           }}
         >
@@ -121,15 +121,15 @@ export default function Network({ onAddContact }) {
         <div style={{
           display: 'flex', alignItems: 'center', gap: '10px',
           padding: '10px 14px', borderRadius: '12px', flex: 1, minWidth: '224px', maxWidth: '320px',
-          background: '#FFFFFF', border: '1px solid #E0E3E7',
+          background: '#FFFFFF', border: '1px solid #E3DFD5',
         }}>
-          <Search style={{ width: '14px', height: '14px', color: '#5E6774', flexShrink: 0 }} />
+          <Search style={{ width: '14px', height: '14px', color: '#5C6B73', flexShrink: 0 }} />
           <input
             type="text"
             placeholder="Search by name, role, or company..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            style={{ background: 'transparent', outline: 'none', border: 'none', fontSize: '13px', color: '#1D2226', width: '100%', fontFamily: 'Inter, sans-serif' }}
+            style={{ background: 'transparent', outline: 'none', border: 'none', fontSize: '13px', color: '#1C2B33', width: '100%', fontFamily: 'Inter, sans-serif' }}
           />
         </div>
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -140,9 +140,9 @@ export default function Network({ onAddContact }) {
               style={{
                 padding: '6px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 500,
                 cursor: 'pointer', transition: 'all 0.15s', fontFamily: 'Inter, sans-serif',
-                background: activePlatform === p ? '#0A66C2' : '#FFFFFF',
-                color: activePlatform === p ? '#FFFFFF' : '#5E6774',
-                border: `1px solid ${activePlatform === p ? '#0A66C2' : '#D5DADF'}`,
+                background: activePlatform === p ? '#0D5C63' : '#FFFFFF',
+                color: activePlatform === p ? '#FFFFFF' : '#5C6B73',
+                border: `1px solid ${activePlatform === p ? '#0D5C63' : '#D6D1C5'}`,
               }}
             >
               {p}
@@ -168,7 +168,7 @@ export default function Network({ onAddContact }) {
           </motion.div>
         ))}
         {filtered.length === 0 && (
-          <div style={{ gridColumn: '1 / -1', padding: '64px 0', textAlign: 'center', color: '#5E6774' }}>
+          <div style={{ gridColumn: '1 / -1', padding: '64px 0', textAlign: 'center', color: '#5C6B73' }}>
             No contacts found.
           </div>
         )}

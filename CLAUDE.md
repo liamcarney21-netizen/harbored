@@ -35,10 +35,15 @@ Runs on http://localhost:5178
 - Sending is real: Send buttons open prefilled mailto:/sms: links and record a touch in the store; touches drive relationship health and appear in Messages + profile timelines.
 - Zustand gotcha: never subscribe with selectors that build new arrays (causes "getSnapshot should be cached" loop) — select stable slices, derive in render.
 
-## Design System
-Light professional CRM theme (LinkedIn-inspired): canvas #F3F2EF, white cards, accent #0A66C2,
-text #1D2226 / #5E6774, Inter only (no serifs). Common Ground is the product's core feature:
-per-contact shared themes → AI significance scoring (threshold 70) → reach-out prompts with drafted messages.
+## Design System — "Editorial Harbor"
+Warm paper canvas #F6F4EF, white cards with warm borders (#E6E2D8 family), deep harbor teal
+accent #0D5C63 (hover #09454B), brass highlight #A97E2F (wordmark anchor, above-bar gauge
+crests), ink text #1C2B33 / #5C6B73. Type: Fraunces (Google Fonts) for display headings,
+wordmark ("Harbored", never all-caps), and stat/score numerals; Inter for UI. Signature: the
+significance gauge is a "tide line" — teal fill cresting into brass past the threshold.
+Health: strong #2E7D5B, cooling #A97E2F, at-risk #B4423A. Do NOT reintroduce LinkedIn blue.
+Common Ground is the product's core feature: per-contact shared themes → significance scoring
+(threshold 70) → reach-out prompts with drafted messages.
 
 ## Live Deployment
 - **Live URL:** https://harbored-three.vercel.app

@@ -54,7 +54,7 @@ export default function PrepBrief() {
 
   if (!contact) {
     return (
-      <div style={{ padding: '40px', fontFamily: 'Inter, sans-serif', color: '#5E6774' }}>
+      <div style={{ padding: '40px', fontFamily: 'Inter, sans-serif', color: '#5C6B73' }}>
         Contact not found.
       </div>
     )
@@ -105,8 +105,8 @@ export default function PrepBrief() {
     recordTouch(contact.id, { channel: channel || 'email', message: msg, trigger: meeting ? `Heads-up before: ${meeting.title}` : 'Pre-meeting heads-up' })
   }
 
-  const card = { borderRadius: '12px', padding: '22px', background: '#FFFFFF', border: '1px solid #E8EAED' }
-  const label = { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600, color: '#5E6774', marginBottom: '14px' }
+  const card = { borderRadius: '12px', padding: '22px', background: '#FFFFFF', border: '1px solid #E6E2D8' }
+  const label = { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600, color: '#5C6B73', marginBottom: '14px' }
 
   return (
     <motion.div
@@ -115,7 +115,7 @@ export default function PrepBrief() {
     >
       <button
         onClick={() => navigate(-1)}
-        style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#5E6774', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif', marginBottom: '20px', padding: 0 }}
+        style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#5C6B73', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif', marginBottom: '20px', padding: 0 }}
       >
         <ChevronLeft style={{ width: '15px', height: '15px' }} /> Back
       </button>
@@ -125,13 +125,13 @@ export default function PrepBrief() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <Avatar initials={contact.initials} color={contact.color} size="lg" />
           <div>
-            <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600, color: '#0A66C2', marginBottom: '3px' }}>
+            <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600, color: '#0D5C63', marginBottom: '3px' }}>
               Prep Brief
             </div>
-            <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#1D2226', marginBottom: '2px' }}>
+            <h1 style={{ fontFamily: '"Fraunces", Georgia, serif', fontSize: '24px', fontWeight: 600, color: '#1C2B33', marginBottom: '2px' }}>
               {meeting ? meeting.title : `Catching up with ${first}`}
             </h1>
-            <p style={{ fontSize: '13px', color: '#5E6774' }}>
+            <p style={{ fontSize: '13px', color: '#5C6B73' }}>
               {meeting
                 ? `${fmtDate(meeting.datetime)} · ${fmtTime(meeting.datetime)} · with ${contact.name}`
                 : `${contact.name} · ${contact.role} at ${contact.company}`}
@@ -143,7 +143,7 @@ export default function PrepBrief() {
           style={{
             display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0,
             padding: '10px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
-            background: '#0A66C2', color: '#FFFFFF', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+            background: '#0D5C63', color: '#FFFFFF', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
           }}
         >
           <Send style={{ width: '13px', height: '13px' }} /> Send a heads-up
@@ -153,39 +153,39 @@ export default function PrepBrief() {
       {/* Vitals strip */}
       <div style={{ ...card, display: 'flex', gap: '28px', flexWrap: 'wrap', marginBottom: '20px', padding: '16px 22px' }}>
         <div>
-          <div style={{ fontSize: '11px', color: '#5E6774', marginBottom: '2px' }}>Relationship</div>
+          <div style={{ fontSize: '11px', color: '#5C6B73', marginBottom: '2px' }}>Relationship</div>
           <div style={{ fontSize: '13px', fontWeight: 600, color: health.color }}>{health.label}</div>
         </div>
         <div>
-          <div style={{ fontSize: '11px', color: '#5E6774', marginBottom: '2px' }}>Last touch</div>
-          <div style={{ fontSize: '13px', fontWeight: 600, color: '#1D2226' }}>
+          <div style={{ fontSize: '11px', color: '#5C6B73', marginBottom: '2px' }}>Last touch</div>
+          <div style={{ fontSize: '13px', fontWeight: 600, color: '#1C2B33' }}>
             {contact.lastTouch ? (health.days === 0 ? 'Today' : `${health.days} days ago`) : 'Never'}
           </div>
         </div>
         <div>
-          <div style={{ fontSize: '11px', color: '#5E6774', marginBottom: '2px' }}>Shared themes</div>
-          <div style={{ fontSize: '13px', fontWeight: 600, color: '#1D2226' }}>{themes.length}</div>
+          <div style={{ fontSize: '11px', color: '#5C6B73', marginBottom: '2px' }}>Shared themes</div>
+          <div style={{ fontSize: '13px', fontWeight: 600, color: '#1C2B33' }}>{themes.length}</div>
         </div>
         <div style={{ flex: 1, minWidth: '160px' }}>
-          <div style={{ fontSize: '11px', color: '#5E6774', marginBottom: '2px' }}>Role</div>
-          <div style={{ fontSize: '13px', fontWeight: 600, color: '#1D2226' }}>{contact.role} · {contact.company}</div>
+          <div style={{ fontSize: '11px', color: '#5C6B73', marginBottom: '2px' }}>Role</div>
+          <div style={{ fontSize: '13px', fontWeight: 600, color: '#1C2B33' }}>{contact.role} · {contact.company}</div>
         </div>
       </div>
 
       {/* Talking points — the headline section */}
-      <div style={{ ...card, marginBottom: '20px', background: 'rgba(10,102,194,0.04)', border: '1px solid rgba(10,102,194,0.2)' }}>
-        <div style={{ ...label, color: '#0A66C2' }}>
+      <div style={{ ...card, marginBottom: '20px', background: 'rgba(13,92,99,0.04)', border: '1px solid rgba(13,92,99,0.2)' }}>
+        <div style={{ ...label, color: '#0D5C63' }}>
           <Lightbulb style={{ width: '13px', height: '13px' }} />
           Talking points
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {talkingPoints.length === 0 && (
-            <p style={{ fontSize: '13px', color: '#5E6774' }}>Add shared themes and notes to generate talking points.</p>
+            <p style={{ fontSize: '13px', color: '#5C6B73' }}>Add shared themes and notes to generate talking points.</p>
           )}
           {talkingPoints.map((p, i) => (
             <div key={i} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
-              <span style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#0A66C2', color: '#fff', fontSize: '11px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '1px' }}>{i + 1}</span>
-              <span style={{ fontSize: '13.5px', color: '#1D2226', lineHeight: 1.6 }}>{p}</span>
+              <span style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#0D5C63', color: '#fff', fontSize: '11px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '1px' }}>{i + 1}</span>
+              <span style={{ fontSize: '13.5px', color: '#1C2B33', lineHeight: 1.6 }}>{p}</span>
             </div>
           ))}
         </div>
@@ -195,29 +195,29 @@ export default function PrepBrief() {
         {/* Common ground this week */}
         <div style={card}>
           <div style={label}>
-            <Compass style={{ width: '13px', height: '13px', color: '#0A66C2' }} />
+            <Compass style={{ width: '13px', height: '13px', color: '#0D5C63' }} />
             Your common ground, this week
             {loadingLive && <RefreshCw style={{ width: '11px', height: '11px', animation: 'spin 1s linear infinite', marginLeft: 'auto' }} />}
           </div>
           {themes.length === 0 && (
-            <p style={{ fontSize: '13px', color: '#5E6774' }}>No shared themes yet — add some on {first}'s profile.</p>
+            <p style={{ fontSize: '13px', color: '#5C6B73' }}>No shared themes yet — add some on {first}'s profile.</p>
           )}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             {themeNews.map(({ theme, update }) => (
               <div key={theme.id}>
-                <div style={{ fontSize: '12px', fontWeight: 600, color: '#0A66C2', marginBottom: '3px' }}>{theme.label}</div>
+                <div style={{ fontSize: '12px', fontWeight: 600, color: '#0D5C63', marginBottom: '3px' }}>{theme.label}</div>
                 {update ? (
-                  <p style={{ fontSize: '12.5px', color: '#44484D', lineHeight: 1.55 }}>
+                  <p style={{ fontSize: '12.5px', color: '#3E4B52', lineHeight: 1.55 }}>
                     {update.headline}
-                    <span style={{ color: '#5E6774', opacity: 0.75 }}> — {update.source}, {update.time}</span>
+                    <span style={{ color: '#5C6B73', opacity: 0.75 }}> — {update.source}, {update.time}</span>
                     {update.link && (
-                      <a href={update.link} target="_blank" rel="noreferrer" aria-label={`Read: ${update.headline}`} style={{ color: '#0A66C2', marginLeft: '6px', verticalAlign: 'middle', display: 'inline-flex' }}>
+                      <a href={update.link} target="_blank" rel="noreferrer" aria-label={`Read: ${update.headline}`} style={{ color: '#0D5C63', marginLeft: '6px', verticalAlign: 'middle', display: 'inline-flex' }}>
                         <ExternalLink style={{ width: '11px', height: '11px' }} />
                       </a>
                     )}
                   </p>
                 ) : (
-                  <p style={{ fontSize: '12.5px', color: '#5E6774', opacity: 0.75 }}>Quiet this week — nothing new detected.</p>
+                  <p style={{ fontSize: '12.5px', color: '#5C6B73', opacity: 0.75 }}>Quiet this week — nothing new detected.</p>
                 )}
               </div>
             ))}
@@ -228,17 +228,17 @@ export default function PrepBrief() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <div style={card}>
             <div style={label}>
-              <MessageCircle style={{ width: '13px', height: '13px', color: '#0A66C2' }} />
+              <MessageCircle style={{ width: '13px', height: '13px', color: '#0D5C63' }} />
               Where you left off
             </div>
-            {touches.length === 0 && <p style={{ fontSize: '13px', color: '#5E6774' }}>No recorded touchpoints yet.</p>}
+            {touches.length === 0 && <p style={{ fontSize: '13px', color: '#5C6B73' }}>No recorded touchpoints yet.</p>}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {touches.map(t => (
                 <div key={t.id}>
-                  <div style={{ fontSize: '11px', color: '#5E6774', marginBottom: '2px' }}>
+                  <div style={{ fontSize: '11px', color: '#5C6B73', marginBottom: '2px' }}>
                     {daysSince(t.date) === 0 ? 'Today' : `${daysSince(t.date)} days ago`}{t.trigger ? ` · ${t.trigger}` : ''}
                   </div>
-                  <p style={{ fontSize: '12.5px', color: '#44484D', lineHeight: 1.5 }}>{t.message}</p>
+                  <p style={{ fontSize: '12.5px', color: '#3E4B52', lineHeight: 1.5 }}>{t.message}</p>
                 </div>
               ))}
             </div>
@@ -247,10 +247,10 @@ export default function PrepBrief() {
           {contact.notes && (
             <div style={card}>
               <div style={label}>
-                <StickyNote style={{ width: '13px', height: '13px', color: '#915907' }} />
+                <StickyNote style={{ width: '13px', height: '13px', color: '#A97E2F' }} />
                 Your notes
               </div>
-              <p style={{ fontSize: '13px', color: '#44484D', lineHeight: 1.6 }}>{contact.notes}</p>
+              <p style={{ fontSize: '13px', color: '#3E4B52', lineHeight: 1.6 }}>{contact.notes}</p>
             </div>
           )}
         </div>
@@ -259,12 +259,12 @@ export default function PrepBrief() {
       {/* Openers */}
       <div style={card}>
         <div style={label}>
-          <Calendar style={{ width: '13px', height: '13px', color: '#0A66C2' }} />
+          <Calendar style={{ width: '13px', height: '13px', color: '#0D5C63' }} />
           Openers, if you need one
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {openers.map((o, i) => (
-            <p key={i} style={{ fontSize: '13px', color: '#44484D', fontStyle: 'italic', lineHeight: 1.6 }}>{o}</p>
+            <p key={i} style={{ fontSize: '13px', color: '#3E4B52', fontStyle: 'italic', lineHeight: 1.6 }}>{o}</p>
           ))}
         </div>
       </div>

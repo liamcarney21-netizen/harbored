@@ -24,31 +24,31 @@ function StatCard({ title, value, icon: Icon, highlight, subtitle }) {
         flexDirection: 'column',
         gap: '12px',
         background: '#FFFFFF',
-        border: `1px solid ${highlight ? 'rgba(10,102,194,0.2)' : '#F3F4F6'}`,
+        border: `1px solid ${highlight ? 'rgba(13,92,99,0.2)' : '#F2F0EA'}`,
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 500, color: '#5E6774', fontFamily: 'Inter, sans-serif' }}>
+        <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 500, color: '#5C6B73', fontFamily: 'Inter, sans-serif' }}>
           {title}
         </span>
         <div style={{
           width: '28px', height: '28px', borderRadius: '8px',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          background: highlight ? 'rgba(10,102,194,0.15)' : '#F3F4F6',
+          background: highlight ? 'rgba(13,92,99,0.15)' : '#F2F0EA',
         }}>
-          <Icon style={{ width: '14px', height: '14px', color: highlight ? '#0A66C2' : '#5E6774' }} />
+          <Icon style={{ width: '14px', height: '14px', color: highlight ? '#0D5C63' : '#5C6B73' }} />
         </div>
       </div>
       <div style={{
-        fontSize: '30px', fontWeight: 700,
-        fontFamily: 'Inter, sans-serif',
-        color: highlight ? '#0A66C2' : '#1D2226',
+        fontSize: '32px', fontWeight: 600,
+        fontFamily: '"Fraunces", Georgia, serif',
+        color: highlight ? '#0D5C63' : '#1C2B33',
         lineHeight: 1,
       }}>
         {value}
       </div>
       {subtitle && (
-        <div style={{ fontSize: '11px', color: highlight ? 'rgba(10,102,194,0.7)' : '#5E6774', fontFamily: 'Inter, sans-serif' }}>
+        <div style={{ fontSize: '11px', color: highlight ? 'rgba(13,92,99,0.7)' : '#5C6B73', fontFamily: 'Inter, sans-serif' }}>
           {subtitle}
         </div>
       )}
@@ -65,24 +65,24 @@ function AlertRow({ alert, onView }) {
       style={{
         display: 'flex', alignItems: 'center', gap: '16px',
         padding: '16px 0', cursor: 'pointer',
-        borderBottom: '1px solid #E8EAED',
+        borderBottom: '1px solid #E6E2D8',
       }}
     >
       <Avatar initials={alert.contactInitials} color={alert.contactColor} size="md" />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
-          <span style={{ fontWeight: 600, fontSize: '14px', color: '#1D2226', fontFamily: 'Inter, sans-serif' }}>{alert.contactName}</span>
-          {!alert.read && <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#0A66C2', flexShrink: 0, display: 'inline-block' }} />}
+          <span style={{ fontWeight: 600, fontSize: '14px', color: '#1C2B33', fontFamily: 'Inter, sans-serif' }}>{alert.contactName}</span>
+          {!alert.read && <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#0D5C63', flexShrink: 0, display: 'inline-block' }} />}
         </div>
-        <p style={{ fontSize: '13px', color: '#5E6774', fontFamily: 'Inter, sans-serif', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <p style={{ fontSize: '13px', color: '#5C6B73', fontFamily: 'Inter, sans-serif', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {alert.event}
         </p>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
         <PlatformBadge platform={alert.platform} />
-        <span style={{ fontSize: '12px', color: '#5E6774', fontFamily: 'Inter, sans-serif' }}>{alert.time}</span>
+        <span style={{ fontSize: '12px', color: '#5C6B73', fontFamily: 'Inter, sans-serif' }}>{alert.time}</span>
         <button
-          style={{ fontSize: '12px', fontWeight: 500, color: '#0A66C2', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontFamily: 'Inter, sans-serif' }}
+          style={{ fontSize: '12px', fontWeight: 500, color: '#0D5C63', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontFamily: 'Inter, sans-serif' }}
         >
           View <ChevronRight style={{ width: '12px', height: '12px' }} />
         </button>
@@ -96,16 +96,16 @@ function ContactCard({ contact }) {
     <div style={{
       flexShrink: 0, width: '176px', borderRadius: '12px', padding: '16px',
       display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px',
-      background: '#FFFFFF', border: '1px solid #E4E6E9',
+      background: '#FFFFFF', border: '1px solid #E5E1D7',
     }}>
       <Avatar initials={contact.initials} color={contact.color} size="lg" />
       <div style={{ textAlign: 'center', minWidth: 0, width: '100%' }}>
-        <div style={{ fontWeight: 600, fontSize: '13px', color: '#1D2226', fontFamily: 'Inter, sans-serif', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{contact.name}</div>
-        <div style={{ fontSize: '11px', color: '#5E6774', fontFamily: 'Inter, sans-serif', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{contact.role}</div>
-        <div style={{ fontSize: '11px', color: '#5E6774', fontFamily: 'Inter, sans-serif', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{contact.company}</div>
+        <div style={{ fontWeight: 600, fontSize: '13px', color: '#1C2B33', fontFamily: 'Inter, sans-serif', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{contact.name}</div>
+        <div style={{ fontSize: '11px', color: '#5C6B73', fontFamily: 'Inter, sans-serif', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{contact.role}</div>
+        <div style={{ fontSize: '11px', color: '#5C6B73', fontFamily: 'Inter, sans-serif', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{contact.company}</div>
       </div>
       {contact.lastEvent && (
-        <span style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '20px', width: '100%', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', background: 'rgba(10,102,194,0.12)', color: '#0A66C2', fontFamily: 'Inter, sans-serif' }}>
+        <span style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '20px', width: '100%', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', background: 'rgba(13,92,99,0.12)', color: '#0D5C63', fontFamily: 'Inter, sans-serif' }}>
           {contact.lastEvent}
         </span>
       )}
@@ -149,17 +149,17 @@ export default function Dashboard({ onAddContact }) {
       {/* Header */}
       <motion.div variants={fadeUp} style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '36px' }}>
         <div>
-          <h1 style={{ fontFamily: 'Inter, sans-serif', fontSize: '26px', fontWeight: 700, color: '#1D2226', marginBottom: '4px' }}>
+          <h1 style={{ fontFamily: '"Fraunces", Georgia, serif', fontSize: '30px', fontWeight: 600, color: '#1C2B33', marginBottom: '4px' }}>
             Good morning, Liam.
           </h1>
-          <p style={{ fontSize: '14px', color: '#5E6774' }}>Here's what's happening in your network today.</p>
+          <p style={{ fontSize: '14px', color: '#5C6B73' }}>Here's what's happening in your network today.</p>
         </div>
         <button
           onClick={onAddContact}
           style={{
             display: 'flex', alignItems: 'center', gap: '8px',
             padding: '10px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
-            background: '#0A66C2', color: '#FFFFFF', border: 'none', cursor: 'pointer',
+            background: '#0D5C63', color: '#FFFFFF', border: 'none', cursor: 'pointer',
             transition: 'opacity 0.15s', flexShrink: 0,
           }}
           onMouseEnter={e => e.currentTarget.style.opacity = '0.88'}
@@ -179,22 +179,22 @@ export default function Dashboard({ onAddContact }) {
       {upcoming.length > 0 && (
         <motion.div variants={fadeUp} style={{ marginBottom: '48px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-            <Calendar style={{ width: '14px', height: '14px', color: '#0A66C2' }} />
-            <h2 style={{ fontSize: '15px', fontWeight: 600, color: '#1D2226' }}>Upcoming Catch-ups</h2>
+            <Calendar style={{ width: '14px', height: '14px', color: '#0D5C63' }} />
+            <h2 style={{ fontSize: '15px', fontWeight: 600, color: '#1C2B33' }}>Upcoming Catch-ups</h2>
           </div>
-          <div style={{ borderRadius: '12px', overflow: 'hidden', background: '#FFFFFF', border: '1px solid #E8EAED' }}>
+          <div style={{ borderRadius: '12px', overflow: 'hidden', background: '#FFFFFF', border: '1px solid #E6E2D8' }}>
             {upcoming.map((m, i) => (
               <div
                 key={m.id}
                 style={{
                   display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 20px',
-                  borderBottom: i < upcoming.length - 1 ? '1px solid #EEEFF1' : 'none',
+                  borderBottom: i < upcoming.length - 1 ? '1px solid #EEEBE3' : 'none',
                 }}
               >
                 <Avatar initials={m.contact.initials} color={m.contact.color} size="sm" />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#1D2226' }}>{m.title}</span>
-                  <p style={{ fontSize: '12px', color: '#5E6774' }}>
+                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#1C2B33' }}>{m.title}</span>
+                  <p style={{ fontSize: '12px', color: '#5C6B73' }}>
                     with {m.contact.name} · {new Date(m.datetime).toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' })} at {new Date(m.datetime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
                   </p>
                 </div>
@@ -203,7 +203,7 @@ export default function Dashboard({ onAddContact }) {
                   style={{
                     display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0,
                     fontSize: '12px', fontWeight: 500, padding: '7px 14px', borderRadius: '8px',
-                    background: 'rgba(10,102,194,0.1)', color: '#0A66C2', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+                    background: 'rgba(13,92,99,0.1)', color: '#0D5C63', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
                   }}
                 >
                   <FileText style={{ width: '12px', height: '12px' }} /> Prep brief
@@ -217,15 +217,15 @@ export default function Dashboard({ onAddContact }) {
       {/* Recent Alerts */}
       <motion.div variants={fadeUp} style={{ marginBottom: '48px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-          <h2 style={{ fontSize: '15px', fontWeight: 600, color: '#1D2226' }}>Recent Alerts</h2>
+          <h2 style={{ fontSize: '15px', fontWeight: 600, color: '#1C2B33' }}>Recent Alerts</h2>
           <button
             onClick={() => navigate('/dashboard/alerts')}
-            style={{ fontSize: '12px', fontWeight: 500, color: '#0A66C2', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+            style={{ fontSize: '12px', fontWeight: 500, color: '#0D5C63', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
           >
             View all <ExternalLink style={{ width: '11px', height: '11px' }} />
           </button>
         </div>
-        <div style={{ borderRadius: '12px', overflow: 'hidden', background: '#FFFFFF', border: '1px solid #E8EAED', padding: '0 20px' }}>
+        <div style={{ borderRadius: '12px', overflow: 'hidden', background: '#FFFFFF', border: '1px solid #E6E2D8', padding: '0 20px' }}>
           <motion.div variants={stagger}>
             {alerts.slice(0, 3).map(alert => (
               <AlertRow key={alert.id} alert={alert} onView={() => navigate('/dashboard/alerts')} />
@@ -237,10 +237,10 @@ export default function Dashboard({ onAddContact }) {
       {/* Network Snapshot */}
       <motion.div variants={fadeUp}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-          <h2 style={{ fontSize: '15px', fontWeight: 600, color: '#1D2226' }}>My Network</h2>
+          <h2 style={{ fontSize: '15px', fontWeight: 600, color: '#1C2B33' }}>My Network</h2>
           <button
             onClick={() => navigate('/dashboard/network')}
-            style={{ fontSize: '12px', fontWeight: 500, color: '#0A66C2', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+            style={{ fontSize: '12px', fontWeight: 500, color: '#0D5C63', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
           >
             View all 12 <ExternalLink style={{ width: '11px', height: '11px' }} />
           </button>

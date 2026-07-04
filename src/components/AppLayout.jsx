@@ -42,7 +42,7 @@ export default function AppLayout() {
         display: 'flex',
         height: '100vh',
         overflow: 'hidden',
-        background: '#F3F2EF',
+        background: '#F6F4EF',
       }}
     >
       <AppSidebar onAddContact={() => { setAddContactFirstRun(false); setShowAddContact(true) }} />

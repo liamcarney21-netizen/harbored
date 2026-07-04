@@ -23,8 +23,8 @@ export default function AppSidebar({ onAddContact }) {
         display: 'flex',
         flexDirection: 'column',
         height: '100vh',
-        background: '#FFFFFF',
-        borderRight: '1px solid #E8EAED',
+        background: '#FCFBF6',
+        borderRight: '1px solid #E6E2D8',
       }}
     >
       {/* Logo */}
@@ -34,20 +34,20 @@ export default function AppSidebar({ onAddContact }) {
           alignItems: 'center',
           gap: '10px',
           padding: '20px',
-          borderBottom: '1px solid #E8EAED',
+          borderBottom: '1px solid #E6E2D8',
           cursor: 'pointer',
         }}
         onClick={() => navigate('/dashboard')}
       >
-        <Anchor style={{ width: '16px', height: '16px', color: '#0A66C2', flexShrink: 0 }} />
+        <Anchor style={{ width: '16px', height: '16px', color: '#A97E2F', flexShrink: 0 }} />
         <span style={{
-          fontFamily: 'Inter, sans-serif',
-          fontSize: '16px',
-          fontWeight: 700,
-          letterSpacing: '0.12em',
-          color: '#1D2226',
+          fontFamily: '"Fraunces", Georgia, serif',
+          fontSize: '20px',
+          fontWeight: 600,
+          letterSpacing: '0.01em',
+          color: '#1C2B33',
         }}>
-          HARBORED
+          Harbored
         </span>
       </div>
 
@@ -69,14 +69,14 @@ export default function AppSidebar({ onAddContact }) {
               fontFamily: 'Inter, system-ui, sans-serif',
               textDecoration: 'none',
               transition: 'all 0.15s ease',
-              color: isActive ? '#0A66C2' : '#5E6774',
-              background: isActive ? 'rgba(10,102,194,0.08)' : 'transparent',
-              borderLeft: isActive ? '2px solid #0A66C2' : '2px solid transparent',
+              color: isActive ? '#0D5C63' : '#5C6B73',
+              background: isActive ? 'rgba(13,92,99,0.08)' : 'transparent',
+              borderLeft: isActive ? '2px solid #0D5C63' : '2px solid transparent',
             })}
           >
             {({ isActive }) => (
               <>
-                <Icon style={{ width: '15px', height: '15px', flexShrink: 0, color: isActive ? '#0A66C2' : '#5E6774' }} />
+                <Icon style={{ width: '15px', height: '15px', flexShrink: 0, color: isActive ? '#0D5C63' : '#5C6B73' }} />
                 <span style={{ flex: 1 }}>{label}</span>
                 {badge && !isActive && (
                   <span style={{
@@ -84,8 +84,8 @@ export default function AppSidebar({ onAddContact }) {
                     fontWeight: 600,
                     padding: '2px 6px',
                     borderRadius: '20px',
-                    background: 'rgba(10,102,194,0.15)',
-                    color: '#0A66C2',
+                    background: 'rgba(13,92,99,0.15)',
+                    color: '#0D5C63',
                   }}>
                     {badge}
                   </span>
@@ -103,37 +103,37 @@ export default function AppSidebar({ onAddContact }) {
           style={{
             width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
             padding: '9px 12px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
-            background: '#0A66C2', color: '#FFFFFF', border: 'none', cursor: 'pointer',
+            background: '#0D5C63', color: '#FFFFFF', border: 'none', cursor: 'pointer',
             fontFamily: 'Inter, sans-serif', transition: 'background 0.15s',
           }}
-          onMouseEnter={e => e.currentTarget.style.background = '#084D92'}
-          onMouseLeave={e => e.currentTarget.style.background = '#0A66C2'}
+          onMouseEnter={e => e.currentTarget.style.background = '#09454B'}
+          onMouseLeave={e => e.currentTarget.style.background = '#0D5C63'}
         >
           <UserPlus style={{ width: '14px', height: '14px' }} /> Add Contact
         </button>
       </div>
 
       {/* User */}
-      <div style={{ padding: '16px', borderTop: '1px solid #E8EAED' }}>
+      <div style={{ padding: '16px', borderTop: '1px solid #E6E2D8' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
             <div style={{
               width: '32px', height: '32px', borderRadius: '50%',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: '11px', fontWeight: 600, flexShrink: 0,
-              background: 'rgba(10,102,194,0.15)', color: '#0A66C2',
+              background: 'rgba(13,92,99,0.15)', color: '#0D5C63',
             }}>LC</div>
             <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: '13px', fontWeight: 500, color: '#1D2226', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <div style={{ fontSize: '13px', fontWeight: 500, color: '#1C2B33', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 Liam Carney
               </div>
-              <div style={{ fontSize: '11px', color: '#5E6774', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <div style={{ fontSize: '11px', color: '#5C6B73', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 liamcarney21@gmail.com
               </div>
             </div>
           </div>
           <Settings2
-            style={{ width: '14px', height: '14px', color: '#5E6774', cursor: 'pointer', flexShrink: 0, marginLeft: '8px' }}
+            style={{ width: '14px', height: '14px', color: '#5C6B73', cursor: 'pointer', flexShrink: 0, marginLeft: '8px' }}
             onClick={() => navigate('/dashboard/settings')}
           />
         </div>

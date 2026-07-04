@@ -5,7 +5,7 @@ import { useDataStore } from '../store/dataStore'
 import { discoverThemes } from '../services/discovery'
 
 const categoryIcons = { sports: Trophy, place: MapPin, market: TrendingUp, hobby: Activity, industry: Briefcase }
-const categoryColors = { sports: '#057642', place: '#0A66C2', market: '#915907', hobby: '#7A3FA8', industry: '#B5560F' }
+const categoryColors = { sports: '#2E7D5B', place: '#0D5C63', market: '#A97E2F', hobby: '#6E5A8E', industry: '#A65B33' }
 
 export default function DiscoverThemesModal({ open, onClose, contact }) {
   const addTheme = useDataStore(s => s.addTheme)
@@ -71,19 +71,19 @@ export default function DiscoverThemesModal({ open, onClose, contact }) {
             }}
           >
             {/* Header */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid #EEEFF1' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid #EEEBE3' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div style={{ width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(10,102,194,0.08)' }}>
-                  <Sparkles style={{ width: '15px', height: '15px', color: '#0A66C2' }} />
+                <div style={{ width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(13,92,99,0.08)' }}>
+                  <Sparkles style={{ width: '15px', height: '15px', color: '#0D5C63' }} />
                 </div>
                 <div>
-                  <div style={{ fontSize: '15px', fontWeight: 700, color: '#1D2226' }}>Discover Common Ground</div>
-                  <div style={{ fontSize: '12px', color: '#5E6774' }}>
+                  <div style={{ fontSize: '15px', fontWeight: 700, color: '#1C2B33' }}>Discover Common Ground</div>
+                  <div style={{ fontSize: '12px', color: '#5C6B73' }}>
                     Paste emails or texts between you and {contact?.name?.split(' ')[0] || 'your contact'} — Harbored finds what you share.
                   </div>
                 </div>
               </div>
-              <button onClick={handleClose} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#5E6774', padding: '4px' }}>
+              <button onClick={handleClose} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#5C6B73', padding: '4px' }}>
                 <X style={{ width: '16px', height: '16px' }} />
               </button>
             </div>
@@ -101,17 +101,17 @@ export default function DiscoverThemesModal({ open, onClose, contact }) {
                     style={{
                       width: '100%', borderRadius: '12px', padding: '14px 16px', fontSize: '13px', lineHeight: 1.6,
                       resize: 'vertical', outline: 'none', boxSizing: 'border-box',
-                      background: '#F7F8F9', border: '1px solid #E4E6E9', color: '#1D2226', fontFamily: 'Inter, sans-serif',
+                      background: '#F7F5F0', border: '1px solid #E5E1D7', color: '#1C2B33', fontFamily: 'Inter, sans-serif',
                     }}
                   />
-                  <p style={{ fontSize: '12px', color: '#5E6774', lineHeight: 1.5 }}>
+                  <p style={{ fontSize: '12px', color: '#5C6B73', lineHeight: 1.5 }}>
                     The text is analyzed and discarded — only the themes you accept are kept. Connecting Gmail for automatic discovery is on the roadmap.
                   </p>
                 </>
               )}
 
               {error && (
-                <div style={{ borderRadius: '10px', padding: '12px 16px', fontSize: '13px', background: 'rgba(204,16,22,0.05)', border: '1px solid rgba(204,16,22,0.2)', color: '#CC1016' }}>
+                <div style={{ borderRadius: '10px', padding: '12px 16px', fontSize: '13px', background: 'rgba(180,66,58,0.05)', border: '1px solid rgba(180,66,58,0.2)', color: '#B4423A' }}>
                   {error}
                 </div>
               )}
@@ -119,10 +119,10 @@ export default function DiscoverThemesModal({ open, onClose, contact }) {
               {result && proposals.length > 0 && (
                 <>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600, color: '#5E6774' }}>
+                    <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600, color: '#5C6B73' }}>
                       Found {proposals.length} shared theme{proposals.length === 1 ? '' : 's'} — tap to exclude
                     </span>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#0A66C2' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#0D5C63' }}>
                       <Zap style={{ width: '11px', height: '11px' }} />
                       {result.engine === 'claude' ? 'Claude analysis' : 'Keyword analysis'}
                     </span>
@@ -130,7 +130,7 @@ export default function DiscoverThemesModal({ open, onClose, contact }) {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     {proposals.map((t, i) => {
                       const Icon = categoryIcons[t.category] || Activity
-                      const color = categoryColors[t.category] || '#5E6774'
+                      const color = categoryColors[t.category] || '#5C6B73'
                       const off = excluded.includes(i)
                       return (
                         <button
@@ -139,24 +139,24 @@ export default function DiscoverThemesModal({ open, onClose, contact }) {
                           aria-pressed={!off}
                           style={{
                             textAlign: 'left', borderRadius: '12px', padding: '12px 14px', cursor: 'pointer',
-                            background: off ? '#F7F8F9' : 'rgba(10,102,194,0.04)',
-                            border: `1px solid ${off ? '#E4E6E9' : 'rgba(10,102,194,0.3)'}`,
+                            background: off ? '#F7F5F0' : 'rgba(13,92,99,0.04)',
+                            border: `1px solid ${off ? '#E5E1D7' : 'rgba(13,92,99,0.3)'}`,
                             opacity: off ? 0.55 : 1, transition: 'all 0.15s', fontFamily: 'Inter, sans-serif',
                           }}
                         >
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                             <Icon style={{ width: '13px', height: '13px', color, flexShrink: 0 }} />
-                            <span style={{ fontSize: '13px', fontWeight: 600, color: '#1D2226', flex: 1 }}>{t.label}</span>
-                            <span style={{ fontSize: '11px', fontWeight: 600, color: '#0A66C2' }}>{t.confidence}</span>
+                            <span style={{ fontSize: '13px', fontWeight: 600, color: '#1C2B33', flex: 1 }}>{t.label}</span>
+                            <span style={{ fontSize: '11px', fontWeight: 600, color: '#0D5C63' }}>{t.confidence}</span>
                             <span style={{
                               width: '18px', height: '18px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              background: off ? '#E4E6E9' : '#0A66C2', color: '#FFFFFF', flexShrink: 0,
+                              background: off ? '#E5E1D7' : '#0D5C63', color: '#FFFFFF', flexShrink: 0,
                             }}>
                               {!off && <Check style={{ width: '11px', height: '11px' }} />}
                             </span>
                           </div>
                           {t.evidence && (
-                            <p style={{ fontSize: '12px', color: '#5E6774', fontStyle: 'italic', lineHeight: 1.5, margin: 0 }}>
+                            <p style={{ fontSize: '12px', color: '#5C6B73', fontStyle: 'italic', lineHeight: 1.5, margin: 0 }}>
                               "{t.evidence}"
                             </p>
                           )}
@@ -165,7 +165,7 @@ export default function DiscoverThemesModal({ open, onClose, contact }) {
                     })}
                   </div>
                   {result.engine === 'heuristic' && (
-                    <p style={{ fontSize: '11px', color: '#5E6774', opacity: 0.75 }}>
+                    <p style={{ fontSize: '11px', color: '#5C6B73', opacity: 0.75 }}>
                       Keyword analysis found these. Add an ANTHROPIC_API_KEY to the server for deeper, AI-powered discovery.
                     </p>
                   )}
@@ -173,25 +173,25 @@ export default function DiscoverThemesModal({ open, onClose, contact }) {
               )}
 
               {result && proposals.length === 0 && !error && (
-                <div style={{ padding: '20px 0', textAlign: 'center', fontSize: '13px', color: '#5E6774' }}>
+                <div style={{ padding: '20px 0', textAlign: 'center', fontSize: '13px', color: '#5C6B73' }}>
                   Everything found is already on {contact?.name?.split(' ')[0]}'s themes. Nice — you know this person well.
                 </div>
               )}
             </div>
 
             {/* Footer */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', padding: '16px 24px', borderTop: '1px solid #EEEFF1' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', padding: '16px 24px', borderTop: '1px solid #EEEBE3' }}>
               {result ? (
                 <>
                   <button onClick={() => { setResult(null); setError(null) }}
-                    style={{ padding: '10px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 500, background: 'none', border: '1px solid #DCE0E4', color: '#44484D', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
+                    style={{ padding: '10px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 500, background: 'none', border: '1px solid #DEDACF', color: '#3E4B52', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
                     Analyze different text
                   </button>
                   <button onClick={acceptSelected} disabled={selectedCount === 0}
                     style={{
                       display: 'flex', alignItems: 'center', gap: '6px',
                       padding: '10px 20px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
-                      background: selectedCount > 0 ? '#0A66C2' : '#C7CDD3', color: '#FFFFFF', border: 'none',
+                      background: selectedCount > 0 ? '#0D5C63' : '#C6C0B3', color: '#FFFFFF', border: 'none',
                       cursor: selectedCount > 0 ? 'pointer' : 'default', fontFamily: 'Inter, sans-serif',
                     }}>
                     <Check style={{ width: '13px', height: '13px' }} />
@@ -201,14 +201,14 @@ export default function DiscoverThemesModal({ open, onClose, contact }) {
               ) : (
                 <>
                   <button onClick={handleClose}
-                    style={{ padding: '10px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 500, background: 'none', border: '1px solid #DCE0E4', color: '#44484D', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
+                    style={{ padding: '10px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 500, background: 'none', border: '1px solid #DEDACF', color: '#3E4B52', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
                     Cancel
                   </button>
                   <button onClick={analyze} disabled={analyzing || text.trim().length < 40}
                     style={{
                       display: 'flex', alignItems: 'center', gap: '6px',
                       padding: '10px 20px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
-                      background: !analyzing && text.trim().length >= 40 ? '#0A66C2' : '#C7CDD3', color: '#FFFFFF', border: 'none',
+                      background: !analyzing && text.trim().length >= 40 ? '#0D5C63' : '#C6C0B3', color: '#FFFFFF', border: 'none',
                       cursor: !analyzing && text.trim().length >= 40 ? 'pointer' : 'default', fontFamily: 'Inter, sans-serif',
                     }}>
                     <Sparkles style={{ width: '13px', height: '13px' }} />

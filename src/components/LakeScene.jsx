@@ -141,7 +141,7 @@ export default function LakeScene({ onCtaClick }) {
           {/* Gold waterline stripe */}
           <path
             d="M15,103 Q54,110 93,103"
-            stroke="rgba(10,102,194,0.5)" strokeWidth="1.2"
+            stroke="rgba(13,92,99,0.5)" strokeWidth="1.2"
             fill="none" strokeLinecap="round"
           />
 
@@ -166,7 +166,7 @@ export default function LakeScene({ onCtaClick }) {
             fontFamily: 'Inter, sans-serif',
             fontSize: 11, fontWeight: 600,
             letterSpacing: '0.36em', textTransform: 'uppercase',
-            color: '#0A66C2',
+            color: '#0D5C63',
             marginBottom: 28,
             animation: 'fadeUp 0.7s 0.05s ease both',
           }}
@@ -177,12 +177,12 @@ export default function LakeScene({ onCtaClick }) {
         {/* Main headline */}
         <h1
           style={{
-            fontFamily: 'Inter, system-ui, sans-serif',
-            fontWeight: 500,
+            fontFamily: '"Fraunces", Georgia, serif',
+            fontWeight: 550,
             fontSize: 'clamp(40px, 6.4vw, 84px)',
             lineHeight: 1.03,
             letterSpacing: '-0.03em',
-            color: '#F8FAFC',
+            color: '#FAF8F3',
             margin: '0 auto 26px',
             animation: 'fadeUp 0.85s 0.15s ease both',
           }}
@@ -197,7 +197,7 @@ export default function LakeScene({ onCtaClick }) {
             fontFamily: 'Inter, sans-serif',
             fontWeight: 300,
             fontSize: 'clamp(15px, 1.75vw, 19px)',
-            color: 'rgba(248,250,252,0.48)',
+            color: 'rgba(250,248,243,0.48)',
             maxWidth: 530,
             lineHeight: 1.74,
             letterSpacing: '0.01em',
@@ -222,23 +222,23 @@ export default function LakeScene({ onCtaClick }) {
             onClick={onCtaClick}
             style={{
               padding: '15px 40px',
-              background: 'linear-gradient(135deg, #0A66C2, #378FE9)',
+              background: 'linear-gradient(135deg, #0D5C63, #177E8A)',
               color: '#FFFFFF',
               fontFamily: 'Inter, sans-serif',
               fontWeight: 600, fontSize: 14,
               letterSpacing: '0.03em',
               border: 'none', borderRadius: 2,
               cursor: 'pointer',
-              boxShadow: '0 4px 24px rgba(10,102,194,0.36)',
+              boxShadow: '0 4px 24px rgba(13,92,99,0.36)',
               transition: 'transform 0.18s ease, box-shadow 0.18s ease',
             }}
             onMouseEnter={e => {
               e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 10px 36px rgba(10,102,194,0.58)';
+              e.currentTarget.style.boxShadow = '0 10px 36px rgba(13,92,99,0.58)';
             }}
             onMouseLeave={e => {
               e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 4px 24px rgba(10,102,194,0.36)';
+              e.currentTarget.style.boxShadow = '0 4px 24px rgba(13,92,99,0.36)';
             }}
           >
             Get Early Access
@@ -250,22 +250,22 @@ export default function LakeScene({ onCtaClick }) {
               display: 'inline-flex', alignItems: 'center',
               padding: '14px 34px',
               background: 'transparent',
-              color: 'rgba(248,250,252,0.7)',
+              color: 'rgba(250,248,243,0.7)',
               fontFamily: 'Inter, sans-serif',
               fontWeight: 400, fontSize: 14,
               letterSpacing: '0.03em',
               textDecoration: 'none',
-              border: '1px solid rgba(248,250,252,0.2)',
+              border: '1px solid rgba(250,248,243,0.2)',
               borderRadius: 2,
               transition: 'border-color 0.18s ease, color 0.18s ease',
             }}
             onMouseEnter={e => {
-              e.currentTarget.style.borderColor = 'rgba(248,250,252,0.52)';
-              e.currentTarget.style.color = '#F8FAFC';
+              e.currentTarget.style.borderColor = 'rgba(250,248,243,0.52)';
+              e.currentTarget.style.color = '#FAF8F3';
             }}
             onMouseLeave={e => {
-              e.currentTarget.style.borderColor = 'rgba(248,250,252,0.2)';
-              e.currentTarget.style.color = 'rgba(248,250,252,0.7)';
+              e.currentTarget.style.borderColor = 'rgba(250,248,243,0.2)';
+              e.currentTarget.style.color = 'rgba(250,248,243,0.7)';
             }}
           >
             See How It Works
@@ -277,7 +277,7 @@ export default function LakeScene({ onCtaClick }) {
           style={{
             fontFamily: 'Inter, sans-serif',
             fontWeight: 300, fontSize: 12,
-            color: 'rgba(248,250,252,0.25)',
+            color: 'rgba(250,248,243,0.25)',
             letterSpacing: '0.02em',
             animation: 'fadeUp 0.85s 0.52s ease both',
           }}

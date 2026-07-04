@@ -6,24 +6,24 @@ import { Anchor } from 'lucide-react';
 const inputStyle = {
   width: '100%', padding: '12px 16px', boxSizing: 'border-box',
   background: '#FFFFFF',
-  border: '1px solid #CDD3D9',
+  border: '1px solid #CCC6B9',
   borderRadius: 8,
   fontFamily: 'Inter, sans-serif', fontSize: 15,
-  color: '#1D2226', outline: 'none',
+  color: '#1C2B33', outline: 'none',
   transition: 'border-color 0.2s, box-shadow 0.2s',
 };
 
 const labelStyle = {
   display: 'block', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600,
-  color: '#44484D', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 8,
+  color: '#3E4B52', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 8,
 };
 
 function focusRing(e) {
-  e.target.style.borderColor = '#0A66C2';
-  e.target.style.boxShadow = '0 0 0 3px rgba(10,102,194,0.15)';
+  e.target.style.borderColor = '#0D5C63';
+  e.target.style.boxShadow = '0 0 0 3px rgba(13,92,99,0.15)';
 }
 function blurRing(e) {
-  e.target.style.borderColor = '#CDD3D9';
+  e.target.style.borderColor = '#CCC6B9';
   e.target.style.boxShadow = 'none';
 }
 
@@ -41,7 +41,7 @@ export default function Login() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: '#F3F2EF',
+      background: '#F6F4EF',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       padding: '24px 16px',
     }}>
@@ -52,7 +52,7 @@ export default function Login() {
         style={{
           width: '100%', maxWidth: 420,
           background: '#FFFFFF',
-          border: '1px solid #E8EAED',
+          border: '1px solid #E6E2D8',
           borderRadius: 12,
           boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
           padding: '48px 40px',
@@ -63,20 +63,20 @@ export default function Login() {
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             marginBottom: 32,
           }}>
-            <Anchor style={{ width: 18, height: 18, color: '#0A66C2' }} />
+            <Anchor style={{ width: 18, height: 18, color: '#A97E2F' }} />
             <span style={{
-              fontFamily: 'Inter, sans-serif', fontSize: 18, fontWeight: 700,
-              letterSpacing: '0.1em', color: '#1D2226',
-            }}>HARBORED</span>
+              fontFamily: '"Fraunces", Georgia, serif', fontSize: 22, fontWeight: 600,
+              color: '#1C2B33',
+            }}>Harbored</span>
           </div>
         </Link>
 
         <h1 style={{
-          fontFamily: 'Inter, sans-serif', fontSize: 24, fontWeight: 700,
-          color: '#1D2226', marginBottom: 8, textAlign: 'center',
+          fontFamily: '"Fraunces", Georgia, serif', fontSize: 26, fontWeight: 600,
+          color: '#1C2B33', marginBottom: 8, textAlign: 'center',
         }}>Welcome back</h1>
         <p style={{
-          fontFamily: 'Inter, sans-serif', fontSize: 14, color: '#5E6774',
+          fontFamily: 'Inter, sans-serif', fontSize: 14, color: '#5C6B73',
           textAlign: 'center', marginBottom: 32,
         }}>Your network missed you.</p>
 
@@ -106,7 +106,7 @@ export default function Login() {
 
           <button type="submit" style={{
             width: '100%', padding: '13px',
-            background: '#0A66C2',
+            background: '#0D5C63',
             color: '#FFFFFF',
             fontFamily: 'Inter, sans-serif',
             fontWeight: 600, fontSize: 15,
@@ -114,18 +114,18 @@ export default function Login() {
             cursor: 'pointer',
             transition: 'background 0.2s',
           }}
-          onMouseEnter={e => e.currentTarget.style.background = '#084D92'}
-          onMouseLeave={e => e.currentTarget.style.background = '#0A66C2'}
+          onMouseEnter={e => e.currentTarget.style.background = '#09454B'}
+          onMouseLeave={e => e.currentTarget.style.background = '#0D5C63'}
           >Sign In</button>
         </form>
 
         <p style={{
           fontFamily: 'Inter, sans-serif', fontSize: 13,
-          color: '#5E6774',
+          color: '#5C6B73',
           textAlign: 'center', marginTop: 24,
         }}>
           New to Harbored?{' '}
-          <Link to="/signup" style={{ color: '#0A66C2', textDecoration: 'none', fontWeight: 600 }}>
+          <Link to="/signup" style={{ color: '#0D5C63', textDecoration: 'none', fontWeight: 600 }}>
             Create an account
           </Link>
         </p>

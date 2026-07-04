@@ -66,17 +66,17 @@ export default function Alerts() {
       >
         {/* Header */}
         <div style={{ marginBottom: '28px' }}>
-          <h1 style={{ fontFamily: 'Inter, sans-serif', fontSize: '24px', fontWeight: 700, color: '#1D2226', marginBottom: '4px' }}>
+          <h1 style={{ fontFamily: '"Fraunces", Georgia, serif', fontSize: '27px', fontWeight: 600, color: '#1C2B33', marginBottom: '4px' }}>
             Alerts
           </h1>
-          <p style={{ fontSize: '13px', color: '#5E6774', fontFamily: 'Inter, sans-serif' }}>Events detected across your network</p>
+          <p style={{ fontSize: '13px', color: '#5C6B73', fontFamily: 'Inter, sans-serif' }}>Events detected across your network</p>
         </div>
 
         {/* Sample notice */}
         <div style={{
           display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px',
           padding: '10px 14px', borderRadius: '10px', fontSize: '12.5px',
-          background: 'rgba(145,89,7,0.06)', border: '1px solid rgba(145,89,7,0.2)', color: '#915907',
+          background: 'rgba(169,126,47,0.06)', border: '1px solid rgba(169,126,47,0.2)', color: '#A97E2F',
         }}>
           <Zap style={{ width: '13px', height: '13px', flexShrink: 0 }} />
           These are sample alerts. Live life-event detection is on the roadmap — Common Ground theme monitoring is live today.
@@ -91,9 +91,9 @@ export default function Alerts() {
               style={{
                 padding: '6px 14px', borderRadius: '20px', fontSize: '12px', fontWeight: 500,
                 fontFamily: 'Inter, sans-serif', cursor: 'pointer', transition: 'all 0.15s',
-                background: activeFilter === f ? '#0A66C2' : '#FFFFFF',
-                color: activeFilter === f ? '#FFFFFF' : '#5E6774',
-                border: `1px solid ${activeFilter === f ? '#0A66C2' : '#D5DADF'}`,
+                background: activeFilter === f ? '#0D5C63' : '#FFFFFF',
+                color: activeFilter === f ? '#FFFFFF' : '#5C6B73',
+                border: `1px solid ${activeFilter === f ? '#0D5C63' : '#D6D1C5'}`,
               }}
             >
               {f}
@@ -102,9 +102,9 @@ export default function Alerts() {
         </div>
 
         {/* Alert list */}
-        <div style={{ borderRadius: '12px', overflow: 'hidden', background: '#FFFFFF', border: '1px solid #E8EAED' }}>
+        <div style={{ borderRadius: '12px', overflow: 'hidden', background: '#FFFFFF', border: '1px solid #E6E2D8' }}>
           {filtered.length === 0 && (
-            <div style={{ padding: '64px 0', textAlign: 'center', color: '#5E6774', fontFamily: 'Inter, sans-serif' }}>
+            <div style={{ padding: '64px 0', textAlign: 'center', color: '#5C6B73', fontFamily: 'Inter, sans-serif' }}>
               No alerts match this filter.
             </div>
           )}
@@ -119,9 +119,9 @@ export default function Alerts() {
               style={{
                 display: 'flex', alignItems: 'center', gap: '16px',
                 padding: '16px 20px', cursor: 'pointer',
-                borderBottom: i < filtered.length - 1 ? '1px solid #EEEFF1' : 'none',
+                borderBottom: i < filtered.length - 1 ? '1px solid #EEEBE3' : 'none',
               }}
-              whileHover={{ background: '#F7FAFD' }}
+              whileHover={{ background: '#F8F6F0' }}
             >
               <div style={{ position: 'relative' }}>
                 <Avatar initials={alert.contactInitials} color={alert.contactColor} size="md" />
@@ -129,7 +129,7 @@ export default function Alerts() {
                   <span style={{
                     position: 'absolute', top: '-2px', right: '-2px',
                     width: '8px', height: '8px', borderRadius: '50%',
-                    background: '#0A66C2', border: '2px solid #FFFFFF',
+                    background: '#0D5C63', border: '2px solid #FFFFFF',
                     display: 'inline-block',
                   }} />
                 )}
@@ -137,23 +137,23 @@ export default function Alerts() {
 
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '2px' }}>
-                  <span style={{ fontWeight: 600, fontSize: '13px', color: '#1D2226', fontFamily: 'Inter, sans-serif' }}>{alert.contactName}</span>
+                  <span style={{ fontWeight: 600, fontSize: '13px', color: '#1C2B33', fontFamily: 'Inter, sans-serif' }}>{alert.contactName}</span>
                   {sent.includes(alert.id) && (
-                    <span style={{ fontSize: '11px', padding: '2px 6px', borderRadius: '20px', background: 'rgba(5,118,66,0.1)', color: '#057642', fontFamily: 'Inter, sans-serif' }}>
+                    <span style={{ fontSize: '11px', padding: '2px 6px', borderRadius: '20px', background: 'rgba(46,125,91,0.1)', color: '#2E7D5B', fontFamily: 'Inter, sans-serif' }}>
                       Sent ✓
                     </span>
                   )}
                 </div>
-                <p style={{ fontSize: '13px', color: '#5E6774', fontFamily: 'Inter, sans-serif', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <p style={{ fontSize: '13px', color: '#5C6B73', fontFamily: 'Inter, sans-serif', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {alert.event}
                 </p>
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
                 <PlatformBadge platform={alert.platform} />
-                <span style={{ fontSize: '12px', color: '#5E6774', width: '80px', textAlign: 'right', fontFamily: 'Inter, sans-serif' }}>{alert.time}</span>
+                <span style={{ fontSize: '12px', color: '#5C6B73', width: '80px', textAlign: 'right', fontFamily: 'Inter, sans-serif' }}>{alert.time}</span>
                 <button
-                  style={{ fontSize: '12px', fontWeight: 500, padding: '6px 12px', borderRadius: '8px', background: 'rgba(10,102,194,0.12)', color: '#0A66C2', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}
+                  style={{ fontSize: '12px', fontWeight: 500, padding: '6px 12px', borderRadius: '8px', background: 'rgba(13,92,99,0.12)', color: '#0D5C63', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}
                   onClick={e => { e.stopPropagation(); openAlert(alert) }}
                 >
                   View
@@ -179,7 +179,7 @@ export default function Alerts() {
               style={{
                 position: 'fixed', right: 0, top: 0, bottom: 0, zIndex: 20,
                 width: '440px', display: 'flex', flexDirection: 'column',
-                background: '#FFFFFF', borderLeft: '1px solid #DCE0E4',
+                background: '#FFFFFF', borderLeft: '1px solid #DEDACF',
               }}
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
@@ -187,21 +187,21 @@ export default function Alerts() {
               transition={{ type: 'spring', damping: 28, stiffness: 280 }}
             >
               {/* Panel header */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderBottom: '1px solid #E4E6E9' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderBottom: '1px solid #E5E1D7' }}>
                 <button
                   onClick={() => setSelected(null)}
-                  style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#5E6774', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#5C6B73', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}
                 >
                   <ChevronLeft style={{ width: '16px', height: '16px' }} /> Back
                 </button>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '12px', color: '#5E6774', fontFamily: 'Inter, sans-serif' }}>Auto-Send</span>
+                  <span style={{ fontSize: '12px', color: '#5C6B73', fontFamily: 'Inter, sans-serif' }}>Auto-Send</span>
                   <button
                     onClick={() => setAutoSend(v => !v)}
                     style={{
                       position: 'relative', width: '36px', height: '20px', borderRadius: '10px',
                       border: 'none', cursor: 'pointer', flexShrink: 0,
-                      background: autoSend ? '#0A66C2' : '#C7CDD3',
+                      background: autoSend ? '#0D5C63' : '#C6C0B3',
                     }}
                   >
                     <span style={{
@@ -219,12 +219,12 @@ export default function Alerts() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
                   <Avatar initials={selected.contactInitials} color={selected.contactColor} size="xl" />
                   <div>
-                    <h2 style={{ fontFamily: 'Inter, sans-serif', fontSize: '20px', fontWeight: 700, color: '#1D2226', marginBottom: '4px' }}>
+                    <h2 style={{ fontFamily: '"Fraunces", Georgia, serif', fontSize: '22px', fontWeight: 600, color: '#1C2B33', marginBottom: '4px' }}>
                       {selected.contactName}
                     </h2>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <PlatformBadge platform={selected.platform} />
-                      <span style={{ fontSize: '12px', color: '#5E6774', fontFamily: 'Inter, sans-serif' }}>
+                      <span style={{ fontSize: '12px', color: '#5C6B73', fontFamily: 'Inter, sans-serif' }}>
                         Detected {selected.time}
                       </span>
                     </div>
@@ -232,11 +232,11 @@ export default function Alerts() {
                 </div>
 
                 {/* Event */}
-                <div style={{ borderRadius: '12px', padding: '16px', marginBottom: '24px', background: '#F7F8F9', border: '1px solid #E4E6E9' }}>
-                  <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '8px', fontWeight: 500, color: '#5E6774', fontFamily: 'Inter, sans-serif' }}>
+                <div style={{ borderRadius: '12px', padding: '16px', marginBottom: '24px', background: '#F7F5F0', border: '1px solid #E5E1D7' }}>
+                  <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '8px', fontWeight: 500, color: '#5C6B73', fontFamily: 'Inter, sans-serif' }}>
                     Event Detected
                   </div>
-                  <p style={{ fontSize: '14px', color: '#1D2226', fontFamily: 'Inter, sans-serif' }}>
+                  <p style={{ fontSize: '14px', color: '#1C2B33', fontFamily: 'Inter, sans-serif' }}>
                     <strong>{selected.contactName}</strong> {selected.event}.
                   </p>
                 </div>
@@ -244,10 +244,10 @@ export default function Alerts() {
                 {/* Draft message */}
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                    <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 500, color: '#5E6774', fontFamily: 'Inter, sans-serif' }}>
+                    <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 500, color: '#5C6B73', fontFamily: 'Inter, sans-serif' }}>
                       Drafted Message
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#0A66C2' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#0D5C63' }}>
                       <Zap style={{ width: '12px', height: '12px' }} />
                       <span style={{ fontSize: '12px', fontFamily: 'Inter, sans-serif' }}>Harbored AI</span>
                     </div>
@@ -260,34 +260,34 @@ export default function Alerts() {
                       style={{
                         width: '100%', borderRadius: '12px', padding: '16px', fontSize: '13px',
                         resize: 'none', outline: 'none', boxSizing: 'border-box',
-                        background: '#F3F4F6', border: '1px solid rgba(10,102,194,0.3)',
-                        color: '#1D2226', fontFamily: 'Inter, sans-serif',
+                        background: '#F2F0EA', border: '1px solid rgba(13,92,99,0.3)',
+                        color: '#1C2B33', fontFamily: 'Inter, sans-serif',
                       }}
                     />
                   ) : (
                     <div style={{
                       borderRadius: '12px', padding: '16px', fontSize: '13px', lineHeight: 1.6,
-                      background: '#F3F4F6', border: '1px solid #E0E3E7',
-                      color: '#1D2226', fontFamily: 'Inter, sans-serif',
+                      background: '#F2F0EA', border: '1px solid #E3DFD5',
+                      color: '#1C2B33', fontFamily: 'Inter, sans-serif',
                     }}>
                       {msgText}
                     </div>
                   )}
-                  <p style={{ fontSize: '12px', marginTop: '8px', color: '#5E6774', fontFamily: 'Inter, sans-serif' }}>
+                  <p style={{ fontSize: '12px', marginTop: '8px', color: '#5C6B73', fontFamily: 'Inter, sans-serif' }}>
                     This message was drafted in your tone by Harbored AI
                   </p>
                 </div>
               </div>
 
               {/* Actions */}
-              <div style={{ padding: '20px 24px', borderTop: '1px solid #E4E6E9' }}>
+              <div style={{ padding: '20px 24px', borderTop: '1px solid #E5E1D7' }}>
                 <div style={{ display: 'flex', gap: '12px' }}>
                   <button
                     onClick={handleSend}
                     style={{
                       flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                       padding: '10px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
-                      background: '#0A66C2', color: '#FFFFFF', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+                      background: '#0D5C63', color: '#FFFFFF', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
                     }}
                   >
                     <Send style={{ width: '14px', height: '14px' }} /> Send
@@ -297,14 +297,14 @@ export default function Alerts() {
                     style={{
                       flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                       padding: '10px', borderRadius: '8px', fontSize: '13px', fontWeight: 500,
-                      background: 'none', color: '#1D2226', border: '1px solid #CDD3D9', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+                      background: 'none', color: '#1C2B33', border: '1px solid #CCC6B9', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
                     }}
                   >
                     <Edit3 style={{ width: '14px', height: '14px' }} /> {editingMsg ? 'Done' : 'Edit'}
                   </button>
                   <button
                     onClick={handleSkip}
-                    style={{ padding: '10px 16px', borderRadius: '8px', fontSize: '13px', fontWeight: 500, background: 'none', color: '#5E6774', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}
+                    style={{ padding: '10px 16px', borderRadius: '8px', fontSize: '13px', fontWeight: 500, background: 'none', color: '#5C6B73', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}
                   >
                     Skip
                   </button>

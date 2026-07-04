@@ -13,12 +13,12 @@ const CATEGORIES = [
 
 const inputStyle = {
   width: '100%', padding: '10px 14px', borderRadius: '8px', fontSize: '13px', outline: 'none',
-  background: '#FFFFFF', border: '1px solid #CDD3D9', color: '#1D2226',
+  background: '#FFFFFF', border: '1px solid #CCC6B9', color: '#1C2B33',
   fontFamily: 'Inter, sans-serif', boxSizing: 'border-box', transition: 'border-color 0.15s',
 }
 const labelStyle = {
   display: 'block', fontSize: '12px', fontWeight: 600, marginBottom: '6px',
-  color: '#44484D', fontFamily: 'Inter, sans-serif',
+  color: '#3E4B52', fontFamily: 'Inter, sans-serif',
 }
 
 export default function AddContactModal({ open, onClose, firstRun = false }) {
@@ -66,21 +66,21 @@ export default function AddContactModal({ open, onClose, firstRun = false }) {
             }}
           >
             {/* Header */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid #EEEFF1' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid #EEEBE3' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div style={{ width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(10,102,194,0.08)' }}>
-                  <UserPlus style={{ width: '15px', height: '15px', color: '#0A66C2' }} />
+                <div style={{ width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(13,92,99,0.08)' }}>
+                  <UserPlus style={{ width: '15px', height: '15px', color: '#0D5C63' }} />
                 </div>
                 <div>
-                  <div style={{ fontSize: '15px', fontWeight: 700, color: '#1D2226' }}>
+                  <div style={{ fontSize: '15px', fontWeight: 700, color: '#1C2B33' }}>
                     {firstRun ? 'Add your first contact' : 'Track someone new'}
                   </div>
-                  <div style={{ fontSize: '12px', color: '#5E6774' }}>
+                  <div style={{ fontSize: '12px', color: '#5C6B73' }}>
                     {firstRun ? 'Pick someone worth staying close to — then add what you have in common.' : 'Harbored watches their world so you don\'t have to.'}
                   </div>
                 </div>
               </div>
-              <button onClick={() => onClose(false)} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#5E6774', padding: '4px' }}>
+              <button onClick={() => onClose(false)} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#5C6B73', padding: '4px' }}>
                 <X style={{ width: '16px', height: '16px' }} />
               </button>
             </div>
@@ -101,15 +101,15 @@ export default function AddContactModal({ open, onClose, firstRun = false }) {
                   <input id="ac-company" style={inputStyle} placeholder="Morgan Stanley" value={form.company} onChange={e => update('company', e.target.value)} />
                 </div>
                 <div style={{ gridColumn: '1 / -1' }}>
-                  <label htmlFor="ac-email" style={labelStyle}>Email <span style={{ fontWeight: 400, color: '#5E6774' }}>(so you can reach out in one click)</span></label>
+                  <label htmlFor="ac-email" style={labelStyle}>Email <span style={{ fontWeight: 400, color: '#5C6B73' }}>(so you can reach out in one click)</span></label>
                   <input id="ac-email" type="email" style={inputStyle} placeholder="john@example.com" value={form.email} onChange={e => update('email', e.target.value)} />
                 </div>
               </div>
 
               {/* Shared themes */}
-              <div style={{ borderRadius: '12px', padding: '16px', background: 'rgba(10,102,194,0.04)', border: '1px solid rgba(10,102,194,0.15)' }}>
-                <div style={{ fontSize: '12px', fontWeight: 700, color: '#0A66C2', marginBottom: '4px' }}>What do you have in common?</div>
-                <p style={{ fontSize: '12px', color: '#5E6774', marginBottom: '12px', lineHeight: 1.5 }}>
+              <div style={{ borderRadius: '12px', padding: '16px', background: 'rgba(13,92,99,0.04)', border: '1px solid rgba(13,92,99,0.15)' }}>
+                <div style={{ fontSize: '12px', fontWeight: 700, color: '#0D5C63', marginBottom: '4px' }}>What do you have in common?</div>
+                <p style={{ fontSize: '12px', color: '#5C6B73', marginBottom: '12px', lineHeight: 1.5 }}>
                   Teams, cities, markets, hobbies. Harbored monitors these and tells you when there's a real reason to reach out.
                 </p>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: themes.length ? '10px' : 0 }}>
@@ -117,7 +117,7 @@ export default function AddContactModal({ open, onClose, firstRun = false }) {
                     <span key={i} style={{
                       display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '5px 10px',
                       borderRadius: '20px', fontSize: '12px', fontWeight: 500,
-                      background: 'rgba(10,102,194,0.08)', color: '#0A66C2', border: '1px solid rgba(10,102,194,0.2)',
+                      background: 'rgba(13,92,99,0.08)', color: '#0D5C63', border: '1px solid rgba(13,92,99,0.2)',
                     }}>
                       {t.label}
                       <button onClick={() => setThemes(ts => ts.filter((_, j) => j !== i))} aria-label={`Remove ${t.label}`}
@@ -143,7 +143,7 @@ export default function AddContactModal({ open, onClose, firstRun = false }) {
                   <button onClick={addThemeChip} aria-label="Add theme"
                     style={{
                       padding: '0 14px', borderRadius: '8px', border: 'none', cursor: 'pointer',
-                      background: 'rgba(10,102,194,0.1)', color: '#0A66C2', display: 'flex', alignItems: 'center',
+                      background: 'rgba(13,92,99,0.1)', color: '#0D5C63', display: 'flex', alignItems: 'center',
                     }}>
                     <Plus style={{ width: '14px', height: '14px' }} />
                   </button>
@@ -152,16 +152,16 @@ export default function AddContactModal({ open, onClose, firstRun = false }) {
             </div>
 
             {/* Footer */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', padding: '16px 24px', borderTop: '1px solid #EEEFF1' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', padding: '16px 24px', borderTop: '1px solid #EEEBE3' }}>
               <button onClick={() => onClose(false)}
-                style={{ padding: '10px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 500, background: 'none', border: '1px solid #DCE0E4', color: '#44484D', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
+                style={{ padding: '10px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 500, background: 'none', border: '1px solid #DEDACF', color: '#3E4B52', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
                 Cancel
               </button>
               <button onClick={handleSave} disabled={!canSave}
                 style={{
                   display: 'flex', alignItems: 'center', gap: '6px',
                   padding: '10px 20px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
-                  background: canSave ? '#0A66C2' : '#C7CDD3', color: '#FFFFFF', border: 'none',
+                  background: canSave ? '#0D5C63' : '#C6C0B3', color: '#FFFFFF', border: 'none',
                   cursor: canSave ? 'pointer' : 'default', fontFamily: 'Inter, sans-serif', transition: 'background 0.15s',
                 }}>
                 <Check style={{ width: '13px', height: '13px' }} />
