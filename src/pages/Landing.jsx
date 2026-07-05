@@ -488,7 +488,7 @@ function SubNav() {
 /* ─── Alternating feature section ─────────────────────────── */
 function FeatureSection({ id, kicker, title, em, body, points = [], flip = false, tint = 'rgba(13,92,99,0.06)', window: Window, cta, onCta }) {
   return (
-    <section id={id} style={{ padding: 'clamp(56px, 8vw, 104px) clamp(20px, 6vw, 80px)', scrollMarginTop: 124 }}>
+    <section id={id} style={{ padding: 'clamp(44px, 6vw, 80px) clamp(20px, 6vw, 80px)', scrollMarginTop: 124 }}>
       <div style={{
         maxWidth: 1120, margin: '0 auto',
         display: 'flex', flexWrap: 'wrap', alignItems: 'center',
@@ -559,7 +559,7 @@ export default function Landing() {
       {/* ══════════════════ HERO — compact, product-forward ══════════════════ */}
       <section style={{
         background: `linear-gradient(180deg, ${C.navy} 0%, #0d1e33 100%)`,
-        padding: 'clamp(120px, 16vh, 168px) clamp(20px, 6vw, 80px) 0',
+        padding: 'clamp(120px, 16vh, 168px) clamp(20px, 6vw, 80px) clamp(56px, 7vw, 88px)',
         position: 'relative', overflow: 'hidden',
       }}>
         {/* Sailboat watermark */}
@@ -624,8 +624,8 @@ export default function Landing() {
             </p>
           </div>
 
-          {/* Product window peeking from the hero — Klaviyo-style product-forward */}
-          <div style={{ maxWidth: 760, margin: '52px auto 0', transform: 'translateY(1px)', animation: 'fadeUp 0.9s 0.55s ease both' }}>
+          {/* Product window — fully contained so it never clips mid-row */}
+          <div style={{ maxWidth: 760, margin: 'clamp(44px, 6vw, 64px) auto 0', animation: 'fadeUp 0.9s 0.55s ease both' }}>
             <FeedMock />
           </div>
         </div>
