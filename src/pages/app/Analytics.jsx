@@ -56,7 +56,7 @@ export default function Analytics() {
 
   return (
     <motion.div
-      style={{ minHeight: '100%', padding: '40px', fontFamily: 'Inter, sans-serif' }}
+      style={{ minHeight: '100%', padding: 'clamp(20px, 4vw, 40px)', fontFamily: 'Inter, sans-serif' }}
       initial="initial"
       animate="animate"
       variants={stagger}
@@ -70,12 +70,12 @@ export default function Analytics() {
       </motion.div>
 
       {/* Stats row */}
-      <motion.div variants={stagger} style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '16px', marginBottom: '32px' }}>
+      <motion.div variants={stagger} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '16px', marginBottom: '32px' }}>
         {stats.map(s => <StatCard key={s.title} {...s} />)}
       </motion.div>
 
       {/* Charts row */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '32px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px', marginBottom: '32px' }}>
         {/* Area chart */}
         <motion.div
           variants={fadeUp}

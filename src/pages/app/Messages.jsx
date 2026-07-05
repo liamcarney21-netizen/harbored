@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useIsMobile } from '../../hooks/useIsMobile'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronLeft, Send, Mail, MessageCircle } from 'lucide-react'
 import Avatar from '../../components/Avatar'
@@ -59,6 +60,7 @@ function MessageRow({ msg, onClick, active }) {
 }
 
 export default function Messages() {
+  const isMobile = useIsMobile()
   const [tab, setTab] = useState('sent')
   const [selected, setSelected] = useState(null)
   const [followUp, setFollowUp] = useState('')
@@ -93,7 +95,7 @@ export default function Messages() {
       transition={{ duration: 0.3 }}
     >
       {/* Header */}
-      <div style={{ padding: '40px 40px 24px', borderBottom: '1px solid #E6E2D8' }}>
+      <div style={{ padding: 'clamp(20px, 4vw, 40px) clamp(20px, 4vw, 40px) 20px', borderBottom: '1px solid #E6E2D8' }}>
         <h1 style={{ fontFamily: '"Fraunces", Georgia, serif', fontSize: '27px', fontWeight: 600, color: '#1C2B33', marginBottom: '16px' }}>
           Messages
         </h1>
@@ -120,7 +122,8 @@ export default function Messages() {
         {/* List */}
         <div style={{
           overflowY: 'auto',
-          width: selected ? '380px' : '100%',
+          width: selected ? (isMobile ? '0px' : '380px') : '100%',
+          display: selected && isMobile ? 'none' : 'block',
           flexShrink: 0,
           borderRight: selected ? '1px solid #E6E2D8' : 'none',
           transition: 'width 0.25s ease',

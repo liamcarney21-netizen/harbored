@@ -59,7 +59,7 @@ export default function Alerts() {
     <div style={{ minHeight: '100%', display: 'flex', position: 'relative' }}>
       {/* Main list */}
       <motion.div
-        style={{ flex: 1, padding: '40px' }}
+        style={{ flex: 1, minWidth: 0, padding: 'clamp(20px, 4vw, 40px)' }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3 }}
@@ -178,7 +178,7 @@ export default function Alerts() {
             <motion.div
               style={{
                 position: 'fixed', right: 0, top: 0, bottom: 0, zIndex: 20,
-                width: '440px', display: 'flex', flexDirection: 'column',
+                width: 'min(440px, 100vw)', display: 'flex', flexDirection: 'column',
                 background: '#FFFFFF', borderLeft: '1px solid #DEDACF',
               }}
               initial={{ x: '100%' }}

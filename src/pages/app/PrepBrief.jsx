@@ -54,7 +54,7 @@ export default function PrepBrief() {
 
   if (!contact) {
     return (
-      <div style={{ padding: '40px', fontFamily: 'Inter, sans-serif', color: '#5C6B73' }}>
+      <div style={{ padding: 'clamp(20px, 4vw, 40px)', fontFamily: 'Inter, sans-serif', color: '#5C6B73' }}>
         Contact not found.
       </div>
     )
@@ -110,7 +110,7 @@ export default function PrepBrief() {
 
   return (
     <motion.div
-      style={{ minHeight: '100%', padding: '40px', fontFamily: 'Inter, sans-serif', maxWidth: '780px' }}
+      style={{ minHeight: '100%', padding: 'clamp(20px, 4vw, 40px)', fontFamily: 'Inter, sans-serif', maxWidth: '780px' }}
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}
     >
       <button

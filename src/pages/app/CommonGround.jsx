@@ -179,7 +179,7 @@ export default function CommonGround() {
   return (
     <div style={{ minHeight: '100%', display: 'flex', position: 'relative' }}>
       <motion.div
-        style={{ flex: 1, padding: '40px', fontFamily: 'Inter, sans-serif' }}
+        style={{ flex: 1, minWidth: 0, padding: 'clamp(20px, 4vw, 40px)', fontFamily: 'Inter, sans-serif' }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3 }}
@@ -272,7 +272,7 @@ export default function CommonGround() {
                     transition={{ delay: Math.min(i * 0.04, 0.3), duration: 0.25 }}
                     onClick={() => openUpdate(u)}
                     style={{
-                      display: 'flex', alignItems: 'center', gap: '16px',
+                      display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap',
                       padding: '16px 20px', cursor: 'pointer',
                       borderBottom: i < opportunities.length - 1 ? '1px solid #EEEBE3' : 'none',
                     }}
@@ -285,7 +285,7 @@ export default function CommonGround() {
                     >
                       <Avatar initials={u.contactInitials} color={u.contactColor} size="md" />
                     </button>
-                    <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ flex: '1 1 200px', minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px', flexWrap: 'wrap' }}>
                         <span style={{ fontWeight: 600, fontSize: '13px', color: '#1C2B33' }}>{u.contactName}</span>
                         <span style={{
@@ -310,7 +310,7 @@ export default function CommonGround() {
                         {u.source} · {u.time}
                       </p>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexShrink: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                       <SignificanceGauge score={u.score} compact />
                       <button
                         style={{ fontSize: '12px', fontWeight: 500, padding: '6px 12px', borderRadius: '8px', background: 'rgba(13,92,99,0.1)', color: '#0D5C63', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}
@@ -577,7 +577,7 @@ export default function CommonGround() {
             <motion.div
               style={{
                 position: 'fixed', right: 0, top: 0, bottom: 0, zIndex: 20,
-                width: '440px', display: 'flex', flexDirection: 'column',
+                width: 'min(440px, 100vw)', display: 'flex', flexDirection: 'column',
                 background: '#FFFFFF', borderLeft: '1px solid #DEDACF',
               }}
               initial={{ x: '100%' }}

@@ -12,7 +12,7 @@ const navItems = [
   { path: '/dashboard/settings',  label: 'Settings',   icon: Settings },
 ]
 
-export default function AppSidebar({ onAddContact }) {
+export default function AppSidebar({ onAddContact, onNavigate }) {
   const navigate = useNavigate()
 
   return (
@@ -58,6 +58,7 @@ export default function AppSidebar({ onAddContact }) {
             key={path}
             to={path}
             end={end}
+            onClick={onNavigate}
             style={({ isActive }) => ({
               display: 'flex',
               alignItems: 'center',

@@ -93,7 +93,7 @@ export default function Settings() {
 
   return (
     <motion.div
-      style={{ minHeight: '100%', padding: '40px', fontFamily: 'Inter, sans-serif' }}
+      style={{ minHeight: '100%', padding: 'clamp(20px, 4vw, 40px)', fontFamily: 'Inter, sans-serif' }}
       initial="initial"
       animate="animate"
       variants={stagger}
@@ -132,7 +132,7 @@ export default function Settings() {
               Change photo
             </button>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px' }}>
             <InputField label="Full name" value={profile.name} onChange={v => setProfile(p => ({ ...p, name: v }))} placeholder="Your name" />
             <InputField label="Email" type="email" value={profile.email} onChange={v => setProfile(p => ({ ...p, email: v }))} placeholder="you@email.com" />
             <div style={{ gridColumn: '1 / -1' }}>

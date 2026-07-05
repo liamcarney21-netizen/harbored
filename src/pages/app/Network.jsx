@@ -88,7 +88,7 @@ export default function Network({ onAddContact }) {
 
   return (
     <motion.div
-      style={{ minHeight: '100%', padding: '40px', fontFamily: 'Inter, sans-serif' }}
+      style={{ minHeight: '100%', padding: 'clamp(20px, 4vw, 40px)', fontFamily: 'Inter, sans-serif' }}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}

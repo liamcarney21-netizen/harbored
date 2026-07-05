@@ -87,7 +87,7 @@ export default function AddContactModal({ open, onClose, firstRun = false }) {
 
             {/* Body */}
             <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '14px' }}>
                 <div style={{ gridColumn: '1 / -1' }}>
                   <label htmlFor="ac-name" style={labelStyle}>Full name</label>
                   <input id="ac-name" style={inputStyle} placeholder="John Sullivan" value={form.name} onChange={e => update('name', e.target.value)} autoFocus />

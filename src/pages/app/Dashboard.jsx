@@ -141,7 +141,7 @@ export default function Dashboard({ onAddContact }) {
 
   return (
     <motion.div
-      style={{ minHeight: '100%', padding: '40px', fontFamily: 'Inter, sans-serif' }}
+      style={{ minHeight: '100%', padding: 'clamp(20px, 4vw, 40px)', fontFamily: 'Inter, sans-serif' }}
       initial="initial"
       animate="animate"
       variants={stagger}
@@ -171,7 +171,7 @@ export default function Dashboard({ onAddContact }) {
       </motion.div>
 
       {/* Stats */}
-      <motion.div variants={stagger} style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '16px', marginBottom: '48px' }}>
+      <motion.div variants={stagger} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '16px', marginBottom: '48px' }}>
         {stats.map(s => <StatCard key={s.title} {...s} />)}
       </motion.div>
 
