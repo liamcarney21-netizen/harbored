@@ -73,7 +73,7 @@ export default function AddContactModal({ open, onClose, firstRun = false }) {
                 </div>
                 <div>
                   <div style={{ fontSize: '15px', fontWeight: 700, color: '#1C2B33' }}>
-                    {firstRun ? 'Add your first contact' : 'Track someone new'}
+                    {firstRun ? 'Add your first contact' : 'Add someone new'}
                   </div>
                   <div style={{ fontSize: '12px', color: '#5C6B73' }}>
                     {firstRun ? 'Pick someone worth staying close to — then add what you have in common.' : 'Harbored watches their world so you don\'t have to.'}

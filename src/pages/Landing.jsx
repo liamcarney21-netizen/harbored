@@ -784,10 +784,10 @@ export default function Landing() {
                 <div style={{ marginBottom: 22 }}>
                   <div style={{ fontFamily: SANS, fontSize: 11, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: C.muted, marginBottom: 10 }}>Free</div>
                   <div style={{ fontFamily: SERIF, fontSize: 44, fontWeight: 600, color: C.ink, lineHeight: 1 }}>$0<span style={{ fontFamily: SANS, fontWeight: 300, fontSize: 16, color: C.faint }}>/mo</span></div>
-                  <p style={{ fontFamily: SANS, fontWeight: 300, fontSize: 13, color: C.muted, marginTop: 10, lineHeight: 1.5 }}>A great way to see how Harbored works before going all in.</p>
+                  <p style={{ fontFamily: SANS, fontWeight: 300, fontSize: 13, color: C.muted, marginTop: 10, lineHeight: 1.5 }}>Keep your inner five close — and see what Harbored can do.</p>
                 </div>
                 <div style={{ borderTop: '1px solid #EBE7DC', paddingTop: 22, flex: 1 }}>
-                  {['Monitor up to 25 contacts', '3 Common Ground themes per contact', 'Email notifications', 'Manual send only'].map(f => (
+                  {['Monitor up to 5 contacts', '2 Common Ground themes per contact', 'Weekly digest email', 'Manual send only'].map(f => (
                     <div key={f} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 12 }}>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2E7D5B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}><polyline points="20 6 9 17 4 12"/></svg>
                       <span style={{ fontFamily: SANS, fontSize: 14, color: '#37444a' }}>{f}</span>
@@ -811,11 +811,11 @@ export default function Landing() {
                 <div style={{ position: 'absolute', top: 22, right: 22, padding: '4px 12px', background: `linear-gradient(135deg, ${C.brass}, ${C.brassPale})`, borderRadius: 20, fontFamily: SANS, fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.navy }}>Most Popular</div>
                 <div style={{ marginBottom: 22 }}>
                   <div style={{ fontFamily: SANS, fontSize: 11, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: C.brassPale, marginBottom: 10 }}>Harbored Pro</div>
-                  <div style={{ fontFamily: SERIF, fontSize: 44, fontWeight: 600, color: C.cream, lineHeight: 1 }}>$12<span style={{ fontFamily: SANS, fontWeight: 300, fontSize: 16, color: 'rgba(250,248,243,0.45)' }}>/mo</span></div>
+                  <div style={{ fontFamily: SERIF, fontSize: 44, fontWeight: 600, color: C.cream, lineHeight: 1 }}>$9<span style={{ fontFamily: SANS, fontWeight: 300, fontSize: 16, color: 'rgba(250,248,243,0.45)' }}>/mo</span></div>
                   <p style={{ fontFamily: SANS, fontWeight: 300, fontSize: 13, color: 'rgba(250,248,243,0.5)', marginTop: 10, lineHeight: 1.5 }}>For professionals who want their relationships to keep up with their careers.</p>
                 </div>
                 <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 22, flex: 1 }}>
-                  {['Unlimited contacts & Common Ground themes', 'Common Ground discovery from your conversations', 'AI message drafting in your voice', 'Auto-Send mode', 'All notification channels', 'Prep briefs & weekly digest'].map(f => (
+                  {['Unlimited contacts & Common Ground themes', 'Common Ground discovery from your conversations', 'Prep briefs before every catch-up', 'AI message drafting in your voice', 'Auto-Send mode', 'All notification channels'].map(f => (
                     <div key={f} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 12 }}>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.brassPale} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}><polyline points="20 6 9 17 4 12"/></svg>
                       <span style={{ fontFamily: SANS, fontSize: 14, color: 'rgba(250,248,243,0.78)' }}>{f}</span>

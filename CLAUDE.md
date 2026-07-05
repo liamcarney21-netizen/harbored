@@ -45,6 +45,12 @@ Health: strong #2E7D5B, cooling #A97E2F, at-risk #B4423A. Do NOT reintroduce Lin
 Common Ground is the product's core feature: per-contact shared themes → significance scoring
 (threshold 70) → reach-out prompts with drafted messages.
 
+## Copy Rules
+- Never use "track/tracked/tracking" for people in UI copy — it reads as surveillance.
+  Use "monitored", "watched", or "kept close" instead.
+- Pricing: Free = taste tier (5 contacts, 2 themes each, weekly digest, manual send);
+  Pro $9/mo = everything (unlimited, discovery, prep briefs, auto-send, all channels).
+
 ## Live Deployment
 - **Live URL:** https://harbored-three.vercel.app
 - **Vercel project:** liamcarney21-netizens-projects/harbored

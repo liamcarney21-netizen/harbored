@@ -100,7 +100,7 @@ export default function Network({ onAddContact }) {
             My Network
           </h1>
           <p style={{ fontSize: '13px', color: '#5C6B73' }}>
-            {contacts.length} people being tracked across 4 platforms
+            {contacts.length} relationships, quietly monitored
           </p>
         </div>
         <button

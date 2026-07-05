@@ -133,7 +133,7 @@ export default function Dashboard({ onAddContact }) {
   const sentLast30 = touches.filter(t => daysSince(t.date) < 30).length
 
   const stats = [
-    { title: 'People Being Tracked', value: String(storeContacts.length), icon: Users, highlight: false, subtitle: 'Across 4 platforms' },
+    { title: 'People Monitored', value: String(storeContacts.length), icon: Users, highlight: false, subtitle: 'Across your themes' },
     { title: 'Alerts This Week',     value: '4',  icon: Bell,           highlight: false, subtitle: '2 unread' },
     { title: 'Messages Sent',        value: String(sentLast30), icon: MessageSquare, highlight: false, subtitle: 'Last 30 days' },
     { title: 'Relationships at Risk',value: String(atRisk), icon: AlertTriangle, highlight: true, subtitle: 'No contact in 60+ days' },
@@ -166,7 +166,7 @@ export default function Dashboard({ onAddContact }) {
           onMouseLeave={e => e.currentTarget.style.opacity = '1'}
         >
           <Plus style={{ width: '14px', height: '14px' }} />
-          Track Someone New
+          Add Someone New
         </button>
       </motion.div>
 
