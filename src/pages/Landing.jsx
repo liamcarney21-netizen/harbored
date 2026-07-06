@@ -709,9 +709,9 @@ export default function Landing() {
       <section style={{ background: C.navy, padding: 'clamp(56px, 8vw, 96px) clamp(20px, 6vw, 80px)' }}>
         <RevealGroup style={{ maxWidth: 1120, margin: '0 auto', display: 'flex', flexWrap: 'wrap', gap: 'clamp(28px, 6vw, 80px)', justifyContent: 'space-between' }}>
           {[
-            ['70', 'the reach-out bar — nothing below it interrupts you'],
-            ['24/7', 'live monitoring across your shared themes'],
-            ['1 click', 'from signal to a sent message, drafted in your voice'],
+            ['0', 'feeds to scroll — Harbored watches your shared themes so you never have to'],
+            ['24/7', 'always-on monitoring across every theme, quietly in the background'],
+            ['1 click', 'from a real reason to a sent message, drafted in your voice'],
           ].map(([n, l]) => (
             <motion.div key={n} variants={fadeUp} custom={0} style={{ flex: '1 1 220px', minWidth: 200 }}>
               <div style={{ fontFamily: SERIF, fontSize: 'clamp(44px, 6vw, 68px)', fontWeight: 600, color: C.brassPale, lineHeight: 1, marginBottom: 10 }}>{n}</div>
