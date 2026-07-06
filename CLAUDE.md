@@ -45,6 +45,11 @@ Health: strong #2E7D5B, cooling #A97E2F, at-risk #B4423A. Do NOT reintroduce Lin
 Common Ground is the product's core feature: per-contact shared themes → significance scoring
 (threshold 70) → reach-out prompts with drafted messages.
 
+Give-first engine: below-the-bar updates that are resourceful/forwardable (detected via
+GIVE_WORDS in services/monitoring.js, or a `giveable`+`giveMessage` flag on curated
+data/commonGround.js updates) surface in a brass "Worth sending" section on Common Ground —
+framed as a no-ask favor. Sending records a touch ("Shared as a favor: …") like any outreach.
+
 ## Copy Rules
 - Never use "track/tracked/tracking" for people in UI copy — it reads as surveillance.
   Use "monitored", "watched", or "kept close" instead.

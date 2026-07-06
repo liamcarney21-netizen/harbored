@@ -158,7 +158,9 @@ export const themeUpdates = [
     source: 'Post & Courier',
     time: '5 days ago',
     score: 58,
-    holdReason: 'Recurring annual event — likely already on John\'s radar. Will flag again if registration opens.',
+    giveable: true,
+    giveMessage: "John — Charleston Pickleball Open dates just dropped for November. Figured you'd want to grab them before the calendar fills up. Should we play?",
+    holdReason: 'Recurring annual event — not urgent, but a friendly thing to pass along.',
   },
   {
     id: 6,
@@ -200,6 +202,8 @@ export const themeUpdates = [
     source: 'Surfline',
     time: '6 days ago',
     score: 49,
-    holdReason: 'Routine conditions update. Saving this context for your next natural touchpoint with Jordan.',
+    giveable: true,
+    giveMessage: "Jordan — Surfline's calling a strong swell at Folly this weekend. Didn't want you to miss it. Get out there.",
+    holdReason: 'Routine conditions update — but the kind of heads-up a friend appreciates.',
   },
 ]

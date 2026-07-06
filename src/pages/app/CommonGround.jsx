@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Send, Edit3, ChevronLeft, Zap, Plus, X, Check, Trophy, MapPin, TrendingUp, Activity, Briefcase, Radar, RefreshCw, ExternalLink, Waves } from 'lucide-react'
+import { Send, Edit3, ChevronLeft, Zap, Plus, X, Check, Trophy, MapPin, TrendingUp, Activity, Briefcase, Radar, RefreshCw, ExternalLink, Waves, Gift } from 'lucide-react'
 import Avatar from '../../components/Avatar'
 import { themeUpdates, SIGNIFICANCE_THRESHOLD } from '../../data/commonGround'
 import { useDataStore, selectNudges } from '../../store/dataStore'
@@ -106,6 +106,7 @@ export default function CommonGround() {
   const [msgText, setMsgText] = useState('')
   const [editingMsg, setEditingMsg] = useState(false)
   const [sent, setSent] = useState([])
+  const [given, setGiven] = useState([])
   const [dismissed, setDismissed] = useState([])
   const [addingFor, setAddingFor] = useState(null)
   const [newThemeLabel, setNewThemeLabel] = useState('')
@@ -129,7 +130,10 @@ export default function CommonGround() {
 
   const allUpdates = [...liveUpdates, ...themeUpdates]
   const opportunities = allUpdates.filter(u => u.score >= SIGNIFICANCE_THRESHOLD && !dismissed.includes(u.id))
-  const logged = allUpdates.filter(u => u.score < SIGNIFICANCE_THRESHOLD).slice(0, 8)
+  const belowBar = allUpdates.filter(u => u.score < SIGNIFICANCE_THRESHOLD)
+  // Below the bar but forwardable → surface as a "give first" favor.
+  const giveables = belowBar.filter(u => u.giveable && !dismissed.includes(u.id) && !given.includes(u.id))
+  const logged = belowBar.filter(u => !u.giveable).slice(0, 8)
   const themeCount = Object.values(themesByContact).reduce((n, t) => n + t.length, 0)
   const monitoredContacts = contacts.filter(c => (themesByContact[c.id] || []).length > 0)
 
@@ -158,6 +162,18 @@ export default function CommonGround() {
       message: nudge.opener,
       trigger: `Reconnect nudge — ${nudge.health.days} days quiet`,
     })
+  }
+
+  function handleGive(update) {
+    const contact = contacts.find(c => c.id === update.contactId)
+    const msg = update.giveMessage + (update.link ? `\n\n${update.link}` : '')
+    const channel = contact ? openSend(contact, msg, 'Thought you\'d want to see this') : null
+    recordTouch(update.contactId, {
+      channel: channel || 'email',
+      message: update.giveMessage,
+      trigger: `Shared as a favor: ${update.headline}`,
+    })
+    setGiven(prev => [...prev, update.id])
   }
 
   function handleSkip() {
@@ -372,6 +388,71 @@ export default function CommonGround() {
                       </button>
                     </div>
                   ))}
+                </div>
+              </>
+            )}
+
+            {/* Give first — forwardable favors */}
+            {giveables.length > 0 && (
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                  <Gift style={{ width: '13px', height: '13px', color: '#A97E2F' }} />
+                  <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 500, color: '#5C6B73' }}>
+                    Worth sending — a small favor, no reply needed
+                  </span>
+                </div>
+                <div style={{ borderRadius: '12px', overflow: 'hidden', background: '#FFFFFF', border: '1px solid #E6E2D8', marginBottom: '32px' }}>
+                  {giveables.map((u, i) => {
+                    const cfg = categoryConfig[u.category] || categoryConfig.hobby
+                    const Icon = cfg.icon
+                    return (
+                      <div
+                        key={u.id}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap', padding: '14px 20px',
+                          borderBottom: i < giveables.length - 1 ? '1px solid #EEEBE3' : 'none',
+                        }}
+                      >
+                        <button
+                          onClick={() => navigate(`/dashboard/contact/${u.contactId}`)}
+                          aria-label={`Open ${u.contactName}'s profile`}
+                          style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+                        >
+                          <Avatar initials={u.contactInitials} color={u.contactColor} size="md" />
+                        </button>
+                        <div style={{ flex: '1 1 200px', minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px', flexWrap: 'wrap' }}>
+                            <span style={{ fontWeight: 600, fontSize: '13px', color: '#1C2B33' }}>{u.contactName}</span>
+                            <span style={{
+                              display: 'inline-flex', alignItems: 'center', gap: '5px',
+                              fontSize: '11px', fontWeight: 500, padding: '2px 8px', borderRadius: '20px',
+                              background: cfg.bg, color: cfg.color,
+                            }}>
+                              <Icon style={{ width: '10px', height: '10px' }} />
+                              {u.themeLabel}
+                            </span>
+                            {u.live && <LiveBadge />}
+                          </div>
+                          <p style={{ fontSize: '13px', color: '#5C6B73', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {u.headline}
+                          </p>
+                          <p style={{ fontSize: '12px', color: '#5C6B73', fontStyle: 'italic', opacity: 0.85, marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            "{u.giveMessage}"
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => handleGive(u)}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0,
+                            fontSize: '12px', fontWeight: 500, padding: '7px 14px', borderRadius: '8px',
+                            background: 'rgba(169,126,47,0.12)', color: '#A97E2F', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+                          }}
+                        >
+                          <Gift style={{ width: '12px', height: '12px' }} /> Send as a favor
+                        </button>
+                      </div>
+                    )
+                  })}
                 </div>
               </>
             )}

@@ -22,6 +22,21 @@ const COLD_WORDS = [
   ['roundup', -10], ['recap', -6], ['odds', -8], ['forecast', -6],
 ]
 
+// "Give first" signals: resourceful, forwardable content — the kind of thing
+// you send as a favor ("thought you'd want to see this") rather than as
+// breaking news. These headlines usually score below the reach-out bar but
+// are still worth passing along on a shared theme.
+const GIVE_WORDS = [
+  'guide', 'how to', 'tips', 'ranking', 'ranked', 'best ', 'top ', 'list of',
+  'report', 'study', 'analysis', 'breakdown', 'deep dive', 'primer', 'explained',
+  'review', 'roundup', 'schedule', 'dates', 'calendar', 'forecast', 'opens', 'registration',
+]
+
+export function isGiveable(title) {
+  const t = title.toLowerCase()
+  return GIVE_WORDS.some(w => t.includes(w))
+}
+
 export function scoreHeadline(title, pubDate) {
   const t = title.toLowerCase()
   let score = 42
@@ -45,6 +60,18 @@ const DRAFTS = [
 export function draftMessage(firstName, themeLabel, headline) {
   const i = Math.abs(hash(headline)) % DRAFTS.length
   return DRAFTS[i](firstName, themeLabel, headline)
+}
+
+// Generosity framing: forward it as a favor, no ask attached.
+const GIVE_DRAFTS = [
+  (first, theme, headline) => `${first} — saw this and thought of you: "${headline}". No agenda, just figured you'd want it.`,
+  (first, theme, headline) => `Hey ${first}, this looked right up your alley — "${headline}". Sharing in case it's useful.`,
+  (first, theme, headline) => `${first} — filing this under things you'd appreciate: "${headline}". Enjoy.`,
+]
+
+export function draftGiveMessage(firstName, themeLabel, headline) {
+  const i = Math.abs(hash(headline + 'give')) % GIVE_DRAFTS.length
+  return GIVE_DRAFTS[i](firstName, themeLabel, headline)
 }
 
 export function holdReasonFor(score) {
@@ -92,6 +119,8 @@ export async function fetchLiveUpdates(contacts, themesByContact, { maxThemes = 
       const score = scoreHeadline(item.title, item.pubDate)
       const first = contact.name.split(' ')[0]
       const above = score >= SIGNIFICANCE_THRESHOLD
+      // Below the bar but resourceful → a "give first" candidate.
+      const giveable = !above && isGiveable(item.title)
       return {
         id: `live-${contact.id}-${theme.id}-${hash(item.title)}`,
         live: true,
@@ -114,6 +143,8 @@ export async function fetchLiveUpdates(contacts, themesByContact, { maxThemes = 
             ]
           : undefined,
         draftMessage: above ? draftMessage(first, theme.label, item.title) : undefined,
+        giveable,
+        giveMessage: giveable ? draftGiveMessage(first, theme.label, item.title) : undefined,
         holdReason: above ? undefined : holdReasonFor(score),
       }
     })
