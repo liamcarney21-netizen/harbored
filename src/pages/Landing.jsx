@@ -428,13 +428,13 @@ function Nav({ scrolled, openModal }) {
             onMouseLeave={e => e.currentTarget.style.color = 'rgba(250,248,243,0.62)'}
           >{label}</a>
         ))}
-        <a href="/login" style={{ fontFamily: SANS, fontSize: 13, fontWeight: 500, color: 'rgba(250,248,243,0.62)', textDecoration: 'none', marginRight: 4 }}
+        <a href="/login" className="nav-login" style={{ fontFamily: SANS, fontSize: 13, fontWeight: 500, color: 'rgba(250,248,243,0.62)', textDecoration: 'none', marginRight: 4, display: 'none' }}
           onMouseEnter={e => e.currentTarget.style.color = C.cream}
           onMouseLeave={e => e.currentTarget.style.color = 'rgba(250,248,243,0.62)'}
         >Login</a>
         <button onClick={openModal} style={{
           padding: '9px 20px', background: C.teal, color: '#fff',
-          fontFamily: SANS, fontWeight: 600, fontSize: 13,
+          fontFamily: SANS, fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap', flexShrink: 0,
           border: 'none', borderRadius: 8, cursor: 'pointer', transition: 'background 0.18s',
         }}
         onMouseEnter={e => e.currentTarget.style.background = '#09454B'}
@@ -457,12 +457,12 @@ const SUBNAV = [
 
 function SubNav() {
   return (
-    <div style={{
+    <div className="platform-subnav" style={{
       position: 'sticky', top: 64, zIndex: 90,
       background: 'rgba(250,248,243,0.94)', backdropFilter: 'blur(14px)',
       borderBottom: '1px solid #E5DFCF',
     }}>
-      <div style={{
+      <div className="platform-subnav-scroll" style={{
         maxWidth: 1120, margin: '0 auto', padding: '0 clamp(16px, 4vw, 40px)',
         display: 'flex', alignItems: 'center', gap: 4,
         overflowX: 'auto', WebkitOverflowScrolling: 'touch',
@@ -900,7 +900,10 @@ export default function Landing() {
       <WaitlistModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onPreviewApp={handlePreviewApp} />
 
       <style>{`
-        @media (min-width: 880px) { .nav-link { display: inline !important; } }
+        @media (min-width: 880px) { .nav-link, .nav-login { display: inline !important; } }
+        @media (max-width: 767px) { .platform-subnav { display: none !important; } }
+        .platform-subnav-scroll::-webkit-scrollbar { height: 0; display: none; }
+        .platform-subnav-scroll { scrollbar-width: none; }
         ::placeholder { color: rgba(250,248,243,0.28); }
         html { scroll-behavior: smooth; }
       `}</style>
