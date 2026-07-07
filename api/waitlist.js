@@ -1,4 +1,4 @@
-// Vercel serverless function: POST /api/waitlist { firstName, email }
+// Vercel serverless function: POST /api/waitlist { firstName, email, plan? }
 import { handleWaitlistRequest } from '../server/waitlistHandler.js'
 import { rateLimit, clientIp } from '../server/rateLimit.js'
 

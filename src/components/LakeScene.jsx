@@ -282,7 +282,7 @@ export default function LakeScene({ onCtaClick }) {
             animation: 'fadeUp 0.85s 0.52s ease both',
           }}
         >
-          Trusted by professionals at Goldman Sachs, Stripe, Google, and more.
+          In private early access — request an invite below.
         </div>
       </div>
     </div>

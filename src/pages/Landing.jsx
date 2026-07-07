@@ -155,8 +155,8 @@ function MockAvatar({ initials, size = 30 }) {
 function FeedMock() {
   const rows = [
     { init: 'JS', name: 'John Sullivan', chip: 'Villanova Basketball', chipColor: '#2E7D5B', head: 'Villanova lands five-star transfer guard Jalen Reyes', score: 92 },
+    { init: 'TW', name: 'Tom Whitfield', chip: 'Charleston Commercial Real Estate', chipColor: C.brass, head: 'Downtown retail vacancy hits decade low in Charleston', score: 88 },
     { init: 'SC', name: 'Sarah Chen', chip: 'Formula 1', chipColor: '#2E7D5B', head: 'F1 confirms Chicago street race for 2027', score: 84 },
-    { init: 'JS', name: 'John Sullivan', chip: 'Minneapolis Real Estate', chipColor: C.brass, head: 'City approves citywide duplex zoning reform', score: 78 },
   ];
   return (
     <BrowserWindow>
@@ -184,13 +184,13 @@ function DiscoveryMock() {
   return (
     <BrowserWindow path="harbored.app/discover">
       <div style={{ fontSize: 11, color: C.muted, fontStyle: 'italic', background: '#F7F5F0', border: '1px solid #EEEBE3', borderRadius: 8, padding: '10px 12px', marginBottom: 12, lineHeight: 1.6 }}>
-        "…did you catch the Nova game Saturday? Also played pickleball down in Charleston this weekend — you'd love the courts there…"
+        "Met Tom Whitfield at the Charleston Chamber mixer — he runs a commercial real estate firm downtown, mostly retail and mixed-use. Market's been tight, he said."
       </div>
       <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600, color: C.teal, marginBottom: 8 }}>
-        Found 3 shared themes
+        Found 2 shared themes
       </div>
       {[
-        ['Villanova Basketball', 92], ['Pickleball in Charleston', 86], ['Minneapolis Real Estate', 78],
+        ['Charleston Commercial Real Estate', 94], ['Downtown Retail Leasing', 79],
       ].map(([label, conf]) => (
         <div key={label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', borderRadius: 9, background: 'rgba(13,92,99,0.05)', border: '1px solid rgba(13,92,99,0.2)', marginBottom: 6 }}>
           <span style={{ fontSize: 12, fontWeight: 600, color: C.ink }}>{label}</span>
@@ -206,13 +206,13 @@ function PrepMock() {
     <BrowserWindow path="harbored.app/prep">
       <div style={{ marginBottom: 12 }}>
         <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600, color: C.teal, marginBottom: 2 }}>Prep brief</div>
-        <div style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 600, color: C.ink }}>Coffee — Spyhouse on Hennepin</div>
-        <div style={{ fontSize: 11, color: C.muted }}>Sunday 9:30 AM · with John Sullivan</div>
+        <div style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 600, color: C.ink }}>Coffee — Kudu Coffee, King Street</div>
+        <div style={{ fontSize: 11, color: C.muted }}>Thursday 8:30 AM · with Tom Whitfield</div>
       </div>
       {[
-        '"Nova just landed Jalen Reyes" — broke 6 hours ago. John will have opinions.',
-        'From your notes: two kids, eyeing a rental property in Minneapolis.',
-        "It's been 42 days — acknowledge the gap warmly.",
+        '"Downtown retail vacancy hit a decade low" — broke 3 days ago. Tom will have thoughts on where lease rates are headed.',
+        'From your notes: closed on a mixed-use building near the Battery last spring — ask how leasing’s going.',
+        "It's been 38 days since the Chamber mixer — good timing to follow up.",
       ].map((p, i) => (
         <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 8 }}>
           <span style={{ width: 17, height: 17, borderRadius: '50%', background: C.teal, color: '#fff', fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>{i + 1}</span>
@@ -235,7 +235,7 @@ function DigestMock() {
           </div>
         ))}
       </div>
-      {[['JS', 'John Sullivan', 'Villanova portal win — 92'], ['KC', 'Kellan Carney', 'Vikings trade up to No. 4 — 73']].map(([init, name, note]) => (
+      {[['TW', 'Tom Whitfield', 'Charleston retail vacancy low — 88'], ['KC', 'Kellan Carney', 'Vikings trade up to No. 4 — 73']].map(([init, name, note]) => (
         <div key={name} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0', borderTop: '1px solid #F0EEE7' }}>
           <MockAvatar initials={init} size={24} />
           <span style={{ fontSize: 12, fontWeight: 600, color: C.ink }}>{name}</span>
@@ -247,7 +247,7 @@ function DigestMock() {
 }
 
 /* ─── Waitlist Modal ────────────────────────────────────── */
-function WaitlistModal({ isOpen, onClose, onPreviewApp }) {
+function WaitlistModal({ isOpen, onClose, onPreviewApp, plan }) {
   const [firstName, setFirstName] = useState('');
   const [email, setEmail]         = useState('');
   const [submitted, setSubmitted] = useState(false);
@@ -266,10 +266,10 @@ function WaitlistModal({ isOpen, onClose, onPreviewApp }) {
     fetch('/api/waitlist', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ firstName, email }),
+      body: JSON.stringify({ firstName, email, plan: plan || undefined }),
     }).catch(() => {});
     const existing = JSON.parse(localStorage.getItem('harbored_waitlist') || '[]');
-    existing.push({ firstName, email, ts: new Date().toISOString() });
+    existing.push({ firstName, email, plan: plan || null, ts: new Date().toISOString() });
     localStorage.setItem('harbored_waitlist', JSON.stringify(existing));
     setSubmitted(true);
   };
@@ -344,7 +344,7 @@ function WaitlistModal({ isOpen, onClose, onPreviewApp }) {
                     Be the first to know.
                   </h2>
                   <p style={{ fontFamily: SANS, fontWeight: 300, fontSize: 14, color: 'rgba(250,248,243,0.48)', lineHeight: 1.65, marginBottom: 28 }}>
-                    Harbored is coming soon. Drop your info and we'll reach out when it's ready.
+                    Harbored is coming soon. Drop your info and we'll reach out when it's ready{plan === 'pro' ? " — we'll flag you as interested in Pro." : '.'}
                   </p>
                   <form onSubmit={handleSubmit}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 14 }}>
@@ -432,7 +432,7 @@ function Nav({ scrolled, openModal }) {
           onMouseEnter={e => e.currentTarget.style.color = C.cream}
           onMouseLeave={e => e.currentTarget.style.color = 'rgba(250,248,243,0.62)'}
         >Login</a>
-        <button onClick={openModal} style={{
+        <button onClick={() => openModal()} style={{
           padding: '9px 20px', background: C.teal, color: '#fff',
           fontFamily: SANS, fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap', flexShrink: 0,
           border: 'none', borderRadius: 8, cursor: 'pointer', transition: 'background 0.18s',
@@ -539,7 +539,8 @@ export default function Landing() {
   const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const openModal = () => setIsModalOpen(true);
+  const [modalPlan, setModalPlan] = useState(null);
+  const openModal = (plan = null) => { setModalPlan(plan); setIsModalOpen(true); };
 
   const handlePreviewApp = () => {
     localStorage.setItem('harbored_loggedin', 'true');
@@ -586,19 +587,19 @@ export default function Landing() {
               color: C.cream, margin: '0 0 22px',
               animation: 'fadeUp 0.85s 0.15s ease both',
             }}>
-              Every relationship runs on <em style={{ fontStyle: 'italic' }}>common ground.</em>
+              Your network is growing. <em style={{ fontStyle: 'italic' }}>Don't lose touch.</em>
             </h1>
             <p style={{
               fontFamily: SANS, fontWeight: 300, fontSize: 'clamp(15px, 1.6vw, 18px)',
               color: 'rgba(250,248,243,0.55)', maxWidth: 520, lineHeight: 1.7, marginBottom: 34,
               animation: 'fadeUp 0.85s 0.28s ease both',
             }}>
-              Tell Harbored what you share with each person — the team, the city, the market.
-              It watches those themes around the clock and tells you the moment there's a real
-              reason to reach out, message drafted.
+              Tell Harbored what you share with the people from your internships, your program,
+              your firm — the team, the city, the market. It watches those themes around the
+              clock and tells you the moment there's a real reason to reconnect, message drafted.
             </p>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 18, animation: 'fadeUp 0.85s 0.4s ease both' }}>
-              <button onClick={openModal} style={{
+              <button onClick={() => openModal()} style={{
                 padding: '14px 34px', background: C.teal, color: '#fff',
                 fontFamily: SANS, fontWeight: 600, fontSize: 14.5,
                 border: 'none', borderRadius: 8, cursor: 'pointer',
@@ -620,7 +621,7 @@ export default function Landing() {
               </a>
             </div>
             <p style={{ fontFamily: SANS, fontWeight: 300, fontSize: 12, color: 'rgba(250,248,243,0.28)', animation: 'fadeUp 0.85s 0.5s ease both' }}>
-              Trusted by professionals at Goldman Sachs, Stripe, Google, and more.
+              In private early access — request an invite below.
             </p>
           </div>
 
@@ -644,10 +645,10 @@ export default function Landing() {
         points={[
           'Themes across sports, places, markets, hobbies, and industries',
           'A visible reach-out bar at 70 — below it, logged quietly',
-          'Message drafted and ready the moment something crests',
+          'Message drafted for you to review and send — Auto-Send is opt-in, not the default',
         ]}
         cta="Explore Common Ground"
-        onCta={openModal}
+        onCta={() => openModal()}
         window={FeedMock}
         tint="rgba(13,92,99,0.07)"
       />
@@ -656,15 +657,16 @@ export default function Landing() {
       <FeatureSection
         id="discovery"
         kicker="Discovery"
-        title="Paste a conversation."
-        em="Harbored finds the common ground."
-        body="You don't have to remember what you share with everyone. Drop in a stretch of texts or emails and Harbored extracts the genuinely mutual interests — with the evidence quoted back to you — and starts monitoring the ones you approve."
+        title="Met someone worth knowing?"
+        em="Tell Harbored what you talked about."
+        body="Right after you meet someone — a new contact, a business owner, anyone worth staying close to — describe the relationship in your own words, or drop in the text thread if you've got one. Harbored pulls out the shared ground, quotes the evidence back to you, and starts monitoring the theme the moment you approve it."
         points={[
           'Evidence-backed proposals, not guesses',
+          'Works from a quick note or a full conversation',
           'One click to start monitoring each theme',
         ]}
         cta="Explore Discovery"
-        onCta={openModal}
+        onCta={() => openModal()}
         window={DiscoveryMock}
         flip
         tint="rgba(169,126,47,0.09)"
@@ -682,7 +684,7 @@ export default function Landing() {
           'Openers ready if you blank',
         ]}
         cta="Explore Prep Briefs"
-        onCta={openModal}
+        onCta={() => openModal()}
         window={PrepMock}
         tint="rgba(30,58,95,0.07)"
       />
@@ -699,7 +701,7 @@ export default function Landing() {
           'Drifting contacts flagged before they go cold',
         ]}
         cta="Explore the Digest"
-        onCta={openModal}
+        onCta={() => openModal()}
         window={DigestMock}
         flip
         tint="rgba(46,125,91,0.08)"
@@ -775,7 +777,7 @@ export default function Landing() {
             <h2 style={{ fontFamily: SERIF, fontSize: 'clamp(28px, 3.6vw, 44px)', fontWeight: 600, letterSpacing: '-0.02em', lineHeight: 1.12, marginBottom: 12 }}>
               Simple, honest pricing.
             </h2>
-            <p style={{ fontFamily: SANS, fontWeight: 300, fontSize: 15.5, color: '#4a5a60' }}>Start free. Upgrade when you're ready.</p>
+            <p style={{ fontFamily: SANS, fontWeight: 300, fontSize: 15.5, color: '#4a5a60' }}>Here's what launch pricing looks like — join the waitlist to lock it in.</p>
           </Reveal>
 
           <RevealGroup style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20 }}>
@@ -794,14 +796,14 @@ export default function Landing() {
                     </div>
                   ))}
                 </div>
-                <button onClick={openModal} style={{
+                <button onClick={() => openModal('free')} style={{
                   display: 'block', marginTop: 26, padding: '13px', textAlign: 'center',
                   background: 'transparent', border: `1px solid ${C.ink}`, borderRadius: 8,
                   fontFamily: SANS, fontWeight: 600, fontSize: 14, color: C.ink, cursor: 'pointer', transition: 'background 0.18s, color 0.18s',
                 }}
                 onMouseEnter={e => { e.currentTarget.style.background = C.ink; e.currentTarget.style.color = C.cream; }}
                 onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = C.ink; }}>
-                  Start Free
+                  Join Waitlist — Free
                 </button>
               </div>
             </motion.div>
@@ -822,14 +824,14 @@ export default function Landing() {
                     </div>
                   ))}
                 </div>
-                <button onClick={openModal} style={{
+                <button onClick={() => openModal('pro')} style={{
                   display: 'block', marginTop: 26, padding: '14px', textAlign: 'center',
                   background: C.teal, borderRadius: 8, fontFamily: SANS, fontWeight: 700, fontSize: 14,
                   color: '#fff', border: 'none', cursor: 'pointer', boxShadow: '0 4px 20px rgba(13,92,99,0.4)', transition: 'background 0.18s',
                 }}
                 onMouseEnter={e => e.currentTarget.style.background = '#09454B'}
                 onMouseLeave={e => e.currentTarget.style.background = C.teal}>
-                  Get Harbored Pro
+                  Join Waitlist — Pro
                 </button>
               </div>
             </motion.div>
@@ -846,7 +848,7 @@ export default function Landing() {
           <p style={{ fontFamily: SANS, fontWeight: 300, fontSize: 'clamp(15px, 1.7vw, 18px)', color: 'rgba(250,248,243,0.48)', maxWidth: 380, margin: '0 auto 44px', lineHeight: 1.65 }}>
             Join the waitlist. Be the first to show up when it counts.
           </p>
-          <button onClick={openModal} style={{
+          <button onClick={() => openModal()} style={{
             padding: '16px 44px', background: C.teal, color: '#fff',
             fontFamily: SANS, fontWeight: 700, fontSize: 15,
             border: 'none', borderRadius: 8, cursor: 'pointer',
@@ -857,7 +859,7 @@ export default function Landing() {
             Join the Waitlist
           </button>
           <p style={{ fontFamily: SANS, fontSize: 12, color: 'rgba(250,248,243,0.24)', marginTop: 18 }}>
-            No credit card. No spam. Cancel anytime.
+            No credit card. No spam. We'll email you when it's ready.
           </p>
         </Reveal>
       </section>
@@ -897,7 +899,7 @@ export default function Landing() {
         </div>
       </footer>
 
-      <WaitlistModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onPreviewApp={handlePreviewApp} />
+      <WaitlistModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onPreviewApp={handlePreviewApp} plan={modalPlan} />
 
       <style>{`
         @media (min-width: 880px) { .nav-link, .nav-login { display: inline !important; } }
