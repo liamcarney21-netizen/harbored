@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Anchor } from 'lucide-react';
+import { useAuthStore } from '../store/authStore';
 
 const inputStyle = {
   width: '100%', padding: '12px 16px', boxSizing: 'border-box',
@@ -30,11 +31,21 @@ function blurRing(e) {
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const signIn = useAuthStore(s => s.signIn);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    localStorage.setItem('harbored_loggedin', 'true');
+    setError('');
+    setLoading(true);
+    const { error: signInError } = await signIn(email, password);
+    setLoading(false);
+    if (signInError) {
+      setError(signInError);
+      return;
+    }
     navigate('/dashboard');
   };
 
@@ -104,19 +115,26 @@ export default function Login() {
             />
           </div>
 
-          <button type="submit" style={{
+          {error && (
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#B4423A', marginBottom: 16, textAlign: 'center' }}>
+              {error}
+            </p>
+          )}
+
+          <button type="submit" disabled={loading} style={{
             width: '100%', padding: '13px',
             background: '#0D5C63',
             color: '#FFFFFF',
             fontFamily: 'Inter, sans-serif',
             fontWeight: 600, fontSize: 15,
             border: 'none', borderRadius: 24,
-            cursor: 'pointer',
+            cursor: loading ? 'default' : 'pointer',
+            opacity: loading ? 0.7 : 1,
             transition: 'background 0.2s',
           }}
-          onMouseEnter={e => e.currentTarget.style.background = '#09454B'}
-          onMouseLeave={e => e.currentTarget.style.background = '#0D5C63'}
-          >Sign In</button>
+          onMouseEnter={e => { if (!loading) e.currentTarget.style.background = '#09454B'; }}
+          onMouseLeave={e => { if (!loading) e.currentTarget.style.background = '#0D5C63'; }}
+          >{loading ? 'Signing in…' : 'Sign In'}</button>
         </form>
 
         <p style={{

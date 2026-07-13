@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Anchor } from 'lucide-react';
+import { useAuthStore } from '../store/authStore';
 
 const inputStyle = {
   width: '100%', padding: '12px 16px', boxSizing: 'border-box',
@@ -28,18 +29,28 @@ function blurRing(e) {
 }
 
 export default function Signup() {
-  const [step, setStep] = useState(1);
-  const [form, setForm] = useState({ name: '', email: '', password: '', university: '', gradYear: '', major: '' });
+  const [form, setForm] = useState({ name: '', email: '', password: '' });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const signUp = useAuthStore(s => s.signUp);
 
   const update = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
-  const handleContinue = () => {
-    if (step === 1) setStep(2);
-    else {
-      localStorage.setItem('harbored_loggedin', 'true');
-      navigate('/dashboard');
+  const handleContinue = async () => {
+    if (!form.name || !form.email || !form.password) {
+      setError('Fill in all fields to continue.');
+      return;
     }
+    setError('');
+    setLoading(true);
+    const { error: signUpError } = await signUp(form.email, form.password, form.name);
+    setLoading(false);
+    if (signUpError) {
+      setError(signUpError);
+      return;
+    }
+    navigate('/dashboard');
   };
 
   return (
@@ -71,76 +82,52 @@ export default function Signup() {
           </div>
         </Link>
 
-        {/* Progress */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 32 }}>
-          {[1, 2].map(s => (
-            <div key={s} style={{
-              flex: 1, height: 3, borderRadius: 2,
-              background: s <= step ? '#0D5C63' : '#E5E1D7',
-              transition: 'background 0.4s',
-            }} />
-          ))}
-        </div>
-
         <h1 style={{ fontFamily: '"Fraunces", Georgia, serif', fontSize: 24, fontWeight: 600, color: '#1C2B33', marginBottom: 6, textAlign: 'center' }}>
-          {step === 1 ? 'Create your account' : 'About you'}
+          Create your account
         </h1>
         <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#5C6B73', textAlign: 'center', marginBottom: 32 }}>
-          {step === 1 ? 'Your network, kept close.' : 'Help us find your network.'}
+          Your network, kept close.
         </p>
 
-        {step === 1 ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div>
-              <label htmlFor="su-name" style={labelStyle}>Full Name</label>
-              <input id="su-name" style={inputStyle} placeholder="Maya Chen" value={form.name} onChange={e => update('name', e.target.value)}
-                onFocus={focusRing} onBlur={blurRing} />
-            </div>
-            <div>
-              <label htmlFor="su-email" style={labelStyle}>Email</label>
-              <input id="su-email" type="email" style={inputStyle} placeholder="you@university.edu" value={form.email} onChange={e => update('email', e.target.value)}
-                onFocus={focusRing} onBlur={blurRing} />
-            </div>
-            <div>
-              <label htmlFor="su-password" style={labelStyle}>Password</label>
-              <input id="su-password" type="password" style={inputStyle} placeholder="••••••••" value={form.password} onChange={e => update('password', e.target.value)}
-                onFocus={focusRing} onBlur={blurRing} />
-            </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div>
+            <label htmlFor="su-name" style={labelStyle}>Full Name</label>
+            <input id="su-name" style={inputStyle} placeholder="Maya Chen" value={form.name} onChange={e => update('name', e.target.value)}
+              onFocus={focusRing} onBlur={blurRing} />
           </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div>
-              <label htmlFor="su-university" style={labelStyle}>University</label>
-              <input id="su-university" style={inputStyle} placeholder="University of Michigan" value={form.university} onChange={e => update('university', e.target.value)}
-                onFocus={focusRing} onBlur={blurRing} />
-            </div>
-            <div>
-              <label htmlFor="su-gradyear" style={labelStyle}>Graduation Year</label>
-              <input id="su-gradyear" style={inputStyle} placeholder="2024" value={form.gradYear} onChange={e => update('gradYear', e.target.value)}
-                onFocus={focusRing} onBlur={blurRing} />
-            </div>
-            <div>
-              <label htmlFor="su-major" style={labelStyle}>Major</label>
-              <input id="su-major" style={inputStyle} placeholder="Economics" value={form.major} onChange={e => update('major', e.target.value)}
-                onFocus={focusRing} onBlur={blurRing} />
-            </div>
+          <div>
+            <label htmlFor="su-email" style={labelStyle}>Email</label>
+            <input id="su-email" type="email" style={inputStyle} placeholder="you@example.com" value={form.email} onChange={e => update('email', e.target.value)}
+              onFocus={focusRing} onBlur={blurRing} />
           </div>
+          <div>
+            <label htmlFor="su-password" style={labelStyle}>Password</label>
+            <input id="su-password" type="password" style={inputStyle} placeholder="••••••••" value={form.password} onChange={e => update('password', e.target.value)}
+              onFocus={focusRing} onBlur={blurRing} />
+          </div>
+        </div>
+
+        {error && (
+          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#B4423A', marginTop: 16, textAlign: 'center' }}>
+            {error}
+          </p>
         )}
 
-        <button onClick={handleContinue} style={{
+        <button onClick={handleContinue} disabled={loading} style={{
           width: '100%', padding: '13px', marginTop: 28,
           background: '#0D5C63',
           color: '#FFFFFF',
           fontFamily: 'Inter, sans-serif',
           fontWeight: 600, fontSize: 15,
           border: 'none', borderRadius: 24,
-          cursor: 'pointer',
+          cursor: loading ? 'default' : 'pointer',
+          opacity: loading ? 0.7 : 1,
           transition: 'background 0.2s',
         }}
-        onMouseEnter={e => e.currentTarget.style.background = '#09454B'}
-        onMouseLeave={e => e.currentTarget.style.background = '#0D5C63'}
+        onMouseEnter={e => { if (!loading) e.currentTarget.style.background = '#09454B'; }}
+        onMouseLeave={e => { if (!loading) e.currentTarget.style.background = '#0D5C63'; }}
         >
-          {step === 1 ? 'Continue' : 'Join Harbored'}
+          {loading ? 'Joining…' : 'Join Harbored'}
         </button>
 
         <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#5C6B73', textAlign: 'center', marginTop: 20 }}>

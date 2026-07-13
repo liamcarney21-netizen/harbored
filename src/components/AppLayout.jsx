@@ -2,9 +2,12 @@ import { useState } from 'react'
 import { Navigate, Routes, Route, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Menu, Anchor } from 'lucide-react'
+import { useAuthStore } from '../store/authStore'
+import { useDataStore } from '../store/dataStore'
 import AppSidebar from './AppSidebar'
 import Onboarding from './Onboarding'
 import AddContactModal from './AddContactModal'
+import ImportContactsModal from './ImportContactsModal'
 import { useIsMobile } from '../hooks/useIsMobile'
 import Dashboard from '../pages/app/Dashboard'
 import Alerts from '../pages/app/Alerts'
@@ -18,7 +21,9 @@ import Analytics from '../pages/app/Analytics'
 import Settings from '../pages/app/Settings'
 
 export default function AppLayout() {
-  const isLoggedIn = localStorage.getItem('harbored_loggedin') === 'true'
+  const user = useAuthStore(s => s.user)
+  const initialized = useAuthStore(s => s.initialized)
+  const dataLoading = useDataStore(s => s.loading)
   const isMobile = useIsMobile()
   const navigate = useNavigate()
   const [showOnboarding, setShowOnboarding] = useState(
@@ -26,8 +31,11 @@ export default function AppLayout() {
   )
   const [showAddContact, setShowAddContact] = useState(false)
   const [addContactFirstRun, setAddContactFirstRun] = useState(false)
+  const [showImportContacts, setShowImportContacts] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
-  if (!isLoggedIn) return <Navigate to="/login" replace />
+  if (!initialized) return null
+  if (!user) return <Navigate to="/login" replace />
+  if (dataLoading) return null
 
   function finishOnboarding(andAddContact = false) {
     localStorage.setItem('harbored_onboarded', 'true')
@@ -41,6 +49,11 @@ export default function AppLayout() {
   const openAddContact = () => {
     setAddContactFirstRun(false)
     setShowAddContact(true)
+    setDrawerOpen(false)
+  }
+
+  const openImportContacts = () => {
+    setShowImportContacts(true)
     setDrawerOpen(false)
   }
 
@@ -83,7 +96,7 @@ export default function AppLayout() {
       )}
 
       {/* Sidebar: static column on desktop, slide-over drawer on mobile */}
-      {!isMobile && <AppSidebar onAddContact={openAddContact} />}
+      {!isMobile && <AppSidebar onAddContact={openAddContact} onImportContacts={openImportContacts} />}
       <AnimatePresence>
         {isMobile && drawerOpen && (
           <>
@@ -97,7 +110,7 @@ export default function AppLayout() {
               transition={{ type: 'spring', damping: 30, stiffness: 320 }}
               style={{ position: 'fixed', left: 0, top: 0, bottom: 0, zIndex: 41, boxShadow: '8px 0 32px rgba(0,0,0,0.18)' }}
             >
-              <AppSidebar onAddContact={openAddContact} onNavigate={() => setDrawerOpen(false)} />
+              <AppSidebar onAddContact={openAddContact} onImportContacts={openImportContacts} onNavigate={() => setDrawerOpen(false)} />
             </motion.div>
           </>
         )}
@@ -108,7 +121,7 @@ export default function AppLayout() {
           <Route index element={<CommonGround />} />
           <Route path="overview"  element={<Dashboard onAddContact={openAddContact} />} />
           <Route path="alerts"    element={<Alerts />} />
-          <Route path="network"   element={<Network onAddContact={openAddContact} />} />
+          <Route path="network"   element={<Network onAddContact={openAddContact} onImportContacts={openImportContacts} />} />
           <Route path="contact/:id" element={<ContactProfile />} />
           <Route path="prep/:id" element={<PrepBrief />} />
           <Route path="digest"    element={<Digest />} />
@@ -123,6 +136,10 @@ export default function AppLayout() {
         open={showAddContact}
         firstRun={addContactFirstRun}
         onClose={() => setShowAddContact(false)}
+      />
+      <ImportContactsModal
+        open={showImportContacts}
+        onClose={() => setShowImportContacts(false)}
       />
     </motion.div>
   )
