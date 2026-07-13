@@ -1,7 +1,8 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
 import { contacts as seedContacts } from '../data/appData'
 import { sharedThemes as seedThemes } from '../data/commonGround'
+import { supabase } from '../lib/supabase'
+import { useAuthStore } from './authStore'
 
 const DAY = 86400000
 const daysAgo = n => new Date(Date.now() - n * DAY).toISOString()
@@ -61,117 +62,168 @@ const SEED_MEETINGS = [
   { id: 'mtg-2', contactId: 2,  title: 'Catch-up call',                datetime: daysFromNow(5, 15, 0) },
 ]
 
-export const useDataStore = create(
-  persist(
-    (set, get) => ({
-      contacts: buildSeedContacts(),
-      themesByContact: buildSeedThemes(),
-      touches: SEED_TOUCHES,
-      meetings: SEED_MEETINGS,
+function seedSnapshot() {
+  return {
+    contacts: buildSeedContacts(),
+    themesByContact: buildSeedThemes(),
+    touches: SEED_TOUCHES,
+    meetings: SEED_MEETINGS,
+  }
+}
 
-      addMeeting: (contactId, { title, datetime }) => {
-        const meeting = { id: `mtg-${Date.now()}`, contactId, title, datetime }
-        set(s => ({ meetings: [...s.meetings, meeting] }))
-        return meeting
-      },
+// Date.now() alone can collide when adding several contacts in a tight loop
+// (e.g. bulk import) — duplicate ids silently clobber each other's themes.
+let contactIdCounter = 0
+function nextContactId() {
+  contactIdCounter = (contactIdCounter + 1) % 1000
+  return Date.now() * 1000 + contactIdCounter
+}
 
-      removeMeeting: id => set(s => ({ meetings: s.meetings.filter(m => m.id !== id) })),
+// Every mutation writes the full snapshot back to Supabase, debounced so
+// rapid successive actions (e.g. typing a note) don't spam the network.
+let syncTimer = null
+function scheduleSync(get) {
+  if (get().loading) return
+  clearTimeout(syncTimer)
+  syncTimer = setTimeout(() => {
+    const user = useAuthStore.getState().user
+    if (!user) return
+    const { contacts, themesByContact, touches, meetings } = get()
+    supabase.from('user_data').upsert({
+      user_id: user.id,
+      data: { contacts, themesByContact, touches, meetings },
+      updated_at: new Date().toISOString(),
+    }).then(({ error }) => {
+      if (error) console.error('Failed to sync data to Supabase:', error.message)
+    })
+  }, 600)
+}
 
-      // Sample-data controls: seeds are tagged so a real user can start clean
-      // without losing anything they added themselves.
-      clearSampleData: () => set(s => {
-        const seedIds = new Set(s.contacts.filter(c => c.seed).map(c => c.id))
-        const themesByContact = { ...s.themesByContact }
-        for (const id of seedIds) delete themesByContact[id]
-        return {
-          contacts: s.contacts.filter(c => !c.seed),
-          themesByContact,
-          touches: s.touches.filter(t => !seedIds.has(t.contactId)),
-          meetings: s.meetings.filter(m => !seedIds.has(m.contactId)),
-        }
-      }),
+export const useDataStore = create((set, get) => {
+  const syncedSet = (partial) => {
+    set(partial)
+    scheduleSync(get)
+  }
 
-      restoreSampleData: () => set(s => {
-        const existing = new Set(s.contacts.map(c => c.id))
-        return {
-          contacts: [...s.contacts, ...buildSeedContacts().filter(c => !existing.has(c.id))],
-          themesByContact: { ...buildSeedThemes(), ...s.themesByContact },
-          touches: [...s.touches.filter(t => !SEED_TOUCHES.some(st => st.id === t.id)), ...SEED_TOUCHES],
-          meetings: [...s.meetings.filter(m => !SEED_MEETINGS.some(sm => sm.id === m.id)), ...SEED_MEETINGS],
-        }
-      }),
+  return {
+    contacts: [],
+    themesByContact: {},
+    touches: [],
+    meetings: [],
+    loading: true,
 
-      addContact: ({ name, role, company, email, phone, themes = [] }) => {
-        const id = Date.now()
-        const initials = name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
-        const colors = ['#1e3a5f', '#1a2e4a', '#1c3554', '#172b45']
-        const contact = {
-          id, name, initials, role, company,
-          platforms: ['linkedin'],
-          color: colors[id % colors.length],
-          email: email || fakeEmail(name),
-          phone: phone || '',
-          lastTouch: null,
-          lastEvent: null,
-          notes: '',
-        }
-        set(s => ({
-          contacts: [...s.contacts, contact],
-          themesByContact: {
-            ...s.themesByContact,
-            [id]: themes.map((t, i) => ({ id: `t${id}-${i}`, label: t.label, category: t.category, updatesThisMonth: 0 })),
-          },
-        }))
-        return contact
-      },
+    // Called once a Supabase session is known (see App.jsx). Pulls this
+    // user's saved data, or seeds a fresh account on first login.
+    hydrate: async () => {
+      const user = useAuthStore.getState().user
+      if (!user) { set({ loading: false }); return }
+      set({ loading: true })
+      const { data, error } = await supabase
+        .from('user_data')
+        .select('data')
+        .eq('user_id', user.id)
+        .maybeSingle()
+      if (error) console.error('Failed to load data from Supabase:', error.message)
+      if (data?.data) {
+        set({ ...data.data, loading: false })
+      } else {
+        set({ ...seedSnapshot(), loading: false })
+        scheduleSync(get)
+      }
+    },
 
-      addTheme: (contactId, label, category) => set(s => ({
-        themesByContact: {
-          ...s.themesByContact,
-          [contactId]: [
-            ...(s.themesByContact[contactId] || []),
-            { id: `t${Date.now()}`, label, category, updatesThisMonth: 0 },
-          ],
-        },
-      })),
+    // Called on logout so the next login on a shared device doesn't see
+    // the previous user's data before hydrate() completes.
+    reset: () => set({ contacts: [], themesByContact: {}, touches: [], meetings: [], loading: true }),
 
-      removeTheme: (contactId, themeId) => set(s => ({
-        themesByContact: {
-          ...s.themesByContact,
-          [contactId]: (s.themesByContact[contactId] || []).filter(t => t.id !== themeId),
-        },
-      })),
+    addMeeting: (contactId, { title, datetime }) => {
+      const meeting = { id: `mtg-${Date.now()}`, contactId, title, datetime }
+      syncedSet(s => ({ meetings: [...s.meetings, meeting] }))
+      return meeting
+    },
 
-      recordTouch: (contactId, { channel, message, trigger }) => {
-        const date = new Date().toISOString()
-        set(s => ({
-          touches: [{ id: `touch-${Date.now()}`, contactId, date, channel, message, trigger }, ...s.touches],
-          contacts: s.contacts.map(c => (c.id === contactId ? { ...c, lastTouch: date } : c)),
-        }))
-      },
+    removeMeeting: id => syncedSet(s => ({ meetings: s.meetings.filter(m => m.id !== id) })),
 
-      saveNote: (contactId, notes) => set(s => ({
-        contacts: s.contacts.map(c => (c.id === contactId ? { ...c, notes } : c)),
-      })),
-
-      getContact: id => get().contacts.find(c => c.id === Number(id) || c.id === id),
+    // Sample-data controls: seeds are tagged so a real user can start clean
+    // without losing anything they added themselves.
+    clearSampleData: () => syncedSet(s => {
+      const seedIds = new Set(s.contacts.filter(c => c.seed).map(c => c.id))
+      const themesByContact = { ...s.themesByContact }
+      for (const id of seedIds) delete themesByContact[id]
+      return {
+        contacts: s.contacts.filter(c => !c.seed),
+        themesByContact,
+        touches: s.touches.filter(t => !seedIds.has(t.contactId)),
+        meetings: s.meetings.filter(m => !seedIds.has(m.contactId)),
+      }
     }),
-    {
-      name: 'harbored-data',
-      version: 2,
-      // v1 → v2: seed contacts predate the `seed` flag. Seed ids are the
-      // small numeric ids from appData; user-added contacts use Date.now().
-      migrate: (persisted, version) => {
-        if (version < 2 && persisted?.contacts) {
-          persisted.contacts = persisted.contacts.map(c =>
-            typeof c.id === 'number' && c.id <= 100 ? { ...c, seed: true } : c
-          )
-        }
-        return persisted
+
+    restoreSampleData: () => syncedSet(s => {
+      const existing = new Set(s.contacts.map(c => c.id))
+      return {
+        contacts: [...s.contacts, ...buildSeedContacts().filter(c => !existing.has(c.id))],
+        themesByContact: { ...buildSeedThemes(), ...s.themesByContact },
+        touches: [...s.touches.filter(t => !SEED_TOUCHES.some(st => st.id === t.id)), ...SEED_TOUCHES],
+        meetings: [...s.meetings.filter(m => !SEED_MEETINGS.some(sm => sm.id === m.id)), ...SEED_MEETINGS],
+      }
+    }),
+
+    addContact: ({ name, role, company, email, phone, themes = [] }) => {
+      const id = nextContactId()
+      const initials = name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+      const colors = ['#1e3a5f', '#1a2e4a', '#1c3554', '#172b45']
+      const contact = {
+        id, name, initials, role, company,
+        platforms: ['linkedin'],
+        color: colors[id % colors.length],
+        email: email || fakeEmail(name),
+        phone: phone || '',
+        lastTouch: null,
+        lastEvent: null,
+        notes: '',
+      }
+      syncedSet(s => ({
+        contacts: [...s.contacts, contact],
+        themesByContact: {
+          ...s.themesByContact,
+          [id]: themes.map((t, i) => ({ id: `t${id}-${i}`, label: t.label, category: t.category, updatesThisMonth: 0 })),
+        },
+      }))
+      return contact
+    },
+
+    addTheme: (contactId, label, category) => syncedSet(s => ({
+      themesByContact: {
+        ...s.themesByContact,
+        [contactId]: [
+          ...(s.themesByContact[contactId] || []),
+          { id: `t${Date.now()}`, label, category, updatesThisMonth: 0 },
+        ],
       },
-    }
-  )
-)
+    })),
+
+    removeTheme: (contactId, themeId) => syncedSet(s => ({
+      themesByContact: {
+        ...s.themesByContact,
+        [contactId]: (s.themesByContact[contactId] || []).filter(t => t.id !== themeId),
+      },
+    })),
+
+    recordTouch: (contactId, { channel, message, trigger }) => {
+      const date = new Date().toISOString()
+      syncedSet(s => ({
+        touches: [{ id: `touch-${Date.now()}`, contactId, date, channel, message, trigger }, ...s.touches],
+        contacts: s.contacts.map(c => (c.id === contactId ? { ...c, lastTouch: date } : c)),
+      }))
+    },
+
+    saveNote: (contactId, notes) => syncedSet(s => ({
+      contacts: s.contacts.map(c => (c.id === contactId ? { ...c, notes } : c)),
+    })),
+
+    getContact: id => get().contacts.find(c => c.id === Number(id) || c.id === id),
+  }
+})
 
 // Contacts quietly drifting: no touch in 45+ days. Each gets a low-stakes
 // opener so there's always a next step, even with no news.
