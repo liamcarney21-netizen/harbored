@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Search, Plus } from 'lucide-react'
+import { Search, Plus, Upload } from 'lucide-react'
 import Avatar from '../../components/Avatar'
 import PlatformBadge from '../../components/PlatformBadge'
 import { useDataStore, healthFromLastTouch } from '../../store/dataStore'
@@ -70,7 +70,7 @@ function ContactCard({ contact, themeCount, onOpen }) {
   )
 }
 
-export default function Network({ onAddContact }) {
+export default function Network({ onAddContact, onImportContacts }) {
   const navigate = useNavigate()
   const contacts = useDataStore(s => s.contacts)
   const themesByContact = useDataStore(s => s.themesByContact)
@@ -103,17 +103,30 @@ export default function Network({ onAddContact }) {
             {contacts.length} relationships, quietly monitored
           </p>
         </div>
-        <button
-          onClick={onAddContact}
-          style={{
-            display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0,
-            padding: '10px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
-            background: '#0D5C63', color: '#FFFFFF', border: 'none', cursor: 'pointer',
-            fontFamily: 'Inter, sans-serif',
-          }}
-        >
-          <Plus style={{ width: '14px', height: '14px' }} /> Add Contact
-        </button>
+        <div style={{ display: 'flex', gap: '10px', flexShrink: 0 }}>
+          <button
+            onClick={onImportContacts}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '8px',
+              padding: '10px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
+              background: 'none', color: '#0D5C63', border: '1px solid rgba(13,92,99,0.25)', cursor: 'pointer',
+              fontFamily: 'Inter, sans-serif',
+            }}
+          >
+            <Upload style={{ width: '14px', height: '14px' }} /> Import Contacts
+          </button>
+          <button
+            onClick={onAddContact}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '8px',
+              padding: '10px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
+              background: '#0D5C63', color: '#FFFFFF', border: 'none', cursor: 'pointer',
+              fontFamily: 'Inter, sans-serif',
+            }}
+          >
+            <Plus style={{ width: '14px', height: '14px' }} /> Add Contact
+          </button>
+        </div>
       </div>
 
       {/* Search + Filters */}

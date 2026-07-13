@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Bell, Users, MessageSquare, BarChart2, Settings, Anchor, Settings2, Compass, Mail, UserPlus } from 'lucide-react'
+import { LayoutDashboard, Bell, Users, MessageSquare, BarChart2, Settings, Anchor, Settings2, Compass, Mail, UserPlus, Upload } from 'lucide-react'
 
 const navItems = [
   { path: '/dashboard',           label: 'Common Ground', icon: Compass, end: true, badge: 4 },
@@ -12,7 +12,7 @@ const navItems = [
   { path: '/dashboard/settings',  label: 'Settings',   icon: Settings },
 ]
 
-export default function AppSidebar({ onAddContact, onNavigate }) {
+export default function AppSidebar({ onAddContact, onImportContacts, onNavigate }) {
   const navigate = useNavigate()
 
   return (
@@ -98,7 +98,7 @@ export default function AppSidebar({ onAddContact, onNavigate }) {
       </nav>
 
       {/* Add contact */}
-      <div style={{ padding: '12px' }}>
+      <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
         <button
           onClick={onAddContact}
           style={{
@@ -111,6 +111,17 @@ export default function AppSidebar({ onAddContact, onNavigate }) {
           onMouseLeave={e => e.currentTarget.style.background = '#0D5C63'}
         >
           <UserPlus style={{ width: '14px', height: '14px' }} /> Add Contact
+        </button>
+        <button
+          onClick={onImportContacts}
+          style={{
+            width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+            padding: '9px 12px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
+            background: 'none', color: '#0D5C63', border: '1px solid rgba(13,92,99,0.25)', cursor: 'pointer',
+            fontFamily: 'Inter, sans-serif',
+          }}
+        >
+          <Upload style={{ width: '14px', height: '14px' }} /> Import Contacts
         </button>
       </div>
 
