@@ -1,5 +1,4 @@
 import { useRef, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
 /* ─── Animation helpers ─────────────────────────────────── */
@@ -247,7 +246,7 @@ function DigestMock() {
 }
 
 /* ─── Waitlist Modal ────────────────────────────────────── */
-function WaitlistModal({ isOpen, onClose, onPreviewApp, plan }) {
+function WaitlistModal({ isOpen, onClose, plan }) {
   const [firstName, setFirstName] = useState('');
   const [email, setEmail]         = useState('');
   const [submitted, setSubmitted] = useState(false);
@@ -381,17 +380,9 @@ function WaitlistModal({ isOpen, onClose, onPreviewApp, plan }) {
                   <h3 style={{ fontFamily: SERIF, fontSize: 'clamp(20px, 3.5vw, 26px)', fontWeight: 600, color: C.cream, marginBottom: 10 }}>
                     You're on the list.
                   </h3>
-                  <p style={{ fontFamily: SANS, fontWeight: 300, fontSize: 14, color: 'rgba(250,248,243,0.48)', lineHeight: 1.65, marginBottom: 28 }}>
-                    We'll reach out when Harbored is ready. In the meantime, take a look inside.
+                  <p style={{ fontFamily: SANS, fontWeight: 300, fontSize: 14, color: 'rgba(250,248,243,0.48)', lineHeight: 1.65 }}>
+                    We'll reach out when Harbored is ready.
                   </p>
-                  <button onClick={onPreviewApp} style={{
-                    width: '100%', padding: '14px', background: C.teal, color: '#fff',
-                    fontFamily: SANS, fontWeight: 700, fontSize: 14,
-                    border: 'none', borderRadius: 8, cursor: 'pointer',
-                    boxShadow: '0 4px 20px rgba(13,92,99,0.4)',
-                  }}>
-                    Preview the App
-                  </button>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -428,10 +419,6 @@ function Nav({ scrolled, openModal }) {
             onMouseLeave={e => e.currentTarget.style.color = 'rgba(250,248,243,0.62)'}
           >{label}</a>
         ))}
-        <a href="/login" className="nav-login" style={{ fontFamily: SANS, fontSize: 13, fontWeight: 500, color: 'rgba(250,248,243,0.62)', textDecoration: 'none', marginRight: 4, display: 'none' }}
-          onMouseEnter={e => e.currentTarget.style.color = C.cream}
-          onMouseLeave={e => e.currentTarget.style.color = 'rgba(250,248,243,0.62)'}
-        >Login</a>
         <button onClick={() => openModal()} style={{
           padding: '9px 20px', background: C.teal, color: '#fff',
           fontFamily: SANS, fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap', flexShrink: 0,
@@ -536,16 +523,10 @@ function FeatureSection({ id, kicker, title, em, body, points = [], flip = false
    MAIN COMPONENT
    ══════════════════════════════════════════════════════════ */
 export default function Landing() {
-  const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalPlan, setModalPlan] = useState(null);
   const openModal = (plan = null) => { setModalPlan(plan); setIsModalOpen(true); };
-
-  const handlePreviewApp = () => {
-    localStorage.setItem('harbored_loggedin', 'true');
-    navigate('/dashboard');
-  };
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 44);
@@ -730,11 +711,11 @@ export default function Landing() {
             <div>
               <Label>Beyond Your Themes</Label>
               <h2 style={{ fontFamily: SERIF, fontSize: 'clamp(26px, 3.2vw, 38px)', fontWeight: 600, letterSpacing: '-0.02em', lineHeight: 1.15 }}>
-                Every life event, <em style={{ fontStyle: 'italic', color: C.teal }}>caught.</em>
+                Every milestone, <em style={{ fontStyle: 'italic', color: C.teal }}>kept in view.</em>
               </h2>
             </div>
             <p style={{ fontFamily: SANS, fontWeight: 300, fontSize: 14.5, color: '#4a5a60', maxWidth: 380, lineHeight: 1.65 }}>
-              Common ground is the heartbeat — and Harbored still catches the milestones across your network.
+              Common ground is the heartbeat — log the milestones in your network too, and Harbored makes sure they don't slip by unnoticed.
             </p>
           </Reveal>
           <RevealGroup style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
@@ -875,7 +856,7 @@ export default function Landing() {
             <div style={{ display: 'flex', gap: 'clamp(28px, 5vw, 72px)', flexWrap: 'wrap' }}>
               {[
                 { heading: 'Platform', links: [['Common Ground', '#common-ground'], ['Discovery', '#discovery'], ['Prep Briefs', '#prep-briefs'], ['Weekly Digest', '#digest']] },
-                { heading: 'Company', links: [['Pricing', '#pricing'], ['Login', '/login'], ['Sign up', '/signup']] },
+                { heading: 'Company', links: [['Pricing', '#pricing']] },
                 { heading: 'Legal',   links: [['Privacy', '#'], ['Terms', '#']] },
               ].map(({ heading, links }) => (
                 <div key={heading}>
@@ -899,7 +880,7 @@ export default function Landing() {
         </div>
       </footer>
 
-      <WaitlistModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onPreviewApp={handlePreviewApp} plan={modalPlan} />
+      <WaitlistModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} plan={modalPlan} />
 
       <style>{`
         @media (min-width: 880px) { .nav-link, .nav-login { display: inline !important; } }
