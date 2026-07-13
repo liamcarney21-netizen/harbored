@@ -55,12 +55,16 @@ export default function AddContactModal({ open, onClose, firstRun = false }) {
             onClick={() => onClose(false)}
             style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(29,34,38,0.5)', backdropFilter: 'blur(3px)' }}
           />
+          <div style={{
+            position: 'fixed', inset: 0, zIndex: 61, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '24px 16px', pointerEvents: 'none',
+          }}>
           <motion.div
             initial={{ opacity: 0, y: 20, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 12 }}
             transition={{ duration: 0.28, ease: 'easeOut' }}
             style={{
-              position: 'fixed', zIndex: 61, top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-              width: 'min(520px, calc(100vw - 32px))', maxHeight: 'calc(100vh - 48px)', overflowY: 'auto',
+              pointerEvents: 'auto',
+              width: 'min(520px, 100%)', maxHeight: '100%', overflowY: 'auto',
               background: '#FFFFFF', borderRadius: '16px', boxShadow: '0 24px 64px rgba(0,0,0,0.25)',
               fontFamily: 'Inter, sans-serif',
             }}
@@ -169,6 +173,7 @@ export default function AddContactModal({ open, onClose, firstRun = false }) {
               </button>
             </div>
           </motion.div>
+          </div>
         </>
       )}
     </AnimatePresence>
