@@ -1,31 +1,10 @@
 // Theme monitoring: fetches live headlines per shared theme (via /api/news),
-// scores each for significance, and drafts an outreach message.
-//
-// Scoring and drafting are heuristic/template-based for now. To upgrade to AI
-// scoring + voice-matched drafting, replace scoreHeadline() and draftMessage()
-// with a single Claude API call (claude-fable-5 or claude-haiku-4-5 for cost):
-// pass the headline, the theme, and the contact's touch history; ask for
-// { score, reasoning, draft } as JSON.
+// then asks /api/score (Claude, with a keyword-heuristic fallback baked into
+// the endpoint) to judge which ones actually clear the reach-out bar and
+// draft a message for the ones that do.
 
 import { SIGNIFICANCE_THRESHOLD } from '../data/commonGround'
 
-const HOT_WORDS = [
-  ['announc', 14], ['confirm', 12], ['lands', 14], ['signs', 12], ['wins', 12],
-  ['launch', 12], ['approv', 14], ['trade', 12], ['hire', 10], ['raises', 12],
-  ['record', 12], ['first', 10], ['major', 10], ['breaking', 16], ['historic', 14],
-  ['biggest', 12], ['blockbuster', 14], ['reform', 10], ['acquir', 14], ['merger', 12],
-  ['ipo', 12], ['champion', 12], ['upset', 10], ['surge', 10], ['soar', 10], ['crash', 12],
-]
-const COLD_WORDS = [
-  ['weekly', -10], ['rates tick', -12], ['schedule', -8], ['preview', -8],
-  ['rumor', -10], ['prediction', -8], ['how to', -12], ['best of', -10],
-  ['roundup', -10], ['recap', -6], ['odds', -8], ['forecast', -6],
-]
-
-// "Give first" signals: resourceful, forwardable content — the kind of thing
-// you send as a favor ("thought you'd want to see this") rather than as
-// breaking news. These headlines usually score below the reach-out bar but
-// are still worth passing along on a shared theme.
 const GIVE_WORDS = [
   'guide', 'how to', 'tips', 'ranking', 'ranked', 'best ', 'top ', 'list of',
   'report', 'study', 'analysis', 'breakdown', 'deep dive', 'primer', 'explained',
@@ -37,53 +16,23 @@ export function isGiveable(title) {
   return GIVE_WORDS.some(w => t.includes(w))
 }
 
-export function scoreHeadline(title, pubDate) {
+// Kept as a fallback for when /api/score itself is unreachable (network
+// error) — the endpoint already falls back to the same heuristic server-side
+// when no ANTHROPIC_API_KEY is set, so this only matters if the request
+// can't complete at all.
+function fallbackScore(title, pubDate) {
+  const HOT = [['announc', 14], ['confirm', 12], ['lands', 14], ['signs', 12], ['wins', 12], ['launch', 12], ['approv', 14], ['trade', 12], ['hire', 10], ['raises', 12], ['record', 12], ['first', 10], ['major', 10], ['breaking', 16], ['historic', 14], ['biggest', 12], ['blockbuster', 14], ['reform', 10], ['acquir', 14], ['merger', 12], ['ipo', 12], ['champion', 12], ['upset', 10], ['surge', 10], ['soar', 10], ['crash', 12]]
+  const COLD = [['weekly', -10], ['rates tick', -12], ['schedule', -8], ['preview', -8], ['rumor', -10], ['prediction', -8], ['how to', -12], ['best of', -10], ['roundup', -10], ['recap', -6], ['odds', -8], ['forecast', -6]]
   const t = title.toLowerCase()
   let score = 42
-  for (const [w, pts] of HOT_WORDS) if (t.includes(w)) score += pts
-  for (const [w, pts] of COLD_WORDS) if (t.includes(w)) score += pts
-  if (/\$[\d,.]+|\d+%|№|\bno\. ?\d/i.test(title)) score += 6
+  for (const [w, pts] of HOT) if (t.includes(w)) score += pts
+  for (const [w, pts] of COLD) if (t.includes(w)) score += pts
   if (pubDate) {
     const ageH = (Date.now() - new Date(pubDate).getTime()) / 3600000
     if (ageH < 24) score += 12
     else if (ageH < 72) score += 6
   }
   return Math.max(8, Math.min(97, Math.round(score)))
-}
-
-const DRAFTS = [
-  (first, theme, headline) => `${first} — did you see this? "${headline}" Immediately thought of you. What's your read?`,
-  (first, theme, headline) => `${first}! Big ${theme} news: "${headline}" — we need to talk about this one.`,
-  (first, theme, headline) => `Hey ${first} — just saw "${headline}" and figured you'd have thoughts. Coffee soon?`,
-]
-
-export function draftMessage(firstName, themeLabel, headline) {
-  const i = Math.abs(hash(headline)) % DRAFTS.length
-  return DRAFTS[i](firstName, themeLabel, headline)
-}
-
-// Generosity framing: forward it as a favor, no ask attached.
-const GIVE_DRAFTS = [
-  (first, theme, headline) => `${first} — saw this and thought of you: "${headline}". No agenda, just figured you'd want it.`,
-  (first, theme, headline) => `Hey ${first}, this looked right up your alley — "${headline}". Sharing in case it's useful.`,
-  (first, theme, headline) => `${first} — filing this under things you'd appreciate: "${headline}". Enjoy.`,
-]
-
-export function draftGiveMessage(firstName, themeLabel, headline) {
-  const i = Math.abs(hash(headline + 'give')) % GIVE_DRAFTS.length
-  return GIVE_DRAFTS[i](firstName, themeLabel, headline)
-}
-
-export function holdReasonFor(score) {
-  if (score >= 55) return 'Close to the bar, but not a clear reason to interrupt. Logged for your next natural touchpoint.'
-  if (score >= 40) return 'Routine coverage with a low engagement signal. Not worth a ping.'
-  return 'Minor update — no meaningful development detected.'
-}
-
-function hash(s) {
-  let h = 0
-  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0
-  return h
 }
 
 function relativeTime(pubDate) {
@@ -97,9 +46,21 @@ function relativeTime(pubDate) {
   return `${Math.floor(days / 7)} wk ago`
 }
 
-// Fetch the freshest headline for each (contact, theme) pair and shape it into
-// the same update objects the Common Ground feed renders. Fails soft: any
-// network error returns [] so the curated feed still stands alone.
+function hash(s) {
+  let h = 0
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0
+  return h
+}
+
+export function holdReasonFor(score) {
+  if (score >= 55) return 'Close to the bar, but not a clear reason to interrupt. Logged for your next natural touchpoint.'
+  if (score >= 40) return 'Routine coverage with a low engagement signal. Not worth a ping.'
+  return 'Minor update — no meaningful development detected.'
+}
+
+// Fetch the freshest headline for each (contact, theme) pair, then score the
+// whole batch in one call. Fails soft: any error just yields fewer/duller
+// cards, never a crash.
 export async function fetchLiveUpdates(contacts, themesByContact, { maxThemes = 6 } = {}) {
   const pairs = []
   for (const contact of contacts) {
@@ -109,48 +70,73 @@ export async function fetchLiveUpdates(contacts, themesByContact, { maxThemes = 
   }
   const sample = pairs.slice(0, maxThemes)
 
-  const results = await Promise.allSettled(
+  const newsResults = await Promise.allSettled(
     sample.map(async ({ contact, theme }) => {
       const resp = await fetch(`/api/news?q=${encodeURIComponent(theme.label)}&limit=3`)
       if (!resp.ok) throw new Error('news fetch failed')
       const { items } = await resp.json()
       if (!items?.length) return null
-      const item = items[0]
-      const score = scoreHeadline(item.title, item.pubDate)
-      const first = contact.name.split(' ')[0]
-      const above = score >= SIGNIFICANCE_THRESHOLD
-      // Below the bar but resourceful → a "give first" candidate.
-      const giveable = !above && isGiveable(item.title)
-      return {
-        id: `live-${contact.id}-${theme.id}-${hash(item.title)}`,
-        live: true,
-        link: item.link,
-        themeLabel: theme.label,
-        category: theme.category,
-        contactId: contact.id,
-        contactName: contact.name,
-        contactInitials: contact.initials,
-        contactColor: contact.color,
-        headline: item.title,
-        source: item.source,
-        time: relativeTime(item.pubDate),
-        score,
-        factors: above
-          ? [
-              'Fresh coverage detected across news sources',
-              `Directly on your shared theme with ${first}: ${theme.label}`,
-              score >= 85 ? 'High-signal language — major development' : 'Clears the reach-out bar',
-            ]
-          : undefined,
-        draftMessage: above ? draftMessage(first, theme.label, item.title) : undefined,
-        giveable,
-        giveMessage: giveable ? draftGiveMessage(first, theme.label, item.title) : undefined,
-        holdReason: above ? undefined : holdReasonFor(score),
-      }
+      return { contact, theme, item: items[0] }
     })
   )
+  const found = newsResults.filter(r => r.status === 'fulfilled' && r.value).map(r => r.value)
+  if (found.length === 0) return []
 
-  return results
-    .filter(r => r.status === 'fulfilled' && r.value)
-    .map(r => r.value)
+  const scorePayload = found.map((f, i) => ({
+    id: i,
+    headline: f.item.title,
+    source: f.item.source,
+    pubDate: f.item.pubDate,
+    themeLabel: f.theme.label,
+    contactName: f.contact.name,
+  }))
+
+  let scoreById = new Map()
+  try {
+    const resp = await fetch('/api/score', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ items: scorePayload }),
+    })
+    if (resp.ok) {
+      const { results } = await resp.json()
+      scoreById = new Map(results.map(r => [r.id, r]))
+    }
+  } catch {
+    // fall through to per-item fallback below
+  }
+
+  return found.map(({ contact, theme, item }, i) => {
+    const scored = scoreById.get(i)
+    const score = scored?.score ?? fallbackScore(item.title, item.pubDate)
+    const above = score >= SIGNIFICANCE_THRESHOLD
+    const first = contact.name.split(' ')[0]
+    const giveable = !above && isGiveable(item.title)
+    return {
+      id: `live-${contact.id}-${theme.id}-${hash(item.title)}`,
+      live: true,
+      link: item.link,
+      themeLabel: theme.label,
+      category: theme.category,
+      contactId: contact.id,
+      contactName: contact.name,
+      contactInitials: contact.initials,
+      contactColor: contact.color,
+      headline: item.title,
+      source: item.source,
+      time: relativeTime(item.pubDate),
+      score,
+      factors: above
+        ? [
+            'Fresh coverage detected across news sources',
+            `Directly on your shared theme with ${first}: ${theme.label}`,
+            score >= 85 ? 'High-signal language — major development' : 'Clears the reach-out bar',
+          ]
+        : undefined,
+      draftMessage: above ? (scored?.draftMessage || `${first} — did you see this? "${item.title}" Immediately thought of you.`) : undefined,
+      giveable,
+      giveMessage: giveable ? `${first} — saw this and thought of you: "${item.title}". No agenda, just figured you'd want it.` : undefined,
+      holdReason: above ? undefined : (scored?.holdReason || holdReasonFor(score)),
+    }
+  })
 }

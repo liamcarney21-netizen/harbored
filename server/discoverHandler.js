@@ -102,7 +102,8 @@ async function claudeDiscover(text, contactName) {
   const data = await resp.json()
   const raw = data.content?.[0]?.text || '{}'
   const jsonStart = raw.indexOf('{')
-  const parsed = JSON.parse(raw.slice(jsonStart))
+  const jsonEnd = raw.lastIndexOf('}')
+  const parsed = JSON.parse(raw.slice(jsonStart, jsonEnd + 1))
   const valid = ['sports', 'place', 'market', 'hobby', 'industry']
   return (parsed.themes || [])
     .filter(t => t.label)
