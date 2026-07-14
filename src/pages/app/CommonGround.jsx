@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Send, Edit3, ChevronLeft, Zap, Plus, X, Check, Trophy, MapPin, TrendingUp, Activity, Briefcase, Radar, RefreshCw, ExternalLink, Waves, Gift } from 'lucide-react'
 import Avatar from '../../components/Avatar'
+import DemoPipeline from '../../components/DemoPipeline'
 import { themeUpdates, SIGNIFICANCE_THRESHOLD } from '../../data/commonGround'
 import { useDataStore, selectNudges } from '../../store/dataStore'
+import { useDemoStore } from '../../store/demoStore'
 import { fetchLiveUpdates } from '../../services/monitoring'
 import { openSend, sendChannelFor } from '../../services/outreach'
 
@@ -91,8 +93,10 @@ function LiveBadge() {
   )
 }
 
-export default function CommonGround() {
+export default function CommonGround({ onImportContacts }) {
   const navigate = useNavigate()
+  const demoActive = useDemoStore(s => s.active)
+  const [showPipeline, setShowPipeline] = useState(true)
   const contacts = useDataStore(s => s.contacts)
   const themesByContact = useDataStore(s => s.themesByContact)
   const addTheme = useDataStore(s => s.addTheme)
@@ -267,6 +271,13 @@ export default function CommonGround() {
 
         {activeTab === 'Opportunities' && (
           <>
+            {demoActive && showPipeline && (
+              <DemoPipeline
+                onImport={onImportContacts}
+                onDismiss={() => setShowPipeline(false)}
+              />
+            )}
+
             {/* Reach-out opportunities */}
             <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 500, color: '#5C6B73', marginBottom: '12px' }}>
               Worth reaching out — {opportunities.length}

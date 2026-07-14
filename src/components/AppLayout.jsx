@@ -153,7 +153,7 @@ export default function AppLayout() {
           </div>
         )}
         <Routes>
-          <Route index element={<CommonGround />} />
+          <Route index element={<CommonGround onImportContacts={openImportContacts} />} />
           <Route path="overview"  element={<Dashboard onAddContact={openAddContact} />} />
           <Route path="alerts"    element={<Alerts />} />
           <Route path="network"   element={<Network onAddContact={openAddContact} onImportContacts={openImportContacts} />} />
