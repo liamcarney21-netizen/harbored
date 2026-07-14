@@ -101,8 +101,8 @@ export default function DemoPipeline({ onImport, onDismiss }) {
         </button>
       </div>
       <p style={{ fontSize: '13px', color: '#3E4B52', lineHeight: 1.55, marginBottom: '16px', maxWidth: '620px' }}>
-        Staying close from a distance is hard when you can't see what's happening in someone's
-        world — so you go quiet, or reach out sounding out of touch. Harbored watches the things
+        Staying genuinely in touch is hard when you can't see what's happening in someone's
+        world — so you go quiet, or reach out sounding generic. Harbored watches the things
         you share and tells you when there's a real reason to reconnect.
       </p>
       <div style={{ display: 'flex', alignItems: 'stretch', gap: '10px', flexWrap: 'wrap' }}>

@@ -587,10 +587,10 @@ export default function Landing() {
               color: 'rgba(250,248,243,0.55)', maxWidth: 520, lineHeight: 1.7, marginBottom: 34,
               animation: 'fadeUp 0.85s 0.28s ease both',
             }}>
-              Once you're not in the same place, staying close is hard — you can't see what's
-              happening in their world, so reaching out feels forced. Tell Harbored the themes
-              you share — the team, the city, the market — and it watches them around the clock,
-              flagging the moment there's a genuine reason to reconnect. Message drafted.
+              Staying genuinely in touch is hard — you can't always see what's happening in
+              someone's world, so you go quiet, or reach out sounding generic. Tell Harbored the
+              themes you share — the team, the city, the market — and it watches them around the
+              clock, flagging the moment there's a real reason to reconnect. Message drafted.
             </p>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 18, animation: 'fadeUp 0.85s 0.4s ease both' }}>
               <button onClick={() => openModal()} style={{
