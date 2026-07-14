@@ -597,7 +597,7 @@ export default function Landing() {
                 padding: '14px 34px', background: C.teal, color: '#fff',
                 fontFamily: SANS, fontWeight: 600, fontSize: 14.5,
                 border: 'none', borderRadius: 8, cursor: 'pointer',
-                boxShadow: '0 4px 24px rgba(13,92,99,0.45)', transition: 'background 0.18s',
+                transition: 'background 0.18s ease',
               }}
               onMouseEnter={e => e.currentTarget.style.background = '#09454B'}
               onMouseLeave={e => e.currentTarget.style.background = C.teal}>
@@ -606,14 +606,14 @@ export default function Landing() {
               <button onClick={startDemo} style={{
                 display: 'inline-flex', alignItems: 'center', gap: 9, padding: '13px 28px',
                 color: C.cream, fontFamily: SANS, fontWeight: 500, fontSize: 14.5,
-                background: 'rgba(169,126,47,0.16)', cursor: 'pointer',
+                background: 'rgba(169,126,47,0.14)', cursor: 'pointer',
                 border: `1px solid ${C.brassPale}`, borderRadius: 8,
-                transition: 'background 0.18s',
+                transition: 'border-color 0.18s ease',
               }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(169,126,47,0.28)'; }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(169,126,47,0.16)'; }}>
+              onMouseEnter={e => { e.currentTarget.style.borderColor = C.brass; const a = e.currentTarget.querySelector('svg'); if (a) a.style.transform = 'translateX(3px)'; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = C.brassPale; const a = e.currentTarget.querySelector('svg'); if (a) a.style.transform = 'translateX(0)'; }}>
                 See it live — no signup
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'transform 0.18s ease' }}><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
               </button>
             </div>
             <p style={{ fontFamily: SANS, fontWeight: 300, fontSize: 12, color: 'rgba(250,248,243,0.28)', animation: 'fadeUp 0.85s 0.5s ease both' }}>
