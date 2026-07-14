@@ -80,6 +80,7 @@ export const themeUpdates = [
     source: 'The Athletic',
     time: '3 hours ago',
     score: 92,
+    rationale: "A top-10 transfer portal win is program-defining news on a team John follows closely — timely, specific, and clearly worth a text.",
     factors: [
       'Major program news — top-10 transfer portal pickup nationally',
       "You haven't spoken with John in 6 weeks",
@@ -100,6 +101,7 @@ export const themeUpdates = [
     source: 'ESPN',
     time: 'Yesterday',
     score: 84,
+    rationale: "A brand-new US Grand Prix is a real, shareable development on a theme you and Sarah actively talk about — not routine race coverage.",
     factors: [
       'First new US street race announced since Las Vegas',
       'You and Sarah messaged about the Miami GP in May',
@@ -120,6 +122,7 @@ export const themeUpdates = [
     source: 'Star Tribune',
     time: '2 days ago',
     score: 78,
+    rationale: "Citywide duplex-conversion reform directly changes the rental math John mentioned — a concrete, personal reason to reconnect.",
     factors: [
       'Policy change with direct impact on residential values',
       'John mentioned scouting a rental property last spring',
@@ -139,6 +142,7 @@ export const themeUpdates = [
     source: 'NFL Network',
     time: '4 days ago',
     score: 73,
+    rationale: "Trading up to No. 4 is a franchise-altering draft-night move — exactly the kind of moment you and Kellan always break down together.",
     factors: [
       'Franchise-altering move — biggest trade of the offseason',
       'You and Kellan text every draft night',

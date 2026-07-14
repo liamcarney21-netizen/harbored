@@ -713,19 +713,31 @@ export default function CommonGround() {
 
                 <div style={{ borderRadius: '12px', padding: '16px', marginBottom: '20px', background: 'rgba(13,92,99,0.05)', border: '1px solid rgba(13,92,99,0.15)' }}>
                   <SignificanceGauge score={selected.score} />
-                  {selected.factors && (
+                  {(selected.rationale || selected.factors) && (
                     <div style={{ marginTop: '14px' }}>
-                      <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '10px', fontWeight: 500, color: '#5C6B73' }}>
-                        Why Harbored flagged this
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                        <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 500, color: '#5C6B73' }}>
+                          Why this cleared the bar
+                        </div>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#0D5C63', fontWeight: 500 }}>
+                          <Zap style={{ width: '11px', height: '11px' }} /> Scored by Claude
+                        </span>
                       </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        {selected.factors.map((f, i) => (
-                          <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                            <Check style={{ width: '13px', height: '13px', color: '#0D5C63', flexShrink: 0, marginTop: '2px' }} />
-                            <span style={{ fontSize: '13px', color: '#1C2B33', lineHeight: 1.5 }}>{f}</span>
-                          </div>
-                        ))}
-                      </div>
+                      {selected.rationale && (
+                        <p style={{ fontSize: '13.5px', color: '#1C2B33', lineHeight: 1.55, marginBottom: selected.factors ? '12px' : 0 }}>
+                          {selected.rationale}
+                        </p>
+                      )}
+                      {selected.factors && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          {selected.factors.map((f, i) => (
+                            <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                              <Check style={{ width: '13px', height: '13px', color: '#0D5C63', flexShrink: 0, marginTop: '2px' }} />
+                              <span style={{ fontSize: '13px', color: '#1C2B33', lineHeight: 1.5 }}>{f}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

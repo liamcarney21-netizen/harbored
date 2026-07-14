@@ -63,6 +63,17 @@ function heuristicHoldReason(score) {
   return 'Minor update — no meaningful development detected.'
 }
 
+// One-sentence "why this score" used when Claude is unavailable, so the
+// reasoning surface is never empty in the keyless fallback path.
+function heuristicRationale(score, themeLabel) {
+  const theme = themeLabel || 'this shared interest'
+  if (score >= 85) return `Strong, high-signal development on ${theme} — a clear, timely reason to reach out.`
+  if (score >= SIGNIFICANCE_THRESHOLD) return `A real update on ${theme} that clears the bar for a natural reach-out.`
+  if (score >= 55) return `Some signal on ${theme}, but not decisive enough to interrupt for.`
+  if (score >= 40) return `Routine ${theme} coverage — low engagement signal, logged quietly.`
+  return `Minor ${theme} update with no meaningful development to act on.`
+}
+
 function heuristicBatch(items) {
   return items.map(item => {
     const score = heuristicScore(item.headline, item.pubDate)
@@ -71,6 +82,7 @@ function heuristicBatch(items) {
     return {
       id: item.id,
       score,
+      rationale: heuristicRationale(score, item.themeLabel),
       draftMessage: above ? heuristicDraft(first, item.themeLabel, item.headline) : undefined,
       holdReason: above ? undefined : heuristicHoldReason(score),
     }
@@ -101,6 +113,8 @@ async function claudeBatch(items) {
         `You judge whether a news headline is a genuine reason to reach out to someone, on behalf of a relationship-intelligence app called Harbored. ` +
         `The user only wants to be interrupted for things that actually matter to their contact — a promotion, a big win, real news on a shared interest — ` +
         `not routine coverage, schedules, rumors, or "best of" listicles. Score each headline 0-100 for how strong a reach-out trigger it is. ` +
+        `Always include a "rationale": one plain-English sentence (under 140 characters) explaining the judgment behind the score — what about this specific ` +
+        `headline, on this shared theme, makes it worth (or not worth) interrupting for. Be specific to the headline, not generic. ` +
         `A score of ${SIGNIFICANCE_THRESHOLD} or above means: draft a short, warm, specific text message the user could send as-is — first name, ` +
         `reference the actual headline, sound like a real friend texting, not a corporate greeting card. Below the bar: explain in one short sentence ` +
         `(under 100 characters) why it's not worth an interruption. Respond with JSON only, no prose.`,
@@ -108,7 +122,7 @@ async function claudeBatch(items) {
         {
           role: 'user',
           content: `Score each of these ${payload.length} items:\n\n${JSON.stringify(payload, null, 2)}\n\n` +
-            `Respond with exactly this JSON shape:\n{"results":[{"id":"...","score":0-100,"draftMessage":"..." (only if score >= ${SIGNIFICANCE_THRESHOLD}),"holdReason":"..." (only if score < ${SIGNIFICANCE_THRESHOLD})}]}`,
+            `Respond with exactly this JSON shape:\n{"results":[{"id":"...","score":0-100,"rationale":"...","draftMessage":"..." (only if score >= ${SIGNIFICANCE_THRESHOLD}),"holdReason":"..." (only if score < ${SIGNIFICANCE_THRESHOLD})}]}`,
         },
       ],
     }),
@@ -133,6 +147,7 @@ async function claudeBatch(items) {
     return {
       id: item.id,
       score,
+      rationale: truncate(String(r.rationale || ''), 200) || heuristicRationale(score, item.themeLabel),
       draftMessage: above ? truncate(String(r.draftMessage || ''), 400) || undefined : undefined,
       holdReason: !above ? truncate(String(r.holdReason || ''), 200) || heuristicHoldReason(score) : undefined,
     }
