@@ -7,6 +7,7 @@ import NotFound from './pages/NotFound';
 import AppLayout from './components/AppLayout';
 import { useAuthStore } from './store/authStore';
 import { useDataStore } from './store/dataStore';
+import { useDemoStore } from './store/demoStore';
 
 export default function App() {
   const init = useAuthStore(s => s.init);
@@ -18,6 +19,7 @@ export default function App() {
       if (uid === lastUserId.current) return;
       lastUserId.current = uid;
       if (uid) useDataStore.getState().hydrate();
+      else if (useDemoStore.getState().active) useDataStore.getState().loadDemo();
       else useDataStore.getState().reset();
     });
     init();

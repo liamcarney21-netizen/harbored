@@ -1,5 +1,7 @@
 import { useRef, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useDemoStore } from '../store/demoStore';
 
 /* ─── Animation helpers ─────────────────────────────────── */
 const ease = [0.22, 1, 0.36, 1];
@@ -527,6 +529,16 @@ export default function Landing() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalPlan, setModalPlan] = useState(null);
   const openModal = (plan = null) => { setModalPlan(plan); setIsModalOpen(true); };
+  const navigate = useNavigate();
+  const enterDemo = useDemoStore(s => s.enter);
+  const startDemo = () => { enterDemo(); navigate('/dashboard'); };
+
+  // Exiting the demo navigates here; clear demo state now that AppLayout (and
+  // its auth guard) is unmounted. Guarded so a real signed-in user visiting the
+  // landing page doesn't have their in-memory data reset.
+  useEffect(() => {
+    if (useDemoStore.getState().active) useDemoStore.getState().exit();
+  }, []);
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 44);
@@ -590,16 +602,18 @@ export default function Landing() {
               onMouseLeave={e => e.currentTarget.style.background = C.teal}>
                 Get Early Access
               </button>
-              <a href="#common-ground" style={{
-                display: 'inline-flex', alignItems: 'center', padding: '13px 28px',
-                color: 'rgba(250,248,243,0.75)', fontFamily: SANS, fontWeight: 400, fontSize: 14.5,
-                textDecoration: 'none', border: '1px solid rgba(250,248,243,0.22)', borderRadius: 8,
-                transition: 'border-color 0.18s, color 0.18s',
+              <button onClick={startDemo} style={{
+                display: 'inline-flex', alignItems: 'center', gap: 9, padding: '13px 28px',
+                color: C.cream, fontFamily: SANS, fontWeight: 500, fontSize: 14.5,
+                background: 'rgba(169,126,47,0.16)', cursor: 'pointer',
+                border: `1px solid ${C.brassPale}`, borderRadius: 8,
+                transition: 'background 0.18s',
               }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(250,248,243,0.55)'; e.currentTarget.style.color = C.cream; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(250,248,243,0.22)'; e.currentTarget.style.color = 'rgba(250,248,243,0.75)'; }}>
-                See the platform
-              </a>
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(169,126,47,0.28)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(169,126,47,0.16)'; }}>
+                See it live — no signup
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+              </button>
             </div>
             <p style={{ fontFamily: SANS, fontWeight: 300, fontSize: 12, color: 'rgba(250,248,243,0.28)', animation: 'fadeUp 0.85s 0.5s ease both' }}>
               In private early access — request an invite below.

@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Menu, Anchor } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
 import { useDataStore } from '../store/dataStore'
+import { useDemoStore } from '../store/demoStore'
 import AppSidebar from './AppSidebar'
 import Onboarding from './Onboarding'
 import AddContactModal from './AddContactModal'
@@ -23,19 +24,27 @@ import Settings from '../pages/app/Settings'
 export default function AppLayout() {
   const user = useAuthStore(s => s.user)
   const initialized = useAuthStore(s => s.initialized)
+  const demoActive = useDemoStore(s => s.active)
   const dataLoading = useDataStore(s => s.loading)
   const isMobile = useIsMobile()
   const navigate = useNavigate()
+  // In demo mode skip the first-run walkthrough — judges land straight on the
+  // seeded Common Ground so the product explains itself.
   const [showOnboarding, setShowOnboarding] = useState(
-    () => localStorage.getItem('harbored_onboarded') !== 'true'
+    () => !demoActive && localStorage.getItem('harbored_onboarded') !== 'true'
   )
   const [showAddContact, setShowAddContact] = useState(false)
   const [addContactFirstRun, setAddContactFirstRun] = useState(false)
   const [showImportContacts, setShowImportContacts] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
   if (!initialized) return null
-  if (!user) return <Navigate to="/login" replace />
+  if (!user && !demoActive) return <Navigate to="/login" replace />
   if (dataLoading) return null
+
+  // Just navigate — Landing clears the demo state on mount, once this component
+  // (and its auth guard) is safely unmounted. Clearing it here, while still on
+  // /dashboard, would trip the guard below and bounce to /login instead.
+  const leaveDemo = () => navigate('/')
 
   function finishOnboarding(andAddContact = false) {
     localStorage.setItem('harbored_onboarded', 'true')
@@ -117,6 +126,32 @@ export default function AppLayout() {
       </AnimatePresence>
 
       <main style={{ flex: 1, overflowY: 'auto', minWidth: 0 }}>
+        {demoActive && (
+          <div style={{
+            position: 'sticky', top: 0, zIndex: 30,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            flexWrap: 'wrap', gap: '4px 12px',
+            padding: '9px 16px', background: '#0D5C63', color: '#FCFBF6',
+            fontFamily: 'Inter, sans-serif', fontSize: '12.5px', fontWeight: 500,
+            textAlign: 'center',
+          }}>
+            <span>
+              <strong style={{ fontWeight: 700 }}>Live demo</strong>
+              {' '}— a sample network, fully interactive. Nothing you do here is saved.
+            </span>
+            <button
+              onClick={leaveDemo}
+              style={{
+                background: 'rgba(252,251,246,0.16)', color: '#FCFBF6',
+                border: '1px solid rgba(252,251,246,0.35)', borderRadius: '999px',
+                padding: '3px 12px', fontSize: '12px', fontWeight: 600,
+                cursor: 'pointer', fontFamily: 'Inter, sans-serif', whiteSpace: 'nowrap',
+              }}
+            >
+              Back to Harbored
+            </button>
+          </div>
+        )}
         <Routes>
           <Route index element={<CommonGround />} />
           <Route path="overview"  element={<Dashboard onAddContact={openAddContact} />} />

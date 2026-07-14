@@ -136,6 +136,11 @@ export const useDataStore = create((set, get) => {
     // the previous user's data before hydrate() completes.
     reset: () => set({ contacts: [], themesByContact: {}, touches: [], meetings: [], loading: true }),
 
+    // No-auth "See it live" demo: drop the sample network straight in, no
+    // Supabase round-trip. Mutations still run (add/import/send all work) but
+    // scheduleSync() no-ops without an auth user, so nothing persists.
+    loadDemo: () => set({ ...seedSnapshot(), loading: false }),
+
     addMeeting: (contactId, { title, datetime }) => {
       const meeting = { id: `mtg-${Date.now()}`, contactId, title, datetime }
       syncedSet(s => ({ meetings: [...s.meetings, meeting] }))
