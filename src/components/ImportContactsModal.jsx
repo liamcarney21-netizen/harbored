@@ -1,14 +1,17 @@
 import { useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Upload, Smartphone, Check, Users } from 'lucide-react'
+import { X, Upload, Smartphone, Check, Users, Sparkles } from 'lucide-react'
 import { useDataStore } from '../store/dataStore'
+import { useDemoStore } from '../store/demoStore'
 import { parseVCard } from '../services/vcard'
+import { SAMPLE_VCARD } from '../data/sampleContacts'
 
 const hasContactPicker = typeof navigator !== 'undefined' && 'contacts' in navigator && 'ContactsManager' in window
 
 export default function ImportContactsModal({ open, onClose }) {
   const contacts = useDataStore(s => s.contacts)
   const addContact = useDataStore(s => s.addContact)
+  const demoActive = useDemoStore(s => s.active)
   const fileInputRef = useRef(null)
 
   const [candidates, setCandidates] = useState(null) // null = no file picked yet
@@ -50,6 +53,13 @@ export default function ImportContactsModal({ open, onClose }) {
     setSelected(new Set(fresh.map((_, i) => i)))
     setSkippedCount(skipped)
     setError('')
+  }
+
+  // Demo convenience: run a realistic iOS vCard export through the real parser
+  // so the Apple import is completable without an actual .vcf on hand.
+  function handleSample() {
+    setError('')
+    ingest(parseVCard(SAMPLE_VCARD))
   }
 
   function handleFile(e) {
@@ -144,6 +154,25 @@ export default function ImportContactsModal({ open, onClose }) {
             <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {!candidates && (
                 <>
+                  {demoActive && (
+                    <>
+                      <button onClick={handleSample} style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                        width: '100%', padding: '14px', borderRadius: '10px', fontSize: '13px', fontWeight: 600,
+                        background: '#0D5C63', color: '#FFFFFF', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+                      }}>
+                        <Sparkles style={{ width: '15px', height: '15px' }} /> Load a sample Apple Contacts export
+                      </button>
+                      <p style={{ fontSize: '12px', color: '#5C6B73', marginTop: '-6px', lineHeight: 1.5 }}>
+                        No iPhone handy? This runs a real iOS vCard through Harbored's parser so you can try the import now.
+                      </p>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '4px 0' }}>
+                        <span style={{ flex: 1, height: '1px', background: '#EEEBE3' }} />
+                        <span style={{ fontSize: '11px', color: '#5C6B73', opacity: 0.7 }}>or use your own</span>
+                        <span style={{ flex: 1, height: '1px', background: '#EEEBE3' }} />
+                      </div>
+                    </>
+                  )}
                   {hasContactPicker && (
                     <button onClick={handlePickContacts} style={{
                       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
