@@ -88,18 +88,23 @@ export default function DemoPipeline({ onImport, onDismiss }) {
         padding: '18px 20px', marginBottom: '24px', fontFamily: 'Inter, sans-serif',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', marginBottom: '6px' }}>
         <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#5C6B73' }}>
           How Harbored works
         </span>
         <button
           onClick={onDismiss}
           aria-label="Dismiss walkthrough"
-          style={{ display: 'flex', background: 'none', border: 'none', cursor: 'pointer', color: '#5C6B73', padding: '2px', opacity: 0.7 }}
+          style={{ display: 'flex', background: 'none', border: 'none', cursor: 'pointer', color: '#5C6B73', padding: '2px', opacity: 0.7, flexShrink: 0 }}
         >
           <X style={{ width: '14px', height: '14px' }} />
         </button>
       </div>
+      <p style={{ fontSize: '13px', color: '#3E4B52', lineHeight: 1.55, marginBottom: '16px', maxWidth: '620px' }}>
+        Staying close from a distance is hard when you can't see what's happening in someone's
+        world — so you go quiet, or reach out sounding out of touch. Harbored watches the things
+        you share and tells you when there's a real reason to reconnect.
+      </p>
       <div style={{ display: 'flex', alignItems: 'stretch', gap: '10px', flexWrap: 'wrap' }}>
         {STEPS.map((s, i) => (
           <div key={s.n} style={{ display: 'contents' }}>

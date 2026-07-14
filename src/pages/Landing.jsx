@@ -587,9 +587,10 @@ export default function Landing() {
               color: 'rgba(250,248,243,0.55)', maxWidth: 520, lineHeight: 1.7, marginBottom: 34,
               animation: 'fadeUp 0.85s 0.28s ease both',
             }}>
-              Tell Harbored what you share with the people from your internships, your program,
-              your firm — the team, the city, the market. It watches those themes around the
-              clock and tells you the moment there's a real reason to reconnect, message drafted.
+              Once you're not in the same place, staying close is hard — you can't see what's
+              happening in their world, so reaching out feels forced. Tell Harbored the themes
+              you share — the team, the city, the market — and it watches them around the clock,
+              flagging the moment there's a genuine reason to reconnect. Message drafted.
             </p>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 18, animation: 'fadeUp 0.85s 0.4s ease both' }}>
               <button onClick={() => openModal()} style={{
