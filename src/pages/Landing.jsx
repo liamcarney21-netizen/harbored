@@ -191,11 +191,10 @@ function DiscoveryMock() {
         Found 2 shared themes
       </div>
       {[
-        ['Charleston Commercial Real Estate', 94], ['Downtown Retail Leasing', 79],
-      ].map(([label, conf]) => (
-        <div key={label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', borderRadius: 9, background: 'rgba(13,92,99,0.05)', border: '1px solid rgba(13,92,99,0.2)', marginBottom: 6 }}>
+        'Charleston Commercial Real Estate', 'Downtown Retail Leasing',
+      ].map(label => (
+        <div key={label} style={{ display: 'flex', alignItems: 'center', padding: '8px 12px', borderRadius: 9, background: 'rgba(13,92,99,0.05)', border: '1px solid rgba(13,92,99,0.2)', marginBottom: 6 }}>
           <span style={{ fontSize: 12, fontWeight: 600, color: C.ink }}>{label}</span>
-          <span style={{ fontFamily: SERIF, fontSize: 13, fontWeight: 600, color: C.teal }}>{conf}</span>
         </div>
       ))}
     </BrowserWindow>
