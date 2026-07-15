@@ -7,7 +7,9 @@ import DemoPipeline from '../../components/DemoPipeline'
 import { themeUpdates, SIGNIFICANCE_THRESHOLD } from '../../data/commonGround'
 import { useDataStore, selectNudges } from '../../store/dataStore'
 import { useDemoStore } from '../../store/demoStore'
+import { useAuthStore } from '../../store/authStore'
 import { fetchLiveUpdates } from '../../services/monitoring'
+import { fetchStoredUpdates } from '../../services/scanResults'
 import { openSend, sendChannelFor } from '../../services/outreach'
 
 const TABS = ['Opportunities', 'Shared Themes']
@@ -96,6 +98,10 @@ function LiveBadge() {
 export default function CommonGround({ onImportContacts }) {
   const navigate = useNavigate()
   const demoActive = useDemoStore(s => s.active)
+  const user = useAuthStore(s => s.user)
+  // Signed-in real users read what the scheduled server scan already found;
+  // demo mode (no user) keeps its live scan + seed data, untouched.
+  const useStored = !!user && !demoActive
   const [showPipeline, setShowPipeline] = useState(true)
   const contacts = useDataStore(s => s.contacts)
   const themesByContact = useDataStore(s => s.themesByContact)
@@ -116,6 +122,7 @@ export default function CommonGround({ onImportContacts }) {
   const [newThemeLabel, setNewThemeLabel] = useState('')
   const [newThemeCategory, setNewThemeCategory] = useState('sports')
   const [liveUpdates, setLiveUpdates] = useState([])
+  const [storedUpdates, setStoredUpdates] = useState([])
   const [scanning, setScanning] = useState(false)
   const [scannedAt, setScannedAt] = useState(null)
 
@@ -130,9 +137,34 @@ export default function CommonGround({ onImportContacts }) {
     }
   }
 
-  useEffect(() => { scan() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  // Real users: load the server's stored scan results. If there are none yet
+  // (never scanned, or a brand-new account), fall back to a live scan so the
+  // page is never empty on first open.
+  async function loadStored() {
+    setScanning(true)
+    try {
+      const stored = await fetchStoredUpdates(contacts)
+      setStoredUpdates(stored)
+      if (stored.length === 0) {
+        const updates = await fetchLiveUpdates(contacts, themesByContact, { maxThemes: 6 })
+        setLiveUpdates(updates)
+        setScannedAt(new Date())
+      }
+    } finally {
+      setScanning(false)
+    }
+  }
 
-  const allUpdates = [...liveUpdates, ...themeUpdates]
+  useEffect(() => {
+    if (useStored) loadStored()
+    else scan()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Stored results are the baseline for signed-in users; a manual "Scan now"
+  // populates liveUpdates and takes over. Demo/logged-out keeps live + seeds.
+  const allUpdates = useStored
+    ? (liveUpdates.length > 0 ? liveUpdates : storedUpdates)
+    : [...liveUpdates, ...themeUpdates]
   const opportunities = allUpdates.filter(u => u.score >= SIGNIFICANCE_THRESHOLD && !dismissed.includes(u.id))
   const belowBar = allUpdates.filter(u => u.score < SIGNIFICANCE_THRESHOLD)
   // Below the bar but forwardable → surface as a "give first" favor.
