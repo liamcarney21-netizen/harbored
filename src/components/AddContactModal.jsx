@@ -65,7 +65,7 @@ export default function AddContactModal({ open, onClose, firstRun = false }) {
             style={{
               pointerEvents: 'auto',
               width: 'min(520px, 100%)', maxHeight: '100%', overflowY: 'auto',
-              background: '#FFFFFF', borderRadius: '16px', boxShadow: '0 24px 64px rgba(0,0,0,0.25)',
+              background: '#FFFFFF', borderRadius: '16px', boxShadow: '0 14px 44px -8px rgba(28,43,51,0.24), 0 3px 10px rgba(28,43,51,0.10)',
               fontFamily: 'Inter, sans-serif',
             }}
           >

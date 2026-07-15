@@ -116,7 +116,7 @@ export default function Onboarding({ onFinish }) {
         transition={{ duration: 0.35, ease: 'easeOut' }}
         style={{
           width: '100%', maxWidth: '560px', borderRadius: '16px',
-          background: '#FFFFFF', boxShadow: '0 24px 64px rgba(0,0,0,0.25)',
+          background: '#FFFFFF', boxShadow: '0 14px 44px -8px rgba(28,43,51,0.24), 0 3px 10px rgba(28,43,51,0.10)',
           display: 'flex', flexDirection: 'column', overflow: 'hidden',
           fontFamily: 'Inter, sans-serif',
         }}
