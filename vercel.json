@@ -2,5 +2,8 @@
   "routes": [
     { "handle": "filesystem" },
     { "src": "/.*", "dest": "/index.html" }
+  ],
+  "crons": [
+    { "path": "/api/scan", "schedule": "0 13 * * *" }
   ]
 }

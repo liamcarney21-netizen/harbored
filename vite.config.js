@@ -5,6 +5,7 @@ import { handleNewsRequest } from './server/newsHandler.js'
 import { handleDiscoverRequest } from './server/discoverHandler.js'
 import { handleWaitlistRequest } from './server/waitlistHandler.js'
 import { handleScoreRequest } from './server/scoreHandler.js'
+import { runScan, createServiceClient } from './server/scanHandler.js'
 
 // Mirrors the api/ functions so /api/* works under `npm run dev` without Vercel.
 function harboredApi() {
@@ -50,6 +51,34 @@ function harboredApi() {
         res.statusCode = status
         res.setHeader('content-type', 'application/json')
         res.end(JSON.stringify(body))
+      })
+      // Server-side scan (the cron target). In dev the CRON_SECRET check is only
+      // enforced if the var is set; pass it as ?secret= or a Bearer header. Needs
+      // SUPABASE_SERVICE_ROLE_KEY in .env.local to actually read/write.
+      server.middlewares.use('/api/scan', async (req, res) => {
+        res.setHeader('content-type', 'application/json')
+        const url = new URL(req.url, 'http://localhost')
+        const secret = process.env.CRON_SECRET
+        const provided = (req.headers.authorization || '').replace('Bearer ', '') || url.searchParams.get('secret')
+        if (secret && provided !== secret) {
+          res.statusCode = 401
+          res.end(JSON.stringify({ error: 'unauthorized' }))
+          return
+        }
+        const supabase = createServiceClient()
+        if (!supabase) {
+          res.statusCode = 500
+          res.end(JSON.stringify({ error: 'Supabase service role not configured (SUPABASE_SERVICE_ROLE_KEY / URL)' }))
+          return
+        }
+        try {
+          const summary = await runScan(supabase)
+          res.statusCode = 200
+          res.end(JSON.stringify({ ok: true, ...summary }))
+        } catch (err) {
+          res.statusCode = 500
+          res.end(JSON.stringify({ ok: false, error: String(err.message || err) }))
+        }
       })
     },
   }
