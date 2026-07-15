@@ -705,15 +705,17 @@ export default function Landing() {
 
       {/* ══════════════════ STATEMENT BAND ══════════════════ */}
       <section style={{ background: C.navy, padding: 'clamp(72px, 11vw, 128px) clamp(20px, 6vw, 80px)' }}>
-        <Reveal style={{ maxWidth: 860, margin: '0 auto', textAlign: 'center' }}>
-          <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 'clamp(64px, 11vw, 132px)', fontWeight: 600, color: C.brassPale, lineHeight: 1, marginBottom: 22 }}>
-            150
-          </div>
-          <p style={{ fontFamily: SERIF, fontSize: 'clamp(21px, 2.7vw, 32px)', fontWeight: 500, color: C.cream, lineHeight: 1.42, letterSpacing: '-0.01em', maxWidth: 720, margin: '0 auto' }}>
-            is the most relationships anyone can actively keep up with. That's a lot of people worth staying close to —{' '}
-            <span style={{ color: C.brassPale }}>Harbored helps you keep every one.</span>
+        <Reveal style={{ maxWidth: 820, margin: '0 auto', textAlign: 'center' }}>
+          <p style={{ fontFamily: SERIF, fontSize: 'clamp(27px, 3.7vw, 46px)', fontWeight: 500, color: C.cream, lineHeight: 1.28, letterSpacing: '-0.015em', margin: 0 }}>
+            Your brain can comfortably maintain around{' '}
+            <span style={{ fontStyle: 'italic', fontWeight: 600, color: C.brassPale }}>150</span>{' '}
+            stable relationships.
           </p>
-          <p style={{ fontFamily: SANS, fontSize: 13, fontWeight: 300, color: 'rgba(250,248,243,0.42)', marginTop: 26, letterSpacing: '0.02em' }}>
+          <p style={{ fontFamily: SANS, fontSize: 'clamp(15px, 1.7vw, 18px)', fontWeight: 300, color: 'rgba(250,248,243,0.6)', lineHeight: 1.6, maxWidth: 600, margin: '22px auto 0' }}>
+            That's a lot of people worth staying close to.{' '}
+            <span style={{ color: C.brassPale, fontWeight: 400 }}>Harbored helps you keep every one.</span>
+          </p>
+          <p style={{ fontFamily: SANS, fontSize: 13, fontWeight: 300, color: 'rgba(250,248,243,0.42)', marginTop: 28, letterSpacing: '0.02em' }}>
             Dunbar's number — Robin Dunbar, University of Oxford.
           </p>
         </Reveal>
