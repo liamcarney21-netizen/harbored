@@ -22,13 +22,16 @@ done from the agent environment.
    sudo xcodebuild -license accept
    xcodebuild -version   # should now print a version, not an error
    ```
-2. **CocoaPods** — `brew install cocoapods` (or `sudo gem install cocoapods`). Verify: `pod --version`.
-3. **Apple Developer account** — already enrolled. ✅
+2. **Apple Developer account** — already enrolled. ✅
 
-> **If you hit `Platform not found` on `cap sync ios`:** it means the iOS project didn't finish
-> generating (usually because Xcode or CocoaPods was missing). After the two prereqs above are
-> installed, re-run `npx cap sync ios`. If the `ios/` folder is in a broken half-state, reset it:
-> `rm -rf ios && npx cap add ios`, then `npx cap sync ios`.
+> **Dependency manager:** Capacitor 8 uses **Swift Package Manager** (SPM), not CocoaPods — the
+> deps live in `ios/App/CapApp-SPM/Package.swift`, and Xcode opens `ios/App/App.xcodeproj`
+> (there is no `.xcworkspace`). CocoaPods is only needed if you later add a plugin that still
+> ships a Podfile.
+>
+> **If you hit `Platform not found` on `cap sync ios`:** the iOS project isn't generated yet.
+> Run `npx cap add ios` first (needs full Xcode selected via `xcode-select`). If `ios/` is in a
+> broken half-state, reset it: `rm -rf ios && npx cap add ios`, then `npx cap sync ios`.
 
 ## Steps
 Run all of these from the repo root (`~/harbored`):
