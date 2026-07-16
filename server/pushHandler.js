@@ -28,9 +28,16 @@ function apnsConfigured() {
   return !!(process.env.APNS_KEY && process.env.APNS_KEY_ID && process.env.APNS_TEAM_ID && process.env.APNS_BUNDLE_ID)
 }
 
+// The .p8 is multi-line PEM. Accept it either raw (fine in the Vercel env UI) or
+// base64-encoded (easier as a single-line value in .env.local).
+function apnsPrivateKey() {
+  const raw = process.env.APNS_KEY || ''
+  return raw.includes('BEGIN') ? raw : Buffer.from(raw, 'base64').toString('utf8')
+}
+
 // APNs provider JWT (ES256). Valid up to 1h; minted once per run.
 function providerJwt() {
-  return jwt.sign({}, process.env.APNS_KEY, {
+  return jwt.sign({}, apnsPrivateKey(), {
     algorithm: 'ES256',
     keyid: process.env.APNS_KEY_ID,
     issuer: process.env.APNS_TEAM_ID,
