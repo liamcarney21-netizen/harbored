@@ -2,6 +2,7 @@ import { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDemoStore } from '../store/demoStore';
+import { apiUrl } from '../lib/apiBase';
 
 /* ─── Animation helpers ─────────────────────────────────── */
 const ease = [0.22, 1, 0.36, 1];
@@ -263,7 +264,7 @@ function WaitlistModal({ isOpen, onClose, plan }) {
   const handleSubmit = e => {
     e.preventDefault();
     if (!email) return;
-    fetch('/api/waitlist', {
+    fetch(apiUrl('/api/waitlist'), {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ firstName, email, plan: plan || undefined }),
