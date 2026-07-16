@@ -1,0 +1,10 @@
+{
+  "appId": "app.harbored",
+  "appName": "Harbored",
+  "webDir": "dist",
+  "plugins": {
+    "CapacitorHttp": {
+      "enabled": true
+    }
+  }
+}

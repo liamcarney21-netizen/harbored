@@ -4,6 +4,7 @@
 // draft a message for the ones that do.
 
 import { SIGNIFICANCE_THRESHOLD } from '../data/commonGround'
+import { apiUrl } from '../lib/apiBase'
 
 const GIVE_WORDS = [
   'guide', 'how to', 'tips', 'ranking', 'ranked', 'best ', 'top ', 'list of',
@@ -72,7 +73,7 @@ export async function fetchLiveUpdates(contacts, themesByContact, { maxThemes = 
 
   const newsResults = await Promise.allSettled(
     sample.map(async ({ contact, theme }) => {
-      const resp = await fetch(`/api/news?q=${encodeURIComponent(theme.label)}&limit=3`)
+      const resp = await fetch(apiUrl(`/api/news?q=${encodeURIComponent(theme.label)}&limit=3`))
       if (!resp.ok) throw new Error('news fetch failed')
       const { items } = await resp.json()
       if (!items?.length) return null
@@ -93,7 +94,7 @@ export async function fetchLiveUpdates(contacts, themesByContact, { maxThemes = 
 
   let scoreById = new Map()
   try {
-    const resp = await fetch('/api/score', {
+    const resp = await fetch(apiUrl('/api/score'), {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ items: scorePayload }),
