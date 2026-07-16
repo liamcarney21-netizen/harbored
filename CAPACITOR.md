@@ -14,9 +14,21 @@ done from the agent environment.
 - API calls use `src/lib/apiBase.js` → relative on web, absolute (prod) on native
 
 ## Prerequisites (one time)
-1. **Xcode** — install from the Mac App Store, then run it once to finish setup.
-2. **CocoaPods** — `sudo gem install cocoapods` (or `brew install cocoapods`).
+1. **Full Xcode** — install from the Mac App Store (large, ~7 GB). **Command Line Tools alone
+   is not enough** (that's what causes `xcodebuild requires Xcode` and `Platform not found`).
+   After installing, open Xcode once to finish component setup, then point the toolchain at it:
+   ```sh
+   sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+   sudo xcodebuild -license accept
+   xcodebuild -version   # should now print a version, not an error
+   ```
+2. **CocoaPods** — `brew install cocoapods` (or `sudo gem install cocoapods`). Verify: `pod --version`.
 3. **Apple Developer account** — already enrolled. ✅
+
+> **If you hit `Platform not found` on `cap sync ios`:** it means the iOS project didn't finish
+> generating (usually because Xcode or CocoaPods was missing). After the two prereqs above are
+> installed, re-run `npx cap sync ios`. If the `ios/` folder is in a broken half-state, reset it:
+> `rm -rf ios && npx cap add ios`, then `npx cap sync ios`.
 
 ## Steps
 Run all of these from the repo root (`~/harbored`):
