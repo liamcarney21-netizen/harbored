@@ -61,10 +61,14 @@ async function sendViaResend(to, subject, html) {
 // send=false forces preview mode regardless of key — used in dev so a real key
 // can never fire a live email against real accounts while testing.
 export async function runDigest(supabase, { send = true } = {}) {
+  // Only genuinely NEW above-bar results — ones the user hasn't been alerted to
+  // yet (notified_at IS NULL). This is what makes the digest surface fresh
+  // opportunities instead of re-sending the same headlines every week.
   const { data: rows, error } = await supabase
     .from('scan_results')
-    .select('user_id, contact_name, theme_label, headline, rationale, score, above_bar')
+    .select('id, user_id, contact_name, theme_label, headline, rationale, score, above_bar, notified_at')
     .eq('above_bar', true)
+    .is('notified_at', null)
     .order('score', { ascending: false })
   if (error) throw new Error(`read scan_results: ${error.message}`)
 
@@ -102,12 +106,21 @@ export async function runDigest(supabase, { send = true } = {}) {
     if (send && hasKey) {
       try {
         await sendViaResend(email, subject, html)
+        // Mark exactly the rows we just sent as notified, so they aren't
+        // re-sent next week. The daily scan carries this forward via content_key.
+        const ids = items.map(it => it.id)
+        const { error: markErr } = await supabase
+          .from('scan_results')
+          .update({ notified_at: new Date().toISOString() })
+          .in('id', ids)
+        if (markErr) console.error(`[digest] mark notified failed for ${email}: ${markErr.message}`)
         summary.usersEmailed++
       } catch (err) {
         console.error(`[digest] send failed for ${email}: ${err.message}`)
       }
     } else {
-      // Preview: never sends. Records enough to verify without exposing addresses.
+      // Preview: never sends and never marks. Records enough to verify without
+      // exposing addresses.
       summary.previews.push({ to: email.replace(/(.).+(@.+)/, '$1***$2'), subject, items: items.length })
     }
   }

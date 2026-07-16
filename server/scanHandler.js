@@ -65,12 +65,25 @@ async function scanUser(supabase, userId, pairs) {
   const { body } = await handleScoreRequest({ items })
   const byId = new Map((body.results || []).map(r => [r.id, r]))
 
-  // 3. Shape rows for storage.
+  // 3. Carry forward notified_at for headlines we've already alerted on, so the
+  //    daily full-refresh doesn't reset "already notified" state. content_key is
+  //    the stable identity of a result (contact + theme + headline).
+  const { data: existing } = await supabase
+    .from('scan_results')
+    .select('content_key, notified_at')
+    .eq('user_id', userId)
+  const notifiedByKey = new Map()
+  for (const r of existing || []) {
+    if (r.content_key && r.notified_at) notifiedByKey.set(r.content_key, r.notified_at)
+  }
+
+  // 4. Shape rows for storage.
   const scannedAt = new Date().toISOString()
   const rows = found.map(({ contact, theme, item }, i) => {
     const scored = byId.get(i) || {}
     const score = Number.isFinite(scored.score) ? scored.score : 0
     const above = score >= SIGNIFICANCE_THRESHOLD
+    const contentKey = `${String(contact.id)}|${theme.label}|${item.title}`
     return {
       user_id: userId,
       contact_id: String(contact.id),
@@ -84,12 +97,14 @@ async function scanUser(supabase, userId, pairs) {
       rationale: scored.rationale ?? null,
       draft_message: above ? (scored.draftMessage ?? null) : null,
       above_bar: above,
+      content_key: contentKey,
+      notified_at: notifiedByKey.get(contentKey) ?? null,
       scanned_at: scannedAt,
     }
   })
 
-  // 4. Full-refresh this user's results (latest scan replaces the prior one).
-  //    Phase 3 (push) will keep history + a "notified" flag instead of deleting.
+  // 5. Full-refresh this user's results (latest scan replaces the prior one),
+  //    with notified_at carried forward via content_key above.
   const del = await supabase.from('scan_results').delete().eq('user_id', userId)
   if (del.error) throw new Error(`delete scan_results (${userId}): ${del.error.message}`)
   if (rows.length) {
