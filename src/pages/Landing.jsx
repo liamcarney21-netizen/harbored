@@ -2,6 +2,7 @@ import { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDemoStore } from '../store/demoStore';
+import AnchorMark from '../components/AnchorMark';
 
 /* ─── Animation helpers ─────────────────────────────────── */
 const ease = [0.22, 1, 0.36, 1];
@@ -331,9 +332,7 @@ function WaitlistModal({ isOpen, onClose, plan }) {
             </button>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 28 }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.brassPale} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="5" r="2.2"/><line x1="12" y1="7.2" x2="12" y2="21"/><path d="M4.5 14.5 Q12 18.5 19.5 14.5"/>
-              </svg>
+              <AnchorMark size={16} color={C.brassPale} />
               <span style={{ fontFamily: SERIF, fontSize: 17, fontWeight: 600, color: C.cream }}>Harbored</span>
             </div>
 
@@ -407,9 +406,7 @@ function Nav({ scrolled, openModal }) {
       boxShadow: scrolled ? '0 1px 0 rgba(255,255,255,0.05)' : 'none',
     }}>
       <a href="#" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none' }}>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.brassPale} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="5" r="2.2"/><line x1="12" y1="7.2" x2="12" y2="21"/><path d="M4.5 14.5 Q12 18.5 19.5 14.5"/>
-        </svg>
+        <AnchorMark size={18} color={C.brassPale} />
         <span style={{ fontFamily: SERIF, fontSize: 21, fontWeight: 600, color: C.cream }}>Harbored</span>
       </a>
       <nav style={{ display: 'flex', alignItems: 'center', gap: 26 }}>

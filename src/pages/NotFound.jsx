@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Anchor } from 'lucide-react'
+import AnchorMark from '../components/AnchorMark'
 
 export default function NotFound() {
   return (
@@ -8,7 +8,7 @@ export default function NotFound() {
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       padding: '24px', textAlign: 'center', fontFamily: 'Inter, sans-serif',
     }}>
-      <Anchor style={{ width: 28, height: 28, color: '#A97E2F', marginBottom: 20 }} />
+      <AnchorMark size={28} color="#A97E2F" style={{ marginBottom: 20 }} />
       <div style={{ fontFamily: '"Fraunces", Georgia, serif', fontSize: 'clamp(56px, 10vw, 96px)', fontWeight: 600, color: '#1C2B33', lineHeight: 1 }}>
         404
       </div>
