@@ -7,6 +7,7 @@ import { handleWaitlistRequest } from './server/waitlistHandler.js'
 import { handleScoreRequest } from './server/scoreHandler.js'
 import { runScan, createServiceClient } from './server/scanHandler.js'
 import { runDigest } from './server/digestHandler.js'
+import { runPush } from './server/pushHandler.js'
 
 // Mirrors the api/ functions so /api/* works under `npm run dev` without Vercel.
 function harboredApi() {
@@ -101,6 +102,33 @@ function harboredApi() {
         }
         try {
           const summary = await runDigest(supabase, { send: false })
+          res.statusCode = 200
+          res.end(JSON.stringify({ ok: true, preview: true, ...summary }))
+        } catch (err) {
+          res.statusCode = 500
+          res.end(JSON.stringify({ ok: false, error: String(err.message || err) }))
+        }
+      })
+      // Push send (APNs). Dev always runs in preview mode (send: false) so it
+      // never attempts a real APNs call while testing.
+      server.middlewares.use('/api/push', async (req, res) => {
+        res.setHeader('content-type', 'application/json')
+        const url = new URL(req.url, 'http://localhost')
+        const secret = process.env.CRON_SECRET
+        const provided = (req.headers.authorization || '').replace('Bearer ', '') || url.searchParams.get('secret')
+        if (secret && provided !== secret) {
+          res.statusCode = 401
+          res.end(JSON.stringify({ error: 'unauthorized' }))
+          return
+        }
+        const supabase = createServiceClient()
+        if (!supabase) {
+          res.statusCode = 500
+          res.end(JSON.stringify({ error: 'Supabase service role not configured (SUPABASE_SERVICE_ROLE_KEY / URL)' }))
+          return
+        }
+        try {
+          const summary = await runPush(supabase, { send: false })
           res.statusCode = 200
           res.end(JSON.stringify({ ok: true, preview: true, ...summary }))
         } catch (err) {
