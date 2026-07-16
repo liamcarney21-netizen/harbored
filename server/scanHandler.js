@@ -39,6 +39,51 @@ function pairsForUser(data, maxPerUser) {
   return pairs
 }
 
+// content_key is the stable identity of a result — the same headline for the
+// same contact+theme maps to the same key across scans, so notified_at can be
+// carried forward and we never re-alert on it.
+export function contentKeyFor(contactId, themeLabel, headline) {
+  return `${String(contactId)}|${themeLabel}|${headline}`
+}
+
+// Build content_key → notified_at from the user's existing rows (only rows that
+// carry both a key and a notified timestamp count).
+export function notifiedKeyMap(existingRows) {
+  const m = new Map()
+  for (const r of existingRows || []) {
+    if (r.content_key && r.notified_at) m.set(r.content_key, r.notified_at)
+  }
+  return m
+}
+
+// Shape scored news into storage rows, carrying notified_at forward for any
+// headline the user was already alerted to (matched by content_key).
+export function shapeResultRows(found, scoreById, userId, notifiedByKey, scannedAt) {
+  return found.map(({ contact, theme, item }, i) => {
+    const scored = scoreById.get(i) || {}
+    const score = Number.isFinite(scored.score) ? scored.score : 0
+    const above = score >= SIGNIFICANCE_THRESHOLD
+    const key = contentKeyFor(contact.id, theme.label, item.title)
+    return {
+      user_id: userId,
+      contact_id: String(contact.id),
+      contact_name: contact.name,
+      theme_label: theme.label,
+      theme_category: theme.category ?? null,
+      headline: item.title,
+      source: item.source ?? null,
+      link: item.link ?? null,
+      score,
+      rationale: scored.rationale ?? null,
+      draft_message: above ? (scored.draftMessage ?? null) : null,
+      above_bar: above,
+      content_key: key,
+      notified_at: notifiedByKey.get(key) ?? null,
+      scanned_at: scannedAt,
+    }
+  })
+}
+
 async function scanUser(supabase, userId, pairs) {
   // 1. Freshest headline per theme (fail-soft: a theme with no news is skipped).
   const newsResults = await Promise.allSettled(
@@ -66,42 +111,16 @@ async function scanUser(supabase, userId, pairs) {
   const byId = new Map((body.results || []).map(r => [r.id, r]))
 
   // 3. Carry forward notified_at for headlines we've already alerted on, so the
-  //    daily full-refresh doesn't reset "already notified" state. content_key is
-  //    the stable identity of a result (contact + theme + headline).
+  //    daily full-refresh doesn't reset "already notified" state.
   const { data: existing } = await supabase
     .from('scan_results')
     .select('content_key, notified_at')
     .eq('user_id', userId)
-  const notifiedByKey = new Map()
-  for (const r of existing || []) {
-    if (r.content_key && r.notified_at) notifiedByKey.set(r.content_key, r.notified_at)
-  }
+  const notifiedByKey = notifiedKeyMap(existing)
 
-  // 4. Shape rows for storage.
+  // 4. Shape rows for storage (with notified_at carried forward via content_key).
   const scannedAt = new Date().toISOString()
-  const rows = found.map(({ contact, theme, item }, i) => {
-    const scored = byId.get(i) || {}
-    const score = Number.isFinite(scored.score) ? scored.score : 0
-    const above = score >= SIGNIFICANCE_THRESHOLD
-    const contentKey = `${String(contact.id)}|${theme.label}|${item.title}`
-    return {
-      user_id: userId,
-      contact_id: String(contact.id),
-      contact_name: contact.name,
-      theme_label: theme.label,
-      theme_category: theme.category ?? null,
-      headline: item.title,
-      source: item.source ?? null,
-      link: item.link ?? null,
-      score,
-      rationale: scored.rationale ?? null,
-      draft_message: above ? (scored.draftMessage ?? null) : null,
-      above_bar: above,
-      content_key: contentKey,
-      notified_at: notifiedByKey.get(contentKey) ?? null,
-      scanned_at: scannedAt,
-    }
-  })
+  const rows = shapeResultRows(found, byId, userId, notifiedByKey, scannedAt)
 
   // 5. Full-refresh this user's results (latest scan replaces the prior one),
   //    with notified_at carried forward via content_key above.
