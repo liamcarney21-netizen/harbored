@@ -8,6 +8,7 @@ import AppLayout from './components/AppLayout';
 import { useAuthStore } from './store/authStore';
 import { useDataStore } from './store/dataStore';
 import { useDemoStore } from './store/demoStore';
+import { registerPushNotifications } from './services/push';
 
 export default function App() {
   const init = useAuthStore(s => s.init);
@@ -18,7 +19,11 @@ export default function App() {
       const uid = state.user?.id ?? null;
       if (uid === lastUserId.current) return;
       lastUserId.current = uid;
-      if (uid) useDataStore.getState().hydrate();
+      if (uid) {
+        useDataStore.getState().hydrate();
+        // Register this device for push (native only; no-op on web).
+        registerPushNotifications();
+      }
       else if (useDemoStore.getState().active) useDataStore.getState().loadDemo();
       else useDataStore.getState().reset();
     });
