@@ -4,6 +4,7 @@ import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Privacy from './pages/Privacy';
+import Support from './pages/Support';
 import NotFound from './pages/NotFound';
 import AppLayout from './components/AppLayout';
 import { useAuthStore } from './store/authStore';
@@ -39,6 +40,7 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/privacy" element={<Privacy />} />
+        <Route path="/support" element={<Support />} />
         <Route path="/dashboard/*" element={<AppLayout />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

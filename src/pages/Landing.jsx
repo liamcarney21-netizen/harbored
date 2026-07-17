@@ -870,7 +870,7 @@ export default function Landing() {
             <div style={{ display: 'flex', gap: 'clamp(28px, 5vw, 72px)', flexWrap: 'wrap' }}>
               {[
                 { heading: 'Platform', links: [['Common Ground', '#common-ground'], ['Discovery', '#discovery'], ['Prep Briefs', '#prep-briefs'], ['Weekly Digest', '#digest']] },
-                { heading: 'Company', links: [['Pricing', '#pricing']] },
+                { heading: 'Company', links: [['Pricing', '#pricing'], ['Support', '/support']] },
                 { heading: 'Legal',   links: [['Privacy', '/privacy'], ['Terms', '#']] },
               ].map(({ heading, links }) => (
                 <div key={heading}>
