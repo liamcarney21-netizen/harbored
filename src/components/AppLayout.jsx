@@ -174,6 +174,7 @@ export default function AppLayout() {
         open={showAddContact}
         firstRun={addContactFirstRun}
         onClose={() => setShowAddContact(false)}
+        onCreated={(contact) => setComposerContacts([contact])}
       />
       <ImportContactsModal
         open={showImportContacts}
