@@ -18,7 +18,7 @@ Character limits noted where Apple enforces them. Everything here must stay trut
 ## URLs
 
 - **Privacy Policy URL**: https://harbored-three.vercel.app/privacy
-- **Support URL**: https://harbored-three.vercel.app  _(add a real support page or mailto before submit)_
+- **Support URL**: https://harbored-three.vercel.app/support
 - **Marketing URL** (optional): https://harbored-three.vercel.app
 
 ---
@@ -131,7 +131,7 @@ Caption each with the benefit, not the feature (e.g. "Know the moment there's a 
 ## Pre-submission checklist
 
 - [ ] Privacy Policy URL live and reachable (`/privacy` — ships when `phase4-contacts`/this branch deploys)
-- [ ] Support URL resolves to something real (page or mailto)
+- [x] Support URL resolves to something real (`/support` page — deploys with this branch)
 - [ ] Nutrition labels entered to match the table above
 - [ ] `NSContactsUsageDescription` present in Info.plist (done — Phase 4)
 - [ ] Push Notifications capability enabled on the App ID (Apple Developer)
