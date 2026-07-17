@@ -141,7 +141,7 @@ export default function AppSidebar({ onAddContact, onImportContacts, onNavigate 
                 Liam Carney
               </div>
               <div style={{ fontSize: '11px', color: '#5C6B73', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                liamcarney21@gmail.com
+                harboredsupport@gmail.com
               </div>
             </div>
           </div>

@@ -79,9 +79,9 @@ export default function Settings() {
   const clearSampleData = useDataStore(s => s.clearSampleData)
   const restoreSampleData = useDataStore(s => s.restoreSampleData)
   const sampleCount = contacts.filter(c => c.seed).length
-  const [profile, setProfile] = useState({ name: 'Liam Carney', email: 'liamcarney21@gmail.com', timezone: 'America/Chicago' })
+  const [profile, setProfile] = useState({ name: 'Liam Carney', email: 'harboredsupport@gmail.com', timezone: 'America/Chicago' })
   const [notifToggles, setNotifToggles] = useState({ email: true, sms: true, slack: false, whatsapp: false, teams: false })
-  const [notifValues, setNotifValues] = useState({ email: 'liamcarney21@gmail.com', sms: '', slack: '', whatsapp: '', teams: '' })
+  const [notifValues, setNotifValues] = useState({ email: 'harboredsupport@gmail.com', sms: '', slack: '', whatsapp: '', teams: '' })
   const [connectedPlatforms, setConnectedPlatforms] = useState(Object.fromEntries(PLATFORMS.map(p => [p.key, p.connected])))
   const [autoSend, setAutoSend] = useState(false)
   const [saved, setSaved] = useState(false)

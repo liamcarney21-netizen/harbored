@@ -8,7 +8,7 @@
 // it's at least visible in the Vercel dashboard, and the response tells the
 // client delivery wasn't durable.
 
-const OWNER_EMAIL = 'liamcarney21@gmail.com'
+const OWNER_EMAIL = 'harboredsupport@gmail.com'
 
 export async function handleWaitlistRequest({ firstName, email, plan }) {
   const cleanEmail = String(email || '').trim().toLowerCase()

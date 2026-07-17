@@ -42,7 +42,7 @@ export default function Digest() {
     const params = new URLSearchParams()
     params.set('subject', `Harbored digest — ${weekRange()}`)
     params.set('body', lines.join('\n'))
-    window.location.href = `mailto:liamcarney21@gmail.com?${params.toString().replace(/\+/g, '%20')}`
+    window.location.href = `mailto:harboredsupport@gmail.com?${params.toString().replace(/\+/g, '%20')}`
   }
 
   const card = { borderRadius: '12px', background: '#FFFFFF', border: '1px solid #E6E2D8' }

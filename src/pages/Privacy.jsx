@@ -8,7 +8,7 @@ const MUTE = '#5C6B73'
 const TEAL = '#0D5C63'
 
 const EFFECTIVE = 'July 17, 2026'
-const CONTACT_EMAIL = 'liamcarney21@gmail.com'
+const CONTACT_EMAIL = 'harboredsupport@gmail.com'
 
 // Substantive privacy policy — Harbored imports contacts and stores personal data,
 // so this is a real disclosure (and a required URL for App Store review), not filler.

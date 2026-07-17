@@ -7,7 +7,7 @@ const INK = '#1C2B33'
 const MUTE = '#5C6B73'
 const TEAL = '#0D5C63'
 
-const CONTACT_EMAIL = 'liamcarney21@gmail.com'
+const CONTACT_EMAIL = 'harboredsupport@gmail.com'
 
 // Support page — doubles as the App Store "Support URL". Keep answers truthful to how
 // the app actually behaves; update alongside product changes (and Privacy.jsx).
