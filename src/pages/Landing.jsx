@@ -871,7 +871,7 @@ export default function Landing() {
               {[
                 { heading: 'Platform', links: [['Common Ground', '#common-ground'], ['Discovery', '#discovery'], ['Prep Briefs', '#prep-briefs'], ['Weekly Digest', '#digest']] },
                 { heading: 'Company', links: [['Pricing', '#pricing']] },
-                { heading: 'Legal',   links: [['Privacy', '#'], ['Terms', '#']] },
+                { heading: 'Legal',   links: [['Privacy', '/privacy'], ['Terms', '#']] },
               ].map(({ heading, links }) => (
                 <div key={heading}>
                   <div style={{ fontFamily: SANS, fontSize: 10, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(250,248,243,0.22)', marginBottom: 16 }}>{heading}</div>
