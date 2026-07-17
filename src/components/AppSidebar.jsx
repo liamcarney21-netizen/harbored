@@ -1,5 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Bell, Users, MessageSquare, BarChart2, Settings, Anchor, Settings2, Compass, Mail, UserPlus, Upload } from 'lucide-react'
+import { LayoutDashboard, Bell, Users, MessageSquare, BarChart2, Settings, Settings2, Compass, Mail, UserPlus, Upload } from 'lucide-react'
+import AnchorMark from './AnchorMark'
 
 const navItems = [
   { path: '/dashboard',           label: 'Common Ground', icon: Compass, end: true, badge: 4 },
@@ -39,7 +40,7 @@ export default function AppSidebar({ onAddContact, onImportContacts, onNavigate 
         }}
         onClick={() => navigate('/dashboard')}
       >
-        <Anchor style={{ width: '16px', height: '16px', color: '#A97E2F', flexShrink: 0 }} />
+        <AnchorMark size={16} color="#A97E2F" style={{ flexShrink: 0 }} />
         <span style={{
           fontFamily: '"Fraunces", Georgia, serif',
           fontSize: '20px',

@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Anchor, Compass, Gauge, Bell, TrendingUp, ArrowRight, ArrowLeft, Check } from 'lucide-react'
+import { Compass, Gauge, Bell, TrendingUp, ArrowRight, ArrowLeft, Check } from 'lucide-react'
+import AnchorMark from './AnchorMark'
 
 const STEPS = [
   {
-    icon: Anchor,
+    icon: AnchorMark,
     kicker: 'Welcome to Harbored',
     title: 'Your network is your most valuable asset.',
     body: "And it erodes quietly. The promotions you never congratulated, the moves you never acknowledged, the people who slowly became strangers. Harbored exists so that never happens — it watches over the relationships your career is built on, and tells you exactly when to show up.",
@@ -124,7 +125,7 @@ export default function Onboarding({ onFinish }) {
         {/* Top bar */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderBottom: '1px solid #EEEBE3' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Anchor style={{ width: '14px', height: '14px', color: '#0D5C63' }} />
+            <AnchorMark size={14} color="#0D5C63" />
             <span style={{ fontFamily: '"Fraunces", Georgia, serif', fontSize: '16px', fontWeight: 600, color: '#1C2B33' }}>Harbored</span>
           </div>
           <button

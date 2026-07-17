@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Anchor } from 'lucide-react';
+import AnchorMark from '../components/AnchorMark';
 import { useAuthStore } from '../store/authStore';
 
 const inputStyle = {
@@ -74,7 +74,7 @@ export default function Login() {
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             marginBottom: 32,
           }}>
-            <Anchor style={{ width: 18, height: 18, color: '#A97E2F' }} />
+            <AnchorMark size={18} color="#A97E2F" />
             <span style={{
               fontFamily: '"Fraunces", Georgia, serif', fontSize: 22, fontWeight: 600,
               color: '#1C2B33',

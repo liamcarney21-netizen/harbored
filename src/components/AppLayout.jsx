@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Navigate, Routes, Route, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Menu, Anchor } from 'lucide-react'
+import { Menu } from 'lucide-react'
+import AnchorMark from './AnchorMark'
 import { useAuthStore } from '../store/authStore'
 import { useDataStore } from '../store/dataStore'
 import { useDemoStore } from '../store/demoStore'
@@ -96,7 +97,7 @@ export default function AppLayout() {
             onClick={() => navigate('/dashboard')}
             style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
           >
-            <Anchor style={{ width: '15px', height: '15px', color: '#A97E2F' }} />
+            <AnchorMark size={15} color="#A97E2F" />
             <span style={{ fontFamily: '"Fraunces", Georgia, serif', fontSize: '18px', fontWeight: 600, color: '#1C2B33' }}>
               Harbored
             </span>
