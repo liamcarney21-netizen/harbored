@@ -10,6 +10,7 @@ import AppSidebar from './AppSidebar'
 import Onboarding from './Onboarding'
 import AddContactModal from './AddContactModal'
 import ImportContactsModal from './ImportContactsModal'
+import ThemeComposerModal from './ThemeComposerModal'
 import { useIsMobile } from '../hooks/useIsMobile'
 import Dashboard from '../pages/app/Dashboard'
 import Alerts from '../pages/app/Alerts'
@@ -37,6 +38,7 @@ export default function AppLayout() {
   const [showAddContact, setShowAddContact] = useState(false)
   const [addContactFirstRun, setAddContactFirstRun] = useState(false)
   const [showImportContacts, setShowImportContacts] = useState(false)
+  const [composerContacts, setComposerContacts] = useState([])
   const [drawerOpen, setDrawerOpen] = useState(false)
   if (!initialized) return null
   if (!user && !demoActive) return <Navigate to="/login" replace />
@@ -176,6 +178,13 @@ export default function AppLayout() {
       <ImportContactsModal
         open={showImportContacts}
         onClose={() => setShowImportContacts(false)}
+        onImported={setComposerContacts}
+      />
+      <ThemeComposerModal
+        key={composerContacts.length ? composerContacts[0].id : 'empty'}
+        open={composerContacts.length > 0}
+        contacts={composerContacts}
+        onClose={() => setComposerContacts([])}
       />
     </motion.div>
   )

@@ -9,7 +9,7 @@ import { isNativeContactsAvailable, pickNativeContacts } from '../services/conta
 
 const hasContactPicker = typeof navigator !== 'undefined' && 'contacts' in navigator && 'ContactsManager' in window
 
-export default function ImportContactsModal({ open, onClose }) {
+export default function ImportContactsModal({ open, onClose, onImported }) {
   const contacts = useDataStore(s => s.contacts)
   const addContact = useDataStore(s => s.addContact)
   const demoActive = useDemoStore(s => s.active)
@@ -130,11 +130,15 @@ export default function ImportContactsModal({ open, onClose }) {
 
   function handleImport() {
     setImporting(true)
+    const created = []
     candidates.forEach((c, i) => {
-      if (selected.has(i)) addContact(c)
+      if (selected.has(i)) created.push(addContact(c))
     })
     setImporting(false)
     handleClose()
+    // Hand the new contacts to the theme composer so people set themes right after
+    // importing, instead of landing empty.
+    if (created.length) onImported?.(created)
   }
 
   return (
