@@ -5,6 +5,7 @@ import { useDataStore } from '../store/dataStore'
 import { useDemoStore } from '../store/demoStore'
 import { parseVCard } from '../services/vcard'
 import { SAMPLE_VCARD } from '../data/sampleContacts'
+import { isNativeContactsAvailable, pickNativeContacts } from '../services/contacts'
 
 const hasContactPicker = typeof navigator !== 'undefined' && 'contacts' in navigator && 'ContactsManager' in window
 
@@ -19,6 +20,11 @@ export default function ImportContactsModal({ open, onClose }) {
   const [skippedCount, setSkippedCount] = useState(0)
   const [error, setError] = useState('')
   const [importing, setImporting] = useState(false)
+  const [loadingNative, setLoadingNative] = useState(false)
+
+  const nativeContacts = isNativeContactsAvailable()
+  // Whether a one-tap picker sits above the .vcf upload (so it renders as secondary).
+  const hasPrimaryPicker = nativeContacts || hasContactPicker
 
   function reset() {
     setCandidates(null)
@@ -26,6 +32,7 @@ export default function ImportContactsModal({ open, onClose }) {
     setSkippedCount(0)
     setError('')
     setImporting(false)
+    setLoadingNative(false)
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
@@ -75,6 +82,25 @@ export default function ImportContactsModal({ open, onClose }) {
     }
     reader.onerror = () => setError('Could not read that file.')
     reader.readAsText(file)
+  }
+
+  // Native iOS path: the system contacts permission prompt + address book,
+  // normalized into the same candidate list the vCard/web paths feed.
+  async function handleNativeContacts() {
+    setError('')
+    setLoadingNative(true)
+    try {
+      const parsed = await pickNativeContacts()
+      if (!parsed.length) {
+        setError('No contacts with a name were found.')
+        return
+      }
+      ingest(parsed)
+    } catch (err) {
+      setError(err?.message || 'Could not read your contacts.')
+    } finally {
+      setLoadingNative(false)
+    }
   }
 
   async function handlePickContacts() {
@@ -173,7 +199,18 @@ export default function ImportContactsModal({ open, onClose }) {
                       </div>
                     </>
                   )}
-                  {hasContactPicker && (
+                  {nativeContacts && (
+                    <button onClick={handleNativeContacts} disabled={loadingNative} style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                      width: '100%', padding: '14px', borderRadius: '10px', fontSize: '13px', fontWeight: 600,
+                      background: '#0D5C63', color: '#FFFFFF', border: 'none',
+                      cursor: loadingNative ? 'default' : 'pointer', opacity: loadingNative ? 0.7 : 1, fontFamily: 'Inter, sans-serif',
+                    }}>
+                      <Smartphone style={{ width: '15px', height: '15px' }} />
+                      {loadingNative ? 'Opening Contacts…' : 'Pick from your contacts'}
+                    </button>
+                  )}
+                  {!nativeContacts && hasContactPicker && (
                     <button onClick={handlePickContacts} style={{
                       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                       width: '100%', padding: '14px', borderRadius: '10px', fontSize: '13px', fontWeight: 600,
@@ -188,14 +225,16 @@ export default function ImportContactsModal({ open, onClose }) {
                     <button onClick={() => fileInputRef.current?.click()} style={{
                       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                       width: '100%', padding: '14px', borderRadius: '10px', fontSize: '13px', fontWeight: 600,
-                      background: hasContactPicker ? 'none' : '#0D5C63', color: hasContactPicker ? '#0D5C63' : '#FFFFFF',
-                      border: hasContactPicker ? '1px solid #0D5C63' : 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+                      background: hasPrimaryPicker ? 'none' : '#0D5C63', color: hasPrimaryPicker ? '#0D5C63' : '#FFFFFF',
+                      border: hasPrimaryPicker ? '1px solid #0D5C63' : 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
                     }}>
                       <Upload style={{ width: '15px', height: '15px' }} /> Upload a .vcf file
                     </button>
-                    <p style={{ fontSize: '12px', color: '#5C6B73', marginTop: '10px', lineHeight: 1.5 }}>
-                      On iPhone: open Contacts → select the people you want → Share Contact → Export vCard, then upload the file here.
-                    </p>
+                    {!nativeContacts && (
+                      <p style={{ fontSize: '12px', color: '#5C6B73', marginTop: '10px', lineHeight: 1.5 }}>
+                        On iPhone: open Contacts → select the people you want → Share Contact → Export vCard, then upload the file here.
+                      </p>
+                    )}
                   </div>
 
                   {error && <p style={{ fontSize: '12px', color: '#B4423A' }}>{error}</p>}
