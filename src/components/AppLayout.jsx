@@ -84,7 +84,7 @@ export default function AppLayout() {
       {isMobile && (
         <header style={{
           display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0,
-          padding: '12px 16px', background: '#FCFBF6', borderBottom: '1px solid #E6E2D8',
+          padding: 'calc(env(safe-area-inset-top) + 12px) 16px 12px', background: '#FCFBF6', borderBottom: '1px solid #E6E2D8',
         }}>
           <button
             onClick={() => setDrawerOpen(true)}

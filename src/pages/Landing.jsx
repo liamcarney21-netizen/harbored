@@ -398,8 +398,8 @@ function WaitlistModal({ isOpen, onClose, plan }) {
 function Nav({ scrolled, openModal }) {
   return (
     <header style={{
-      position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
-      height: 64, padding: '0 clamp(20px, 5vw, 64px)',
+      position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, boxSizing: 'border-box',
+      height: 'calc(64px + env(safe-area-inset-top))', padding: 'env(safe-area-inset-top) clamp(20px, 5vw, 64px) 0',
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       transition: 'background 0.35s ease, box-shadow 0.35s ease',
       background: scrolled ? 'rgba(10,22,40,0.96)' : 'transparent',
@@ -444,7 +444,7 @@ const SUBNAV = [
 function SubNav() {
   return (
     <div className="platform-subnav" style={{
-      position: 'sticky', top: 64, zIndex: 90,
+      position: 'sticky', top: 'calc(64px + env(safe-area-inset-top))', zIndex: 90,
       background: 'rgba(250,248,243,0.94)', backdropFilter: 'blur(14px)',
       borderBottom: '1px solid #E5DFCF',
     }}>

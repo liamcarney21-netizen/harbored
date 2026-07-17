@@ -225,6 +225,22 @@ export default function CommonGround({ onImportContacts }) {
     setNewThemeLabel('')
   }
 
+  // The header CTA should drop you straight into adding a theme — not just flip a
+  // tab (which reads as "nothing happened" on mobile, where the cards are below the
+  // fold). Open an autofocused input on the first contact and scroll it into view.
+  function startAddTheme() {
+    setActiveTab('Shared Themes')
+    const first = contacts[0]
+    if (first) {
+      setNewThemeLabel('')
+      setNewThemeCategory('sports')
+      setAddingFor(first.id)
+    }
+    setTimeout(() => {
+      document.getElementById('shared-themes-anchor')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 60)
+  }
+
   const selectedCfg = selected ? (categoryConfig[selected.category] || categoryConfig.hobby) : null
   const selectedContact = selected ? contacts.find(c => c.id === selected.contactId) : null
 
@@ -262,7 +278,7 @@ export default function CommonGround({ onImportContacts }) {
               {scanning ? 'Scanning themes…' : 'Scan now'}
             </button>
             <button
-              onClick={() => setActiveTab('Shared Themes')}
+              onClick={startAddTheme}
               style={{
                 display: 'flex', alignItems: 'center', gap: '8px',
                 padding: '10px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
@@ -543,7 +559,7 @@ export default function CommonGround({ onImportContacts }) {
         )}
 
         {activeTab === 'Shared Themes' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div id="shared-themes-anchor" style={{ display: 'flex', flexDirection: 'column', gap: '14px', scrollMarginTop: '80px' }}>
             {contacts.filter(c => (themesByContact[c.id] || []).length > 0 || addingFor === c.id).map((c, i) => {
               const themes = themesByContact[c.id] || []
               return (
@@ -584,7 +600,7 @@ export default function CommonGround({ onImportContacts }) {
                         ))}
                         {addingFor === c.id ? (
                           <span style={{
-                            display: 'inline-flex', alignItems: 'center', gap: '6px',
+                            display: 'inline-flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', maxWidth: '100%',
                             padding: '4px 6px 4px 12px', borderRadius: '20px',
                             background: '#F2F0EA', border: '1px solid rgba(13,92,99,0.4)',
                           }}>
@@ -598,7 +614,7 @@ export default function CommonGround({ onImportContacts }) {
                               aria-label="New shared theme"
                               style={{
                                 background: 'transparent', border: 'none', outline: 'none',
-                                fontSize: '12px', color: '#1C2B33', width: '180px', fontFamily: 'Inter, sans-serif',
+                                fontSize: '16px', color: '#1C2B33', width: '170px', maxWidth: '48vw', minWidth: 0, fontFamily: 'Inter, sans-serif',
                               }}
                             />
                             <select
@@ -607,7 +623,7 @@ export default function CommonGround({ onImportContacts }) {
                               aria-label="Theme category"
                               style={{
                                 background: '#FFFFFF', border: '1px solid #D6D1C5',
-                                borderRadius: '6px', color: '#5C6B73', fontSize: '11px', padding: '3px 4px',
+                                borderRadius: '6px', color: '#5C6B73', fontSize: '16px', padding: '3px 4px',
                                 outline: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
                               }}
                             >
@@ -668,7 +684,7 @@ export default function CommonGround({ onImportContacts }) {
                   aria-label="Pick a contact to add themes for"
                   style={{
                     background: '#FFFFFF', border: '1px solid #CCC6B9', borderRadius: '8px',
-                    color: '#1C2B33', fontSize: '12px', padding: '7px 10px', outline: 'none', cursor: 'pointer',
+                    color: '#1C2B33', fontSize: '16px', padding: '7px 10px', outline: 'none', cursor: 'pointer',
                     fontFamily: 'Inter, sans-serif',
                   }}
                 >
