@@ -19,16 +19,16 @@ Runs on http://localhost:5178
 
 ## Project Structure
 - `src/pages/` — Landing (platform-page architecture: compact product-forward hero, sticky "The Platform" sub-nav, one alternating feature section per capability with in-JSX browser-window product mocks, stats band, single large testimonial; LakeScene.jsx is retired/unused), Login, Signup (routed) + legacy Feed/Jobs/Messages/Network/Profile (unrouted)
-- `src/pages/app/` — the app: CommonGround (home at /dashboard), Dashboard (as /dashboard/overview), Alerts, Network, ContactProfile (/dashboard/contact/:id), PrepBrief (/dashboard/prep/:id — meeting one-pager with live theme updates + talking points; meetings stored in dataStore, scheduled from profiles with a Google Calendar deep link), Digest (/dashboard/digest), Messages, Analytics, Settings
+- `src/pages/app/` — the app, focused on theme tracking only (2026-07-18 focus decision): CommonGround (home at /dashboard), Network, ContactProfile (/dashboard/contact/:id), Digest (/dashboard/digest), Settings. Retired sections (Overview/Alerts/Messages/Analytics/PrepBrief) were deleted; their old routes redirect to /dashboard. Meeting scheduling (Google Calendar deep link) still lives on ContactProfile.
 - `src/components/` — AppLayout, AppSidebar, Onboarding (first-login walkthrough → hands off to AddContactModal), AddContactModal, Avatar, PlatformBadge, LakeScene
 - `src/store/` — dataStore (Zustand + localStorage persist: contacts, themes, touches, notes; health derived from days-since-last-touch in `healthFromLastTouch`), authStore (legacy)
 - `src/services/` — monitoring (live theme updates: /api/news fetch + heuristic significance scoring + template drafts; swap for a Claude call to go full AI), outreach (mailto/sms deep-link sending), discovery (client for /api/discover)
-- `src/data/` — appData (alerts/messages seeds), commonGround (curated theme updates + SIGNIFICANCE_THRESHOLD)
+- `src/data/` — appData (seed contacts only), commonGround (curated theme updates + SIGNIFICANCE_THRESHOLD)
 - `server/newsHandler.js` — keyless Google News RSS fetcher, shared by vite dev middleware (vite.config.js) and the Vercel function `api/news.js`
 - `server/discoverHandler.js` — Common Ground discovery (POST /api/discover): extracts shared themes from pasted conversation text. Uses the Claude API when ANTHROPIC_API_KEY is set (shell env in dev, Vercel project env in prod; model override via ANTHROPIC_MODEL), otherwise a keyword-taxonomy fallback. UI entry: "Discover" button on contact profiles (DiscoverThemesModal).
 - `server/waitlistHandler.js` — waitlist signups (POST /api/waitlist): emails the owner via Resend when RESEND_API_KEY is set, otherwise logs to function logs. Landing WaitlistModal POSTs here (localStorage kept as client backup).
 - `server/rateLimit.js` — per-IP in-memory rate limiting on the Vercel functions (discover 10/hr, news 120/hr, waitlist 5/hr). Not applied in dev middleware.
-- Sample data: seed contacts are tagged `seed: true` (persist migration v2); Settings has clear/restore controls. Alerts page is marked as sample until real event detection exists.
+- Sample data: seed contacts are tagged `seed: true` (persist migration v2); Settings has clear/restore controls.
 - `public/` — static assets
 
 ## Key Behaviors
@@ -42,8 +42,10 @@ crests), ink text #1C2B33 / #5C6B73. Type: Fraunces (Google Fonts) for display h
 wordmark ("Harbored", never all-caps), and stat/score numerals; Inter for UI. Signature: the
 significance gauge is a "tide line" — teal fill cresting into brass past the threshold.
 Health: strong #2E7D5B, cooling #A97E2F, at-risk #B4423A. Do NOT reintroduce LinkedIn blue.
-Common Ground is the product's core feature: per-contact shared themes → significance scoring
-(threshold 70) → reach-out prompts with drafted messages.
+Common Ground is the product's core feature: per-contact themes (shared, or ground the user is
+deliberately building — e.g. a market they want to break into) → significance scoring
+(threshold 70) → reach-out prompts with drafted messages. Copy frames themes as "what connects
+you," never exclusively as pre-existing commonalities.
 
 Give-first engine: below-the-bar updates that are resourceful/forwardable (detected via
 GIVE_WORDS in services/monitoring.js, or a `giveable`+`giveMessage` flag on curated
@@ -54,7 +56,7 @@ framed as a no-ask favor. Sending records a touch ("Shared as a favor: …") lik
 - Never use "track/tracked/tracking" for people in UI copy — it reads as surveillance.
   Use "monitored", "watched", or "kept close" instead.
 - Pricing: Free = taste tier (5 contacts, 2 themes each, weekly digest, manual send);
-  Pro $9/mo = everything (unlimited, discovery, prep briefs, auto-send, all channels).
+  Pro $9/mo = everything (unlimited, discovery, auto-send, all channels).
 
 ## Live Deployment
 - **Live URL:** https://harbored-three.vercel.app

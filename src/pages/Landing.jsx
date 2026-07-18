@@ -99,12 +99,6 @@ function Label({ children, light = false }) {
   );
 }
 
-/* ─── Life-event chips (secondary strip) ─────────────────── */
-const EVENTS = [
-  'Job promotions', 'New roles', 'Moving cities', 'Birthdays',
-  'Engagements', 'New babies', 'Starting a company', 'Work anniversaries',
-];
-
 /* ─── Product-window mockups ─────────────────────────────── */
 function BrowserWindow({ children, path = 'harbored.app/dashboard' }) {
   return (
@@ -197,28 +191,6 @@ function DiscoveryMock() {
       ].map(label => (
         <div key={label} style={{ display: 'flex', alignItems: 'center', padding: '8px 12px', borderRadius: 9, background: 'rgba(13,92,99,0.05)', border: '1px solid rgba(13,92,99,0.2)', marginBottom: 6 }}>
           <span style={{ fontSize: 12, fontWeight: 600, color: C.ink }}>{label}</span>
-        </div>
-      ))}
-    </BrowserWindow>
-  );
-}
-
-function PrepMock() {
-  return (
-    <BrowserWindow path="harbored.app/prep">
-      <div style={{ marginBottom: 12 }}>
-        <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600, color: C.teal, marginBottom: 2 }}>Prep brief</div>
-        <div style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 600, color: C.ink }}>Coffee — Kudu Coffee, King Street</div>
-        <div style={{ fontSize: 11, color: C.muted }}>Thursday 8:30 AM · with Tom Whitfield</div>
-      </div>
-      {[
-        '"Downtown retail vacancy hit a decade low" — broke 3 days ago. Tom will have thoughts on where lease rates are headed.',
-        'From your notes: closed on a mixed-use building near the Battery last spring — ask how leasing’s going.',
-        "It's been 38 days since the Chamber mixer — good timing to follow up.",
-      ].map((p, i) => (
-        <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 8 }}>
-          <span style={{ width: 17, height: 17, borderRadius: '50%', background: C.teal, color: '#fff', fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>{i + 1}</span>
-          <span style={{ fontSize: 11.5, color: C.ink, lineHeight: 1.55 }}>{p}</span>
         </div>
       ))}
     </BrowserWindow>
@@ -411,7 +383,7 @@ function Nav({ scrolled, openModal }) {
         <span style={{ fontFamily: SERIF, fontSize: 21, fontWeight: 600, color: C.cream }}>Harbored</span>
       </a>
       <nav style={{ display: 'flex', alignItems: 'center', gap: 26 }}>
-        {[['Common Ground', '#common-ground'], ['Discovery', '#discovery'], ['Prep Briefs', '#prep-briefs'], ['Pricing', '#pricing']].map(([label, href]) => (
+        {[['Common Ground', '#common-ground'], ['Discovery', '#discovery'], ['Weekly Digest', '#digest'], ['Pricing', '#pricing']].map(([label, href]) => (
           <a key={label} href={href} className="nav-link"
             style={{ fontFamily: SANS, fontSize: 13, fontWeight: 500, color: 'rgba(250,248,243,0.62)', textDecoration: 'none', transition: 'color 0.18s', display: 'none' }}
             onMouseEnter={e => e.currentTarget.style.color = C.cream}
@@ -435,9 +407,7 @@ function Nav({ scrolled, openModal }) {
 const SUBNAV = [
   ['Common Ground', '#common-ground'],
   ['Discovery', '#discovery'],
-  ['Prep Briefs', '#prep-briefs'],
   ['Weekly Digest', '#digest'],
-  ['Life Events', '#life-events'],
   ['Pricing', '#pricing'],
 ];
 
@@ -586,8 +556,9 @@ export default function Landing() {
             }}>
               Staying genuinely in touch is hard — you can't always see what's happening in
               someone's world, so you go quiet, or reach out sounding generic. Tell Harbored the
-              themes you share — the team, the city, the market — and it watches them around the
-              clock, flagging the moment there's a real reason to reconnect. Message drafted.
+              themes that connect you — the team you both follow, the market you want to break
+              into — and it watches them around the clock, flagging the moment there's a real
+              reason to reach out. Message drafted.
             </p>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 18, animation: 'fadeUp 0.85s 0.4s ease both' }}>
               <button onClick={() => openModal()} style={{
@@ -634,7 +605,7 @@ export default function Landing() {
         kicker="Common Ground"
         title="Shared themes,"
         em="watched around the clock."
-        body="For every person who matters, tell Harbored what you have in common. Those themes become standing reasons to talk — monitored across live news sources and scored for significance, so you're only interrupted when something clears the reach-out bar."
+        body="For every person who matters, tell Harbored what you have in common — or the ground you want to build with them. Those themes become standing reasons to talk — monitored across live news sources and scored for significance, so you're only interrupted when something clears the reach-out bar."
         points={[
           'Themes across sports, places, markets, hobbies, and industries',
           'A visible reach-out bar at 70 — below it, logged quietly',
@@ -665,38 +636,20 @@ export default function Landing() {
         tint="rgba(169,126,47,0.09)"
       />
 
-      {/* ══════════════════ FEATURE: PREP BRIEFS ══════════════════ */}
-      <FeatureSection
-        id="prep-briefs"
-        kicker="Prep Briefs"
-        title="Never walk into"
-        em="a catch-up cold."
-        body="Before every coffee or call, Harbored hands you a one-pager: what broke on your shared themes this week, where you left off, your notes, and talking points numbered in the order you'll want them."
-        points={[
-          'Live theme updates pulled the morning of',
-          'Openers ready if you blank',
-        ]}
-        cta="Explore Prep Briefs"
-        onCta={() => openModal()}
-        window={PrepMock}
-        tint="rgba(30,58,95,0.07)"
-      />
-
       {/* ══════════════════ FEATURE: DIGEST ══════════════════ */}
       <FeatureSection
         id="digest"
         kicker="Weekly Digest"
-        title="Your week in relationships,"
+        title="Your themes' week,"
         em="on one page."
-        body="Every week: the reasons to reach out, who's drifting quietly, and proof the small gestures are compounding. Consistency is the whole game — the digest is how you keep score."
+        body="Every week: what moved on the themes you watch, ranked by significance, with the reach-outs worth making. Consistency is the whole game — the digest is how you keep score."
         points={[
           'Reach-out opportunities ranked by significance',
-          'Drifting contacts flagged before they go cold',
+          'Only what cleared the bar — nothing to wade through',
         ]}
         cta="Explore the Digest"
         onCta={() => openModal()}
         window={DigestMock}
-        flip
         tint="rgba(46,125,91,0.08)"
       />
 
@@ -716,33 +669,6 @@ export default function Landing() {
             Dunbar's number — Robin Dunbar, University of Oxford.
           </p>
         </Reveal>
-      </section>
-
-      {/* ══════════════════ LIFE EVENTS STRIP ══════════════════ */}
-      <section id="life-events" style={{ padding: 'clamp(56px, 8vw, 96px) clamp(20px, 6vw, 80px)', background: C.sand, borderBottom: '1px solid #E5DFCF', scrollMarginTop: 124 }}>
-        <div style={{ maxWidth: 1120, margin: '0 auto' }}>
-          <Reveal style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: 20, marginBottom: 30 }}>
-            <div>
-              <Label>Beyond Your Themes</Label>
-              <h2 style={{ fontFamily: SERIF, fontSize: 'clamp(26px, 3.2vw, 38px)', fontWeight: 600, letterSpacing: '-0.02em', lineHeight: 1.15 }}>
-                Every milestone, <em style={{ fontStyle: 'italic', color: C.teal }}>kept in view.</em>
-              </h2>
-            </div>
-            <p style={{ fontFamily: SANS, fontWeight: 300, fontSize: 14.5, color: '#4a5a60', maxWidth: 380, lineHeight: 1.65 }}>
-              Common ground is the heartbeat — log the milestones in your network too, and Harbored makes sure they don't slip by unnoticed.
-            </p>
-          </Reveal>
-          <RevealGroup style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-            {EVENTS.map(label => (
-              <motion.span key={label} variants={fadeUp} custom={0} style={{
-                fontFamily: SANS, fontSize: 13.5, fontWeight: 500, color: C.ink,
-                padding: '10px 18px', borderRadius: 24, background: '#fff', border: '1px solid #E0DBCE',
-              }}>
-                {label}
-              </motion.span>
-            ))}
-          </RevealGroup>
-        </div>
       </section>
 
       {/* ══════════════════ TESTIMONIAL — single, big ══════════════════ */}
@@ -812,7 +738,7 @@ export default function Landing() {
                   <p style={{ fontFamily: SANS, fontWeight: 300, fontSize: 13, color: 'rgba(250,248,243,0.5)', marginTop: 10, lineHeight: 1.5 }}>For professionals who want their relationships to keep up with their careers.</p>
                 </div>
                 <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 22, flex: 1 }}>
-                  {['Unlimited contacts & Common Ground themes', 'Common Ground discovery from your conversations', 'Prep briefs before every catch-up', 'AI message drafting in your voice', 'Auto-Send mode', 'All notification channels'].map(f => (
+                  {['Unlimited contacts & Common Ground themes', 'Common Ground discovery from your conversations', 'AI message drafting in your voice', 'Auto-Send mode', 'All notification channels'].map(f => (
                     <div key={f} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 12 }}>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.brassPale} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}><polyline points="20 6 9 17 4 12"/></svg>
                       <span style={{ fontFamily: SANS, fontSize: 14, color: 'rgba(250,248,243,0.78)' }}>{f}</span>
@@ -869,7 +795,7 @@ export default function Landing() {
             </div>
             <div style={{ display: 'flex', gap: 'clamp(28px, 5vw, 72px)', flexWrap: 'wrap' }}>
               {[
-                { heading: 'Platform', links: [['Common Ground', '#common-ground'], ['Discovery', '#discovery'], ['Prep Briefs', '#prep-briefs'], ['Weekly Digest', '#digest']] },
+                { heading: 'Platform', links: [['Common Ground', '#common-ground'], ['Discovery', '#discovery'], ['Weekly Digest', '#digest']] },
                 { heading: 'Company', links: [['Pricing', '#pricing'], ['Support', '/support']] },
                 { heading: 'Legal',   links: [['Privacy', '/privacy'], ['Terms', '#']] },
               ].map(({ heading, links }) => (

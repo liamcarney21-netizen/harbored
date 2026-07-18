@@ -15,8 +15,8 @@ const STEPS = [
   {
     n: 2,
     Icon: Radar,
-    title: 'Name what you share',
-    body: 'Tell Harbored the themes you have in common — a team, a city, a market.',
+    title: 'Name what connects you',
+    body: 'Themes you have in common — or ground you want to build. A team, a city, a market.',
   },
   {
     n: 3,

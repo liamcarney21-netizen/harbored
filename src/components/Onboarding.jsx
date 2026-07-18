@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Compass, Gauge, Bell, TrendingUp, ArrowRight, ArrowLeft, Check } from 'lucide-react'
+import { Compass, Gauge, TrendingUp, ArrowRight, ArrowLeft, Check } from 'lucide-react'
 import AnchorMark from './AnchorMark'
 
 const STEPS = [
@@ -15,7 +15,7 @@ const STEPS = [
     icon: Compass,
     kicker: 'The heart of Harbored',
     title: 'Common Ground',
-    body: "For every person who matters, tell Harbored what you have in common — a team you both follow, a city you both love, a market you both watch. These shared themes become standing reasons to talk. This is where your network stops being a list of names and becomes a set of living connections.",
+    body: "For every person who matters, tell Harbored what connects you — a team you both follow, a city you both love, or the ground you want to build, like the market you're trying to break into. These themes become standing reasons to talk. This is where your network stops being a list of names and becomes a set of living connections.",
     visual: 'themes',
   },
   {
@@ -26,17 +26,10 @@ const STEPS = [
     visual: 'gauge',
   },
   {
-    icon: Bell,
-    kicker: 'Never miss a moment',
-    title: 'Every milestone, caught.',
-    body: "Promotions, new roles, engagements, moves — Alerts detects the life events happening across your network, and Messages keeps a record of every outreach you make. The moments that strengthen a relationship are fleeting. Harbored makes sure you're there for them.",
-    visual: null,
-  },
-  {
     icon: TrendingUp,
     kicker: 'Watch it compound',
     title: 'Relationships, measured.',
-    body: "My Network shows you the health of every relationship — who's strong, who's cooling, who's at risk of drifting away. Analytics proves the return of showing up consistently. Small, well-timed gestures compound into a network that works for you. Start now by adding the first person worth staying close to.",
+    body: "My Network shows you the health of every relationship — who's strong, who's cooling, who's at risk of drifting away. Small, well-timed gestures compound into a network that works for you. Start now by adding the first person worth staying close to.",
     visual: null,
   },
 ]

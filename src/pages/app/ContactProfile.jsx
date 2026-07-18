@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ChevronLeft, Mail, Phone, Send, Check, Plus, X, MessageCircle, Compass, StickyNote, Sparkles, Calendar, FileText } from 'lucide-react'
+import { ChevronLeft, Mail, Phone, Send, Check, Plus, X, MessageCircle, Compass, StickyNote, Sparkles, Calendar } from 'lucide-react'
 import Avatar from '../../components/Avatar'
 import PlatformBadge from '../../components/PlatformBadge'
 import DiscoverThemesModal from '../../components/DiscoverThemesModal'
@@ -124,16 +124,6 @@ export default function ContactProfile() {
               <Send style={{ width: '13px', height: '13px' }} /> Reach out now
             </button>
             <button
-              onClick={() => navigate(`/dashboard/prep/${contact.id}`)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '8px',
-                padding: '10px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 500,
-                background: 'rgba(13,92,99,0.1)', color: '#0D5C63', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
-              }}
-            >
-              <FileText style={{ width: '13px', height: '13px' }} /> Prep brief
-            </button>
-            <button
               onClick={() => setScheduling(v => !v)}
               style={{
                 display: 'flex', alignItems: 'center', gap: '8px',
@@ -196,12 +186,6 @@ export default function ContactProfile() {
               <span style={{ fontSize: '12.5px', color: '#1C2B33', flex: 1 }}>
                 <strong>{next.title}</strong> · {new Date(next.datetime).toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' })} at {new Date(next.datetime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
               </span>
-              <button
-                onClick={() => navigate(`/dashboard/prep/${contact.id}`)}
-                style={{ fontSize: '12px', fontWeight: 600, color: '#2E7D5B', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}
-              >
-                View brief →
-              </button>
             </div>
           ) : null
         })()}

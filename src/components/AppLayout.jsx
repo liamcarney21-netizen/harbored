@@ -12,15 +12,10 @@ import AddContactModal from './AddContactModal'
 import ImportContactsModal from './ImportContactsModal'
 import ThemeComposerModal from './ThemeComposerModal'
 import { useIsMobile } from '../hooks/useIsMobile'
-import Dashboard from '../pages/app/Dashboard'
-import Alerts from '../pages/app/Alerts'
 import Network from '../pages/app/Network'
 import CommonGround from '../pages/app/CommonGround'
 import ContactProfile from '../pages/app/ContactProfile'
-import PrepBrief from '../pages/app/PrepBrief'
 import Digest from '../pages/app/Digest'
-import Messages from '../pages/app/Messages'
-import Analytics from '../pages/app/Analytics'
 import Settings from '../pages/app/Settings'
 
 export default function AppLayout() {
@@ -157,16 +152,12 @@ export default function AppLayout() {
         )}
         <Routes>
           <Route index element={<CommonGround onImportContacts={openImportContacts} />} />
-          <Route path="overview"  element={<Dashboard onAddContact={openAddContact} />} />
-          <Route path="alerts"    element={<Alerts />} />
           <Route path="network"   element={<Network onAddContact={openAddContact} onImportContacts={openImportContacts} />} />
           <Route path="contact/:id" element={<ContactProfile />} />
-          <Route path="prep/:id" element={<PrepBrief />} />
           <Route path="digest"    element={<Digest />} />
-          <Route path="common-ground" element={<Navigate to="/dashboard" replace />} />
-          <Route path="messages"  element={<Messages />} />
-          <Route path="analytics" element={<Analytics />} />
           <Route path="settings"  element={<Settings />} />
+          {/* Retired sections (overview/alerts/messages/analytics/prep) land on Common Ground */}
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </main>
       {showOnboarding && <Onboarding onFinish={finishOnboarding} />}
