@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Compass, Gauge, Bell, TrendingUp, ArrowRight, ArrowLeft, Check } from 'lucide-react'
+import { Compass, Gauge, TrendingUp, ArrowRight, ArrowLeft, Check } from 'lucide-react'
 import AnchorMark from './AnchorMark'
 
 const STEPS = [
@@ -26,17 +26,10 @@ const STEPS = [
     visual: 'gauge',
   },
   {
-    icon: Bell,
-    kicker: 'Never miss a moment',
-    title: 'Every milestone, caught.',
-    body: "Promotions, new roles, engagements, moves — Alerts detects the life events happening across your network, and Messages keeps a record of every outreach you make. The moments that strengthen a relationship are fleeting. Harbored makes sure you're there for them.",
-    visual: null,
-  },
-  {
     icon: TrendingUp,
     kicker: 'Watch it compound',
     title: 'Relationships, measured.',
-    body: "My Network shows you the health of every relationship — who's strong, who's cooling, who's at risk of drifting away. Analytics proves the return of showing up consistently. Small, well-timed gestures compound into a network that works for you. Start now by adding the first person worth staying close to.",
+    body: "My Network shows you the health of every relationship — who's strong, who's cooling, who's at risk of drifting away. Small, well-timed gestures compound into a network that works for you. Start now by adding the first person worth staying close to.",
     visual: null,
   },
 ]

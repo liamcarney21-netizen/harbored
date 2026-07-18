@@ -1,15 +1,11 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Bell, Users, MessageSquare, BarChart2, Settings, Settings2, Compass, Mail, UserPlus, Upload } from 'lucide-react'
+import { Users, Settings, Settings2, Compass, Mail, UserPlus, Upload } from 'lucide-react'
 import AnchorMark from './AnchorMark'
 
 const navItems = [
   { path: '/dashboard',           label: 'Common Ground', icon: Compass, end: true, badge: 4 },
-  { path: '/dashboard/overview',  label: 'Overview',   icon: LayoutDashboard },
-  { path: '/dashboard/alerts',    label: 'Alerts',     icon: Bell,            badge: 2 },
   { path: '/dashboard/network',   label: 'My Network', icon: Users },
-  { path: '/dashboard/messages',  label: 'Messages',   icon: MessageSquare },
   { path: '/dashboard/digest',    label: 'Weekly Digest', icon: Mail },
-  { path: '/dashboard/analytics', label: 'Analytics',  icon: BarChart2 },
   { path: '/dashboard/settings',  label: 'Settings',   icon: Settings },
 ]
 
