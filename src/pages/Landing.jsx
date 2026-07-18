@@ -556,8 +556,9 @@ export default function Landing() {
             }}>
               Staying genuinely in touch is hard — you can't always see what's happening in
               someone's world, so you go quiet, or reach out sounding generic. Tell Harbored the
-              themes you share — the team, the city, the market — and it watches them around the
-              clock, flagging the moment there's a real reason to reconnect. Message drafted.
+              themes that connect you — the team you both follow, the market you want to break
+              into — and it watches them around the clock, flagging the moment there's a real
+              reason to reach out. Message drafted.
             </p>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 18, animation: 'fadeUp 0.85s 0.4s ease both' }}>
               <button onClick={() => openModal()} style={{
@@ -604,7 +605,7 @@ export default function Landing() {
         kicker="Common Ground"
         title="Shared themes,"
         em="watched around the clock."
-        body="For every person who matters, tell Harbored what you have in common. Those themes become standing reasons to talk — monitored across live news sources and scored for significance, so you're only interrupted when something clears the reach-out bar."
+        body="For every person who matters, tell Harbored what you have in common — or the ground you want to build with them. Those themes become standing reasons to talk — monitored across live news sources and scored for significance, so you're only interrupted when something clears the reach-out bar."
         points={[
           'Themes across sports, places, markets, hobbies, and industries',
           'A visible reach-out bar at 70 — below it, logged quietly',

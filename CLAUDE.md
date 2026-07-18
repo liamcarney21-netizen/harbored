@@ -42,8 +42,10 @@ crests), ink text #1C2B33 / #5C6B73. Type: Fraunces (Google Fonts) for display h
 wordmark ("Harbored", never all-caps), and stat/score numerals; Inter for UI. Signature: the
 significance gauge is a "tide line" — teal fill cresting into brass past the threshold.
 Health: strong #2E7D5B, cooling #A97E2F, at-risk #B4423A. Do NOT reintroduce LinkedIn blue.
-Common Ground is the product's core feature: per-contact shared themes → significance scoring
-(threshold 70) → reach-out prompts with drafted messages.
+Common Ground is the product's core feature: per-contact themes (shared, or ground the user is
+deliberately building — e.g. a market they want to break into) → significance scoring
+(threshold 70) → reach-out prompts with drafted messages. Copy frames themes as "what connects
+you," never exclusively as pre-existing commonalities.
 
 Give-first engine: below-the-bar updates that are resourceful/forwardable (detected via
 GIVE_WORDS in services/monitoring.js, or a `giveable`+`giveMessage` flag on curated

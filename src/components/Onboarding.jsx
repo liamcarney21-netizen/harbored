@@ -15,7 +15,7 @@ const STEPS = [
     icon: Compass,
     kicker: 'The heart of Harbored',
     title: 'Common Ground',
-    body: "For every person who matters, tell Harbored what you have in common — a team you both follow, a city you both love, a market you both watch. These shared themes become standing reasons to talk. This is where your network stops being a list of names and becomes a set of living connections.",
+    body: "For every person who matters, tell Harbored what connects you — a team you both follow, a city you both love, or the ground you want to build, like the market you're trying to break into. These themes become standing reasons to talk. This is where your network stops being a list of names and becomes a set of living connections.",
     visual: 'themes',
   },
   {
