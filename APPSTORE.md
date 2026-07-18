@@ -130,11 +130,15 @@ Caption each with the benefit, not the feature (e.g. "Know the moment there's a 
 
 ## Pre-submission checklist
 
-- [ ] Privacy Policy URL live and reachable (`/privacy` — ships when `phase4-contacts`/this branch deploys)
-- [x] Support URL resolves to something real (`/support` page — deploys with this branch)
-- [ ] Nutrition labels entered to match the table above
-- [ ] `NSContactsUsageDescription` present in Info.plist (done — Phase 4)
-- [ ] Push Notifications capability enabled on the App ID (Apple Developer)
-- [ ] Screenshots at all required sizes
-- [ ] Keywords string ≤ 100 chars
-- [ ] Build uploaded via Xcode / TestFlight
+- [x] Privacy Policy URL live and reachable (`/privacy` — verified 200 on prod)
+- [x] Support URL resolves to something real (`/support` — verified 200 on prod)
+- [ ] Nutrition labels entered to match the table above *(manual — App Store Connect)*
+- [x] `NSContactsUsageDescription` present in Info.plist (Phase 4)
+- [x] Push entitlement wired in the repo — `ios/App/App/App.entitlements`
+  (`aps-environment`) referenced by `CODE_SIGN_ENTITLEMENTS` in both build configs
+- [ ] Push Notifications capability enabled on the App ID *(Apple Developer portal)*
+      — in Xcode, Signing & Capabilities → the entitlement above is already present;
+      toggling "Push Notifications" will register it on the App ID
+- [ ] Screenshots at all required sizes *(shoot from simulator, demo mode)*
+- [x] Keywords string ≤ 100 chars (96 chars — verified)
+- [ ] Build uploaded via Xcode / TestFlight *(manual — needs Xcode + Apple ID)*
