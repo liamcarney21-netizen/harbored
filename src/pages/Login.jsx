@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import AnchorMark from '../components/AnchorMark';
 import { useAuthStore } from '../store/authStore';
+import { supabase } from '../lib/supabase';
 
 const inputStyle = {
   width: '100%', padding: '12px 16px', boxSizing: 'border-box',
@@ -33,6 +34,8 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  // 'signin' → normal login; 'forgot' → ask for email; 'sent' → reset email sent
+  const [mode, setMode] = useState('signin');
   const navigate = useNavigate();
   const signIn = useAuthStore(s => s.signIn);
 
@@ -47,6 +50,21 @@ export default function Login() {
       return;
     }
     navigate('/dashboard');
+  };
+
+  const handleForgot = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setLoading(false);
+    if (resetError) {
+      setError(resetError.message);
+      return;
+    }
+    setMode('sent');
   };
 
   return (
@@ -85,12 +103,63 @@ export default function Login() {
         <h1 style={{
           fontFamily: '"Fraunces", Georgia, serif', fontSize: 26, fontWeight: 600,
           color: '#1C2B33', marginBottom: 8, textAlign: 'center',
-        }}>Welcome back</h1>
+        }}>{mode === 'signin' ? 'Welcome back' : 'Reset your password'}</h1>
         <p style={{
           fontFamily: 'Inter, sans-serif', fontSize: 14, color: '#5C6B73',
           textAlign: 'center', marginBottom: 32,
-        }}>Your network missed you.</p>
+        }}>
+          {mode === 'signin' && 'Your network missed you.'}
+          {mode === 'forgot' && "Enter your email and we'll send you a reset link."}
+          {mode === 'sent' && `Check ${email || 'your inbox'} for a link to set a new password.`}
+        </p>
 
+        {mode === 'sent' && (
+          <button
+            onClick={() => setMode('signin')}
+            style={{
+              width: '100%', padding: '13px', background: 'none',
+              border: '1px solid #CCC6B9', borderRadius: 24,
+              fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: 14,
+              color: '#3E4B52', cursor: 'pointer',
+            }}
+          >Back to sign in</button>
+        )}
+
+        {mode === 'forgot' && (
+          <form onSubmit={handleForgot}>
+            <div style={{ marginBottom: 28 }}>
+              <label htmlFor="forgot-email" style={labelStyle}>Email</label>
+              <input
+                id="forgot-email"
+                type="email" value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                style={inputStyle}
+                onFocus={focusRing} onBlur={blurRing}
+              />
+            </div>
+            {error && (
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#B4423A', marginBottom: 16, textAlign: 'center' }}>
+                {error}
+              </p>
+            )}
+            <button type="submit" disabled={loading} style={{
+              width: '100%', padding: '13px', background: '#0D5C63', color: '#FFFFFF',
+              fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: 15,
+              border: 'none', borderRadius: 24,
+              cursor: loading ? 'default' : 'pointer', opacity: loading ? 0.7 : 1,
+            }}>{loading ? 'Sending…' : 'Send reset link'}</button>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#5C6B73', textAlign: 'center', marginTop: 24 }}>
+              Remembered it?{' '}
+              <button type="button" onClick={() => { setMode('signin'); setError(''); }}
+                style={{ background: 'none', border: 'none', padding: 0, color: '#0D5C63', fontWeight: 600, fontSize: 13, fontFamily: 'Inter, sans-serif', cursor: 'pointer' }}>
+                Back to sign in
+              </button>
+            </p>
+          </form>
+        )}
+
+        {mode === 'signin' && (
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: 16 }}>
             <label htmlFor="login-email" style={labelStyle}>Email</label>
@@ -113,6 +182,12 @@ export default function Login() {
               style={inputStyle}
               onFocus={focusRing} onBlur={blurRing}
             />
+            <div style={{ textAlign: 'right', marginTop: 8 }}>
+              <button type="button" onClick={() => { setMode('forgot'); setError(''); }}
+                style={{ background: 'none', border: 'none', padding: 0, color: '#0D5C63', fontWeight: 600, fontSize: 12.5, fontFamily: 'Inter, sans-serif', cursor: 'pointer' }}>
+                Forgot password?
+              </button>
+            </div>
           </div>
 
           {error && (
@@ -136,7 +211,9 @@ export default function Login() {
           onMouseLeave={e => { if (!loading) e.currentTarget.style.background = '#0D5C63'; }}
           >{loading ? 'Signing in…' : 'Sign In'}</button>
         </form>
+        )}
 
+        {mode === 'signin' && (
         <p style={{
           fontFamily: 'Inter, sans-serif', fontSize: 13,
           color: '#5C6B73',
@@ -147,6 +224,7 @@ export default function Login() {
             Create an account
           </Link>
         </p>
+        )}
       </motion.div>
     </div>
   );
