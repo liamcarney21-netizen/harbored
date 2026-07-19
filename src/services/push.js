@@ -24,6 +24,7 @@ export async function registerPushNotifications() {
   // APNs hands us the device token here — store it against the current user.
   await PushNotifications.addListener('registration', async (token) => {
     const user = useAuthStore.getState().user
+    console.log('[push] APNs token received; user?', !!user, 'token?', !!token?.value)
     if (!user || !token?.value) return
     const { error } = await supabase.from('device_tokens').upsert(
       {
@@ -35,6 +36,7 @@ export async function registerPushNotifications() {
       { onConflict: 'user_id,token' },
     )
     if (error) console.error('[push] device token upsert failed:', error.message)
+    else console.log('[push] device token stored')
   })
 
   await PushNotifications.addListener('registrationError', (err) => {
@@ -46,7 +48,9 @@ export async function registerPushNotifications() {
   if (perm.receive === 'prompt' || perm.receive === 'prompt-with-rationale') {
     perm = await PushNotifications.requestPermissions()
   }
+  console.log('[push] permission:', perm.receive)
   if (perm.receive === 'granted') {
     await PushNotifications.register()
+    console.log('[push] register() called — waiting for APNs')
   }
 }
