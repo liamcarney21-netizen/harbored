@@ -118,7 +118,10 @@ export async function runPush(supabase, { send = true } = {}) {
   let client = null
   let token = null
   if (live) {
-    client = http2.connect(APNS_HOSTS[process.env.APNS_ENV === 'sandbox' ? 'sandbox' : 'production'])
+    // Apple calls the test environment both "development" (entitlement value) and
+    // "sandbox" (host name) — accept either spelling.
+    const env = ['sandbox', 'development'].includes(process.env.APNS_ENV) ? 'sandbox' : 'production'
+    client = http2.connect(APNS_HOSTS[env])
     token = providerJwt()
   }
 
