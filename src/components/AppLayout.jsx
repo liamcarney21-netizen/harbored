@@ -135,7 +135,9 @@ export default function AppLayout() {
           }}>
             <span>
               <strong style={{ fontWeight: 700 }}>Live demo</strong>
-              {' '}— a sample network, fully interactive. Nothing you do here is saved.
+              {isMobile
+                ? ' — nothing here is saved.'
+                : ' — a sample network, fully interactive. Nothing you do here is saved.'}
             </span>
             <button
               onClick={leaveDemo}

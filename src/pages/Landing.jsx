@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect } from 'react';
-import { useNavigate, Link as RouterLink } from 'react-router-dom';
+import { useNavigate, Navigate, Link as RouterLink } from 'react-router-dom';
+import { useAuthStore } from '../store/authStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDemoStore } from '../store/demoStore';
 import { apiUrl } from '../lib/apiBase';
@@ -519,6 +520,17 @@ export default function Landing() {
     window.addEventListener('scroll', fn, { passive: true });
     return () => window.removeEventListener('scroll', fn);
   }, []);
+
+  // Inside the installed app the marketing page is never the front door:
+  // signed-in users land on Common Ground, everyone else on the login card.
+  // (Declared after all hooks so the hook order stays stable.)
+  const isNative = typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.();
+  const authUser = useAuthStore(s => s.user);
+  const authInitialized = useAuthStore(s => s.initialized);
+  if (isNative) {
+    if (!authInitialized) return null;
+    return <Navigate to={authUser ? '/dashboard' : '/login'} replace />;
+  }
 
   return (
     <div style={{ background: C.cream, color: C.ink }}>

@@ -11,6 +11,7 @@ import { useAuthStore } from '../../store/authStore'
 import { fetchLiveUpdates } from '../../services/monitoring'
 import { fetchStoredUpdates } from '../../services/scanResults'
 import { openSend, sendChannelFor } from '../../services/outreach'
+import { useIsMobile } from '../../hooks/useIsMobile'
 
 const TABS = ['Opportunities', 'Shared Themes']
 
@@ -97,6 +98,7 @@ function LiveBadge() {
 
 export default function CommonGround({ onImportContacts }) {
   const navigate = useNavigate()
+  const isMobile = useIsMobile()
   const demoActive = useDemoStore(s => s.active)
   const user = useAuthStore(s => s.user)
   // Signed-in real users read what the scheduled server scan already found;
@@ -262,7 +264,7 @@ export default function CommonGround({ onImportContacts }) {
               {themeCount} shared themes monitored across {monitoredContacts.length} contacts · flagged only when it clears the bar
             </p>
           </div>
-          <div style={{ display: 'flex', gap: '10px', flexShrink: 0 }}>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             <button
               onClick={scan}
               disabled={scanning}
@@ -413,38 +415,49 @@ export default function CommonGround({ onImportContacts }) {
                     <div
                       key={n.contact.id}
                       style={{
-                        display: 'flex', alignItems: 'center', gap: '16px', padding: '14px 20px',
+                        padding: isMobile ? '14px 16px' : '14px 20px',
                         borderBottom: i < Math.min(nudges.length, 4) - 1 ? '1px solid #EEEBE3' : 'none',
                       }}
                     >
-                      <button
-                        onClick={() => navigate(`/dashboard/contact/${n.contact.id}`)}
-                        aria-label={`Open ${n.contact.name}'s profile`}
-                        style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
-                      >
-                        <Avatar initials={n.contact.initials} color={n.contact.color} size="md" />
-                      </button>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
-                          <span style={{ fontWeight: 600, fontSize: '13px', color: '#1C2B33' }}>{n.contact.name}</span>
-                          <span style={{ fontSize: '11px', fontWeight: 500, padding: '2px 8px', borderRadius: '20px', background: n.health.bg, color: n.health.color }}>
-                            {n.health.days} days quiet
-                          </span>
+                      {/* Mobile: name+pill+button on line 1, full-width opener under.
+                          Desktop: single row with the opener inline. */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '12px' : '16px' }}>
+                        <button
+                          onClick={() => navigate(`/dashboard/contact/${n.contact.id}`)}
+                          aria-label={`Open ${n.contact.name}'s profile`}
+                          style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', flexShrink: 0 }}
+                        >
+                          <Avatar initials={n.contact.initials} color={n.contact.color} size="md" />
+                        </button>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px', flexWrap: 'wrap' }}>
+                            <span style={{ fontWeight: 600, fontSize: '13px', color: '#1C2B33', whiteSpace: 'nowrap' }}>{n.contact.name}</span>
+                            <span style={{ fontSize: '11px', fontWeight: 500, padding: '2px 8px', borderRadius: '20px', background: n.health.bg, color: n.health.color, whiteSpace: 'nowrap', flexShrink: 0 }}>
+                              {n.health.days} days quiet
+                            </span>
+                          </div>
+                          {!isMobile && (
+                            <p style={{ fontSize: '12px', color: '#5C6B73', fontStyle: 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              "{n.opener}"
+                            </p>
+                          )}
                         </div>
-                        <p style={{ fontSize: '12px', color: '#5C6B73', fontStyle: 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <button
+                          onClick={() => handleNudgeSend(n)}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0,
+                            fontSize: '12px', fontWeight: 500, padding: '7px 14px', borderRadius: '8px',
+                            background: 'rgba(13,92,99,0.1)', color: '#0D5C63', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+                          }}
+                        >
+                          <Send style={{ width: '12px', height: '12px' }} /> Reach out
+                        </button>
+                      </div>
+                      {isMobile && (
+                        <p style={{ fontSize: '12px', color: '#5C6B73', fontStyle: 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: '8px' }}>
                           "{n.opener}"
                         </p>
-                      </div>
-                      <button
-                        onClick={() => handleNudgeSend(n)}
-                        style={{
-                          display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0,
-                          fontSize: '12px', fontWeight: 500, padding: '7px 14px', borderRadius: '8px',
-                          background: 'rgba(13,92,99,0.1)', color: '#0D5C63', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
-                        }}
-                      >
-                        <Send style={{ width: '12px', height: '12px' }} /> Reach out
-                      </button>
+                      )}
                     </div>
                   ))}
                 </div>
