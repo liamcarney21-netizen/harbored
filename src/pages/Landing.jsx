@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDemoStore } from '../store/demoStore';
 import { apiUrl } from '../lib/apiBase';
@@ -383,6 +383,13 @@ function Nav({ scrolled, openModal }) {
         <span style={{ fontFamily: SERIF, fontSize: 21, fontWeight: 600, color: C.cream }}>Harbored</span>
       </a>
       <nav style={{ display: 'flex', alignItems: 'center', gap: 26 }}>
+        {/* The web landing is waitlist-only, but the installed app needs a way in:
+            login entry shows only inside the native (Capacitor) shell */}
+        {typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.() && (
+          <RouterLink to="/login" style={{ fontFamily: SANS, fontSize: 13, fontWeight: 600, color: 'rgba(250,248,243,0.85)', textDecoration: 'none', whiteSpace: 'nowrap' }}>
+            Log in
+          </RouterLink>
+        )}
         {[['Common Ground', '#common-ground'], ['Discovery', '#discovery'], ['Weekly Digest', '#digest'], ['Pricing', '#pricing']].map(([label, href]) => (
           <a key={label} href={href} className="nav-link"
             style={{ fontFamily: SANS, fontSize: 13, fontWeight: 500, color: 'rgba(250,248,243,0.62)', textDecoration: 'none', transition: 'color 0.18s', display: 'none' }}
