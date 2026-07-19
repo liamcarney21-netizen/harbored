@@ -10,7 +10,7 @@ function mockSupabase(byTable, users = []) {
     from(table) {
       const result = byTable[table] ?? { data: [], error: null }
       const b = {}
-      for (const m of ['select', 'eq', 'is', 'in', 'order', 'update', 'delete', 'insert', 'upsert']) {
+      for (const m of ['select', 'eq', 'is', 'in', 'gte', 'order', 'update', 'delete', 'insert', 'upsert']) {
         b[m] = () => b
       }
       b.then = (resolve) => resolve(result)

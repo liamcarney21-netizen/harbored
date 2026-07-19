@@ -5,6 +5,7 @@
 // set, so we require it here — this endpoint reads all users and spends Anthropic
 // credits, so it must never be publicly callable.
 import { runScan, createServiceClient } from '../server/scanHandler.js'
+import { runPush } from '../server/pushHandler.js'
 
 // Scanning many themes involves several outbound fetches + a Claude call; give
 // the function room beyond the default. (Capped at the plan's max on Hobby.)
@@ -25,7 +26,16 @@ export default async function handler(req, res) {
 
   try {
     const summary = await runScan(supabase)
-    res.status(200).json({ ok: true, ...summary })
+    // Push rides the scan cron: alert phones about whatever the scan just found,
+    // without spending a second Hobby-plan cron slot on it. A push failure must
+    // not fail the scan — the results are already stored either way.
+    let push = null
+    try {
+      push = await runPush(supabase)
+    } catch (err) {
+      push = { error: String(err.message || err) }
+    }
+    res.status(200).json({ ok: true, ...summary, push })
   } catch (err) {
     res.status(500).json({ ok: false, error: String(err.message || err) })
   }
