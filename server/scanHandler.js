@@ -27,10 +27,15 @@ export function createServiceClient() {
 }
 
 // Collect up to `maxPerUser` (contact, theme) pairs from one user's stored blob.
+// Newest contacts first: when the cap bites, it must never silently drop the
+// themes the user just added — those are exactly the ones they expect watched.
+// Contact ids are Date.now() for user-added contacts and small ints for seeds,
+// so a descending numeric sort puts fresh additions ahead of sample data.
 function pairsForUser(data, maxPerUser) {
   const { contacts = [], themesByContact = {} } = data || {}
+  const ordered = [...contacts].sort((a, b) => (Number(b.id) || 0) - (Number(a.id) || 0))
   const pairs = []
-  for (const contact of contacts) {
+  for (const contact of ordered) {
     for (const theme of themesByContact[contact.id] || []) {
       pairs.push({ contact, theme })
       if (pairs.length >= maxPerUser) return pairs
