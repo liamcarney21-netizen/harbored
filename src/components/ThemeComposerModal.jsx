@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { X, Plus, Check, ArrowRight } from 'lucide-react'
 import { useDataStore } from '../store/dataStore'
 import Avatar from './Avatar'
+import ThemeSpecificityHint from './ThemeSpecificityHint'
 
 // Dedicated, multi-add theme picker shown right after a contact is added or
 // imported — so people start monitored instead of empty. Steps through one or
@@ -113,7 +114,9 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
               {/* Body */}
               <div style={{ padding: '18px 24px 22px' }}>
                 <p style={{ fontSize: 13, color: '#5C6B73', lineHeight: 1.55, margin: '0 0 16px' }}>
-                  Teams, cities, markets, hobbies. Harbored watches these and tells you the moment there's a real reason to reach out.
+                  Teams, cities, markets, hobbies. Harbored watches these and tells you the moment
+                  there's a real reason to reach out — so name the <em>specific</em> thing: the
+                  company, the team, the place.
                 </p>
 
                 {/* Added chips */}
@@ -160,6 +163,8 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
                     <Plus style={{ width: 16, height: 16 }} />
                   </button>
                 </div>
+
+                <ThemeSpecificityHint label={label} style={{ marginTop: 10 }} />
 
                 {/* Category picker */}
                 <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', marginTop: 12 }}>

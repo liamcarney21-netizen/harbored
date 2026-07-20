@@ -111,6 +111,8 @@ async function scanUser(supabase, userId, pairs) {
     pubDate: f.item.pubDate,
     themeLabel: f.theme.label,
     contactName: f.contact.name,
+    contactCompany: f.contact.company,
+    contactRole: f.contact.role,
   }))
   const { body } = await handleScoreRequest({ items })
   const byId = new Map((body.results || []).map(r => [r.id, r]))

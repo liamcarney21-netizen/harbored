@@ -97,6 +97,9 @@ async function claudeBatch(items) {
     pubDate: item.pubDate,
     themeLabel: item.themeLabel,
     contactName: item.contactName,
+    // Optional grounding so relevance judgments never rely on guesswork.
+    contactCompany: item.contactCompany || undefined,
+    contactRole: item.contactRole || undefined,
   }))
 
   const resp = await fetch('https://api.anthropic.com/v1/messages', {
@@ -111,10 +114,18 @@ async function claudeBatch(items) {
       max_tokens: 2048,
       system:
         `You judge whether a news headline is a genuine reason to reach out to someone, on behalf of a relationship-intelligence app called Harbored. ` +
-        `The user only wants to be interrupted for things that actually matter to their contact — a promotion, a big win, real news on a shared interest — ` +
+        `A false positive is the worst outcome: one irrelevant notification teaches the user to ignore all of them. When unsure, score low.\n\n` +
+        `RELEVANCE COMES FIRST. Before judging importance, ask: is this headline about the SPECIFIC subject the theme names? ` +
+        `A theme like "Villanova Basketball" or "Sunny Benefits" names a subject; news about other teams or other companies in the same category is irrelevant, ` +
+        `no matter how big the story. If the theme is only a generic category with no specific subject (e.g. "Fintech startup", "basketball", "real estate"), ` +
+        `no headline can clear the bar — there is no subject for news to be about — so cap the score at 50 and say in the holdReason that the theme is too broad to monitor well.\n\n` +
+        `You know ONLY what is given: the theme label, the contact's name, and (when provided) their company and role. NEVER invent a connection — ` +
+        `do not guess that the contact works at, founded, or is otherwise linked to an entity in the headline unless the given data says so. ` +
+        `If contactCompany is provided and the headline is about a different company, it is not about their company.\n\n` +
+        `For relevant headlines, the user only wants interruptions for things that actually matter — a promotion, a big win, real news on the shared subject — ` +
         `not routine coverage, schedules, rumors, or "best of" listicles. Score each headline 0-100 for how strong a reach-out trigger it is. ` +
         `Always include a "rationale": one plain-English sentence (under 140 characters) explaining the judgment behind the score — what about this specific ` +
-        `headline, on this shared theme, makes it worth (or not worth) interrupting for. Be specific to the headline, not generic. ` +
+        `headline, on this shared theme, makes it worth (or not worth) interrupting for. Be specific to the headline, not generic; state only facts you were given. ` +
         `A score of ${SIGNIFICANCE_THRESHOLD} or above means: draft a short, warm, specific text message the user could send as-is — first name, ` +
         `reference the actual headline, sound like a real friend texting, not a corporate greeting card. Below the bar: explain in one short sentence ` +
         `(under 100 characters) why it's not worth an interruption. Respond with JSON only, no prose.`,

@@ -90,6 +90,8 @@ export async function fetchLiveUpdates(contacts, themesByContact, { maxThemes = 
     pubDate: f.item.pubDate,
     themeLabel: f.theme.label,
     contactName: f.contact.name,
+    contactCompany: f.contact.company,
+    contactRole: f.contact.role,
   }))
 
   let scoreById = new Map()

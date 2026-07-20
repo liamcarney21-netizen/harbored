@@ -12,6 +12,7 @@ import { fetchLiveUpdates } from '../../services/monitoring'
 import { fetchStoredUpdates } from '../../services/scanResults'
 import { openSend, sendChannelFor } from '../../services/outreach'
 import { useIsMobile } from '../../hooks/useIsMobile'
+import ThemeSpecificityHint from '../../components/ThemeSpecificityHint'
 
 const TABS = ['Opportunities', 'Shared Themes']
 
@@ -666,6 +667,7 @@ export default function CommonGround({ onImportContacts }) {
                             >
                               <X style={{ width: '12px', height: '12px' }} />
                             </button>
+                            <ThemeSpecificityHint label={newThemeLabel} style={{ flexBasis: '100%', margin: '2px 0 0' }} />
                           </span>
                         ) : (
                           <button
