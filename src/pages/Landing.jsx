@@ -1,6 +1,5 @@
 import { useRef, useState, useEffect } from 'react';
-import { useNavigate, Navigate, Link as RouterLink } from 'react-router-dom';
-import { useAuthStore } from '../store/authStore';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDemoStore } from '../store/demoStore';
 import { apiUrl } from '../lib/apiBase';
@@ -384,13 +383,6 @@ function Nav({ scrolled, openModal }) {
         <span style={{ fontFamily: SERIF, fontSize: 21, fontWeight: 600, color: C.cream }}>Harbored</span>
       </a>
       <nav style={{ display: 'flex', alignItems: 'center', gap: 26 }}>
-        {/* The web landing is waitlist-only, but the installed app needs a way in:
-            login entry shows only inside the native (Capacitor) shell */}
-        {typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.() && (
-          <RouterLink to="/login" style={{ fontFamily: SANS, fontSize: 13, fontWeight: 600, color: 'rgba(250,248,243,0.85)', textDecoration: 'none', whiteSpace: 'nowrap' }}>
-            Log in
-          </RouterLink>
-        )}
         {[['Common Ground', '#common-ground'], ['Discovery', '#discovery'], ['Weekly Digest', '#digest'], ['Pricing', '#pricing']].map(([label, href]) => (
           <a key={label} href={href} className="nav-link"
             style={{ fontFamily: SANS, fontSize: 13, fontWeight: 500, color: 'rgba(250,248,243,0.62)', textDecoration: 'none', transition: 'color 0.18s', display: 'none' }}
@@ -521,17 +513,9 @@ export default function Landing() {
     return () => window.removeEventListener('scroll', fn);
   }, []);
 
-  // Inside the installed app the marketing page is never the front door:
-  // signed-in users land on Common Ground, everyone else on the login card.
-  // (Declared after all hooks so the hook order stays stable.)
-  const isNative = typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.();
-  const authUser = useAuthStore(s => s.user);
-  const authInitialized = useAuthStore(s => s.initialized);
-  if (isNative) {
-    if (!authInitialized) return null;
-    return <Navigate to={authUser ? '/dashboard' : '/login'} replace />;
-  }
-
+  // Note: this marketing page is web-only. In the native app the root route
+  // (App.jsx RootRoute) never mounts Landing at all, so there's no need for a
+  // native check or a login link here.
   return (
     <div style={{ background: C.cream, color: C.ink }}>
       <Nav scrolled={scrolled} openModal={openModal} />
