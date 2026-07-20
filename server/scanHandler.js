@@ -9,6 +9,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { fetchThemeNews } from './newsHandler.js'
 import { handleScoreRequest, SIGNIFICANCE_THRESHOLD } from './scoreHandler.js'
+import { daysUntilBirthday } from '../src/lib/birthday.js'
 
 // Bound the work per run so a single serverless invocation stays within its time
 // budget and Anthropic spend stays predictable. At real scale this becomes a
@@ -51,6 +52,45 @@ export function contentKeyFor(contactId, themeLabel, headline) {
   return `${String(contactId)}|${themeLabel}|${headline}`
 }
 
+// Birthday is the first non-news signal source. It emits a scan_results row on
+// the day itself, so it flows through the exact same dedup (content_key),
+// notified_at tracking, push, and digest machinery as scored news — the whole
+// point of the shared signal pipeline. The content_key includes the occurrence
+// year so it fires once per birthday and again next year.
+export function birthdayRowsForUser(data, userId, notifiedByKey, scannedAt, now = new Date()) {
+  const { contacts = [] } = data || {}
+  const rows = []
+  for (const c of contacts) {
+    if (daysUntilBirthday(c.birthday, now) !== 0) continue
+    const first = (c.name || '').split(' ')[0] || 'them'
+    const key = `birthday|${c.id}|${now.getFullYear()}-${c.birthday}`
+    rows.push({
+      user_id: userId,
+      contact_id: String(c.id),
+      contact_name: c.name,
+      theme_label: 'Birthday',
+      theme_category: 'birthday',
+      headline: `It's ${first}'s birthday today`,
+      source: 'Harbored',
+      link: null,
+      score: 100,
+      rationale: 'A birthday is one of the easiest, most natural reasons to reach out.',
+      draft_message: `Happy birthday, ${first}! 🎉 Hope it's a great one.`,
+      above_bar: true,
+      content_key: key,
+      notified_at: notifiedByKey.get(key) ?? null,
+      scanned_at: scannedAt,
+    })
+  }
+  return rows
+}
+
+// Does this user have any signal today that warrants processing, even with no
+// themes to scan? (Keeps birthday-only users from being skipped.)
+function hasBirthdayToday(data, now = new Date()) {
+  return (data?.contacts || []).some(c => daysUntilBirthday(c.birthday, now) === 0)
+}
+
 // Build content_key → notified_at from the user's existing rows (only rows that
 // carry both a key and a notified timestamp count).
 export function notifiedKeyMap(existingRows) {
@@ -89,54 +129,60 @@ export function shapeResultRows(found, scoreById, userId, notifiedByKey, scanned
   })
 }
 
-async function scanUser(supabase, userId, pairs) {
-  // 1. Freshest headline per theme (fail-soft: a theme with no news is skipped).
-  const newsResults = await Promise.allSettled(
-    pairs.map(async ({ contact, theme }) => {
-      const items = await fetchThemeNews(theme.label, 1)
-      if (!items?.length) return null
-      return { contact, theme, item: items[0] }
-    })
-  )
-  const found = newsResults
-    .filter(r => r.status === 'fulfilled' && r.value)
-    .map(r => r.value)
-  if (found.length === 0) return 0
+// Process one user: gather every signal (scored news + birthdays), carry
+// notified_at forward by content_key, and full-refresh their stored rows. `data`
+// is the user's saved blob (contacts, themes); `pairs` may be empty for a
+// birthday-only user.
+async function processUser(supabase, userId, data, pairs) {
+  const scannedAt = new Date().toISOString()
 
-  // 2. Score the batch (Claude, heuristic fallback inside the handler).
-  const items = found.map((f, i) => ({
-    id: i,
-    headline: f.item.title,
-    source: f.item.source,
-    pubDate: f.item.pubDate,
-    themeLabel: f.theme.label,
-    contactName: f.contact.name,
-    contactCompany: f.contact.company,
-    contactRole: f.contact.role,
-  }))
-  const { body } = await handleScoreRequest({ items })
-  const byId = new Map((body.results || []).map(r => [r.id, r]))
+  // 1. News: freshest headline per theme (fail-soft: no-news themes are skipped).
+  let found = []
+  let scoreById = new Map()
+  if (pairs.length) {
+    const newsResults = await Promise.allSettled(
+      pairs.map(async ({ contact, theme }) => {
+        const items = await fetchThemeNews(theme.label, 1)
+        if (!items?.length) return null
+        return { contact, theme, item: items[0] }
+      })
+    )
+    found = newsResults.filter(r => r.status === 'fulfilled' && r.value).map(r => r.value)
+    if (found.length) {
+      const items = found.map((f, i) => ({
+        id: i,
+        headline: f.item.title,
+        source: f.item.source,
+        pubDate: f.item.pubDate,
+        themeLabel: f.theme.label,
+        contactName: f.contact.name,
+        contactCompany: f.contact.company,
+        contactRole: f.contact.role,
+      }))
+      const { body } = await handleScoreRequest({ items })
+      scoreById = new Map((body.results || []).map(r => [r.id, r]))
+    }
+  }
 
-  // 3. Carry forward notified_at for headlines we've already alerted on, so the
-  //    daily full-refresh doesn't reset "already notified" state.
+  // 2. Carry forward notified_at across the full-refresh (covers all signals).
   const { data: existing } = await supabase
     .from('scan_results')
     .select('content_key, notified_at')
     .eq('user_id', userId)
   const notifiedByKey = notifiedKeyMap(existing)
 
-  // 4. Shape rows for storage (with notified_at carried forward via content_key).
-  const scannedAt = new Date().toISOString()
-  const rows = shapeResultRows(found, byId, userId, notifiedByKey, scannedAt)
+  // 3. Shape every signal into rows: scored news + today's birthdays.
+  const rows = [
+    ...(found.length ? shapeResultRows(found, scoreById, userId, notifiedByKey, scannedAt) : []),
+    ...birthdayRowsForUser(data, userId, notifiedByKey, scannedAt),
+  ]
+  if (rows.length === 0) return 0
 
-  // 5. Full-refresh this user's results (latest scan replaces the prior one),
-  //    with notified_at carried forward via content_key above.
+  // 4. Full-refresh this user's results (latest scan replaces the prior one).
   const del = await supabase.from('scan_results').delete().eq('user_id', userId)
   if (del.error) throw new Error(`delete scan_results (${userId}): ${del.error.message}`)
-  if (rows.length) {
-    const ins = await supabase.from('scan_results').insert(rows)
-    if (ins.error) throw new Error(`insert scan_results (${userId}): ${ins.error.message}`)
-  }
+  const ins = await supabase.from('scan_results').insert(rows)
+  if (ins.error) throw new Error(`insert scan_results (${userId}): ${ins.error.message}`)
   return rows.length
 }
 
@@ -153,13 +199,15 @@ export async function runScan(supabase, {
   let totalPairs = 0
 
   for (const row of userRows || []) {
-    if (totalPairs >= maxPairsTotal) break
-    const pairs = pairsForUser(row.data, maxPairsPerUser)
-      .slice(0, maxPairsTotal - totalPairs)
-    if (pairs.length === 0) continue
+    const pairs = totalPairs >= maxPairsTotal
+      ? []
+      : pairsForUser(row.data, maxPairsPerUser).slice(0, maxPairsTotal - totalPairs)
+    // Process a user if they have themes to scan OR a birthday to alert on today,
+    // so birthday-only users (no themes) still get their signal.
+    if (pairs.length === 0 && !hasBirthdayToday(row.data)) continue
     totalPairs += pairs.length
-    summary.usersWithThemes++
-    summary.resultsWritten += await scanUser(supabase, row.user_id, pairs)
+    if (pairs.length) summary.usersWithThemes++
+    summary.resultsWritten += await processUser(supabase, row.user_id, row.data, pairs)
     summary.usersScanned++
   }
 

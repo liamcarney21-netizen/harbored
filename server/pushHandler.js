@@ -45,10 +45,18 @@ function providerJwt() {
 }
 
 function buildPayload(topItem, count) {
+  // Single birthday signal gets a birthday-native title instead of the generic
+  // "Reach out to …" framing.
+  const isBirthday = topItem.theme_label === 'Birthday'
+  const first = (topItem.contact_name || '').split(' ')[0] || topItem.contact_name
+  let title
+  if (count > 1) title = `${count} people worth reaching out to`
+  else if (isBirthday) title = `🎂 It's ${first}'s birthday`
+  else title = `Reach out to ${topItem.contact_name}`
   return {
     aps: {
       alert: {
-        title: count > 1 ? `${count} people worth reaching out to` : `Reach out to ${topItem.contact_name}`,
+        title,
         body: topItem.headline,
       },
       sound: 'default',

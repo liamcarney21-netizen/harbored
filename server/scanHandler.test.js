@@ -1,5 +1,33 @@
 import { describe, it, expect } from 'vitest'
-import { contentKeyFor, notifiedKeyMap, shapeResultRows } from './scanHandler.js'
+import { contentKeyFor, notifiedKeyMap, shapeResultRows, birthdayRowsForUser } from './scanHandler.js'
+
+describe('birthdayRowsForUser', () => {
+  const now = new Date(2026, 5, 1) // Jun 1, 2026
+  const data = { contacts: [
+    { id: 'c1', name: 'Sarah Chen', birthday: '06-01' }, // today
+    { id: 'c2', name: 'Bob Jones', birthday: '12-25' },  // not today
+    { id: 'c3', name: 'No Birthday', birthday: '' },
+  ] }
+
+  it('emits an above-bar row only for contacts whose birthday is today', () => {
+    const rows = birthdayRowsForUser(data, 'u1', new Map(), 'ts', now)
+    expect(rows).toHaveLength(1)
+    expect(rows[0]).toMatchObject({
+      contact_name: 'Sarah Chen',
+      theme_label: 'Birthday',
+      above_bar: true,
+      score: 100,
+      content_key: 'birthday|c1|2026-06-01',
+    })
+    expect(rows[0].draft_message).toContain('Happy birthday, Sarah')
+  })
+
+  it('carries notified_at forward by content_key so it fires once', () => {
+    const notified = new Map([['birthday|c1|2026-06-01', '2026-06-01T13:00:00Z']])
+    const rows = birthdayRowsForUser(data, 'u1', notified, 'ts', now)
+    expect(rows[0].notified_at).toBe('2026-06-01T13:00:00Z')
+  })
+})
 
 describe('contentKeyFor', () => {
   it('builds a stable contact|theme|headline key, coercing ids to string', () => {
