@@ -25,8 +25,36 @@ export function daysSince(iso) {
   return Math.floor((Date.now() - new Date(iso).getTime()) / DAY)
 }
 
+// Days until a contact's next birthday from a recurring "MM-DD" string.
+// Returns null for missing/invalid input, 0 on the birthday itself. Feb-29
+// birthdays fall back to Feb-28 in non-leap years.
+export function daysUntilBirthday(mmdd, now = new Date()) {
+  if (!mmdd || !/^\d{2}-\d{2}$/.test(mmdd)) return null
+  const [m, d] = mmdd.split('-').map(Number)
+  if (m < 1 || m > 12 || d < 1 || d > 31) return null
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const makeDate = (year) => {
+    const dt = new Date(year, m - 1, d)
+    // Overflow (e.g. Feb 29 → Mar 1) means the day doesn't exist that year; pin to last valid day.
+    if (dt.getMonth() !== m - 1) dt.setDate(0)
+    return dt
+  }
+  let next = makeDate(today.getFullYear())
+  if (next < today) next = makeDate(today.getFullYear() + 1)
+  return Math.round((next - today) / DAY)
+}
+
 // Seed last-touch recency so health has meaningful spread out of the box.
 const SEED_LAST_TOUCH = { 1: 2, 2: 10, 3: 35, 4: 50, 5: 65, 6: 90, 7: 20, 8: 75, 9: 15, 10: 40, 11: 25, 12: 55, 13: 42 }
+
+// A couple of demo birthdays anchored a few days out from "now" so the
+// Birthdays section is always populated in demo mode and screenshots. Real
+// birthdays come from vCard/native import.
+const mmddFromNow = n => {
+  const d = new Date(Date.now() + n * DAY)
+  return `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+const SEED_BIRTHDAYS = { 7: mmddFromNow(3), 3: mmddFromNow(0), 11: mmddFromNow(9) }
 
 function fakeEmail(name) {
   return name.toLowerCase().replace(/[^a-z ]/g, '').trim().replace(/ +/g, '.') + '@example.com'
@@ -39,6 +67,7 @@ function buildSeedContacts() {
     email: fakeEmail(c.name),
     phone: `+1 (555) 01${String(i).padStart(2, '0')}-${String(1000 + c.id * 37).slice(-4)}`,
     lastTouch: daysAgo(SEED_LAST_TOUCH[c.id] ?? 60),
+    birthday: SEED_BIRTHDAYS[c.id] || '',
     notes: c.id === 13 ? 'Nova alum (class of \'12). Two kids. Looking at rental property in Minneapolis since last spring.' : '',
   }))
 }
@@ -173,7 +202,7 @@ export const useDataStore = create((set, get) => {
       }
     }),
 
-    addContact: ({ name, role, company, email, phone, themes = [] }) => {
+    addContact: ({ name, role, company, email, phone, birthday, themes = [] }) => {
       const id = nextContactId()
       const initials = name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
       const colors = ['#1e3a5f', '#1a2e4a', '#1c3554', '#172b45']
@@ -183,6 +212,7 @@ export const useDataStore = create((set, get) => {
         color: colors[id % colors.length],
         email: email || fakeEmail(name),
         phone: phone || '',
+        birthday: birthday || '',
         lastTouch: null,
         lastEvent: null,
         notes: '',
@@ -232,6 +262,24 @@ export const useDataStore = create((set, get) => {
 
 // Contacts quietly drifting: no touch in 45+ days. Each gets a low-stakes
 // opener so there's always a next step, even with no news.
+// Contacts whose birthday falls within the next `withinDays` days — a non-news
+// reach-out signal computed entirely from local contact data (no API). Sorted
+// soonest-first, each with a warm, ready-to-send opener.
+export function selectUpcomingBirthdays(state, withinDays = 10) {
+  return state.contacts
+    .map(c => ({ contact: c, days: daysUntilBirthday(c.birthday) }))
+    .filter(({ days }) => days !== null && days <= withinDays)
+    .sort((a, b) => a.days - b.days)
+    .map(({ contact, days }) => {
+      const first = contact.name.split(' ')[0]
+      const when = days === 0 ? 'today' : days === 1 ? 'tomorrow' : `in ${days} days`
+      const opener = days === 0
+        ? `Happy birthday, ${first}! 🎉 Hope you have a great one.`
+        : `Happy birthday, ${first}! 🎉 Hope it's a great one — thinking of you.`
+      return { contact, days, when, opener }
+    })
+}
+
 export function selectNudges(state) {
   return state.contacts
     .filter(c => c.lastTouch) // brand-new contacts aren't "drifting" — they have no history yet

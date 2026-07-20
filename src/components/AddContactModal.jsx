@@ -15,15 +15,17 @@ const labelStyle = {
 
 export default function AddContactModal({ open, onClose, onCreated, firstRun = false }) {
   const addContact = useDataStore(s => s.addContact)
-  const [form, setForm] = useState({ name: '', role: '', company: '', email: '' })
+  const [form, setForm] = useState({ name: '', role: '', company: '', email: '', birthday: '' })
 
   const update = (k, v) => setForm(f => ({ ...f, [k]: v }))
   const canSave = form.name.trim().length > 1
 
   function handleSave() {
     if (!canSave) return
-    const contact = addContact({ ...form })
-    setForm({ name: '', role: '', company: '', email: '' })
+    // <input type="date"> gives YYYY-MM-DD; we store the recurring MM-DD only.
+    const birthday = form.birthday ? form.birthday.slice(5) : ''
+    const contact = addContact({ ...form, birthday })
+    setForm({ name: '', role: '', company: '', email: '', birthday: '' })
     onClose(true)
     // Themes are set in the shared composer that opens next — one consistent flow
     // whether the contact was typed in here or imported.
@@ -88,9 +90,13 @@ export default function AddContactModal({ open, onClose, onCreated, firstRun = f
                   <label htmlFor="ac-company" style={labelStyle}>Company</label>
                   <input id="ac-company" style={inputStyle} placeholder="Morgan Stanley" value={form.company} onChange={e => update('company', e.target.value)} />
                 </div>
-                <div style={{ gridColumn: '1 / -1' }}>
+                <div>
                   <label htmlFor="ac-email" style={labelStyle}>Email <span style={{ fontWeight: 400, color: '#5C6B73' }}>(so you can reach out in one click)</span></label>
                   <input id="ac-email" type="email" style={inputStyle} placeholder="john@example.com" value={form.email} onChange={e => update('email', e.target.value)} />
+                </div>
+                <div>
+                  <label htmlFor="ac-birthday" style={labelStyle}>Birthday <span style={{ fontWeight: 400, color: '#5C6B73' }}>(optional)</span></label>
+                  <input id="ac-birthday" type="date" style={inputStyle} value={form.birthday} onChange={e => update('birthday', e.target.value)} />
                 </div>
               </div>
             </div>

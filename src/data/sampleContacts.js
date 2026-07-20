@@ -12,6 +12,7 @@ ORG:Sunbelt Retail Partners;
 TITLE:Principal
 EMAIL;type=INTERNET;type=WORK;type=pref:diego@sunbeltretail.com
 TEL;type=CELL;type=VOICE;type=pref:+1 (704) 555-0142
+BDAY:1990-03-14
 END:VCARD
 BEGIN:VCARD
 VERSION:3.0

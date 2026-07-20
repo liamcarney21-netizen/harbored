@@ -42,6 +42,17 @@ describe('parseVCard', () => {
 
   it('always returns the full contact shape (empty strings, never undefined)', () => {
     const c = parseVCard('BEGIN:VCARD\nFN:Bare Name\nEND:VCARD')[0]
-    expect(c).toEqual({ name: 'Bare Name', role: '', company: '', email: '', phone: '' })
+    expect(c).toEqual({ name: 'Bare Name', role: '', company: '', email: '', phone: '', birthday: '' })
+  })
+
+  it('captures BDAY and normalizes to MM-DD across vCard date shapes', () => {
+    const full = parseVCard('BEGIN:VCARD\nFN:A\nBDAY:1990-02-15\nEND:VCARD')[0]
+    expect(full.birthday).toBe('02-15')
+    const compact = parseVCard('BEGIN:VCARD\nFN:B\nBDAY:19900215\nEND:VCARD')[0]
+    expect(compact.birthday).toBe('02-15')
+    const noYear = parseVCard('BEGIN:VCARD\nFN:C\nBDAY:--0215\nEND:VCARD')[0]
+    expect(noYear.birthday).toBe('02-15')
+    const none = parseVCard('BEGIN:VCARD\nFN:D\nEND:VCARD')[0]
+    expect(none.birthday).toBe('')
   })
 })

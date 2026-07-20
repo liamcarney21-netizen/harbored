@@ -32,7 +32,17 @@ function normalize(payload) {
     phone: pickPrimary(payload.phones, 'number'),
     role: payload.organization?.jobTitle?.trim() || '',
     company: payload.organization?.company?.trim() || '',
+    birthday: birthdayFromPayload(payload.birthday),
   }
+}
+
+// The plugin returns birthday as { year?, month, day } (month 1-based). We only
+// keep the recurring month+day as "MM-DD" to match the vCard path.
+function birthdayFromPayload(b) {
+  if (!b || !b.month || !b.day) return ''
+  const mm = String(b.month).padStart(2, '0')
+  const dd = String(b.day).padStart(2, '0')
+  return `${mm}-${dd}`
 }
 
 // Reads the whole address book (after permission) and returns normalized contacts
@@ -52,7 +62,7 @@ export async function pickNativeContacts() {
   }
 
   const { contacts } = await Contacts.getContacts({
-    projection: { name: true, phones: true, emails: true, organization: true },
+    projection: { name: true, phones: true, emails: true, organization: true, birthday: true },
   })
 
   return (contacts || []).map(normalize).filter(c => c.name)

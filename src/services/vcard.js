@@ -65,6 +65,9 @@ export function parseVCard(text) {
       case 'TEL':
         if (!current.phone) current.phone = value
         break
+      case 'BDAY':
+        if (!current.birthday) current.birthday = normalizeBirthday(value)
+        break
       default:
         break
     }
@@ -78,5 +81,31 @@ export function parseVCard(text) {
       company: c.company || '',
       email: c.email || '',
       phone: c.phone || '',
+      birthday: c.birthday || '',
     }))
+}
+
+// vCard BDAY comes in several shapes: "1990-02-15", "19900215", "--0215"
+// (year withheld), sometimes with a trailing time. We only ever act on the
+// recurring month+day, so normalize to "MM-DD" and drop the rest. Returns ''
+// if we can't find a valid month/day.
+export function normalizeBirthday(raw) {
+  if (!raw) return ''
+  const digits = raw.replace(/[^\d]/g, '')
+  let mm, dd
+  if (raw.startsWith('--') && digits.length >= 4) {
+    // --MMDD (year omitted)
+    mm = digits.slice(0, 2); dd = digits.slice(2, 4)
+  } else if (digits.length >= 8) {
+    // YYYYMMDD
+    mm = digits.slice(4, 6); dd = digits.slice(6, 8)
+  } else if (digits.length === 4) {
+    // MMDD
+    mm = digits.slice(0, 2); dd = digits.slice(2, 4)
+  } else {
+    return ''
+  }
+  const m = Number(mm), d = Number(dd)
+  if (m < 1 || m > 12 || d < 1 || d > 31) return ''
+  return `${mm}-${dd}`
 }
