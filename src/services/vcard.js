@@ -1,5 +1,5 @@
 // Minimal vCard (.vcf) parser — handles the common 3.0/4.0 fields exported
-// by iOS/Android/macOS Contacts (FN, N, ORG, TITLE, EMAIL, TEL), including
+// by iOS/Android/macOS Contacts (FN, N, ORG, TITLE, EMAIL, TEL, BDAY), including
 // RFC 6350 line folding (continuation lines start with a space or tab).
 function unescapeValue(v) {
   return v
