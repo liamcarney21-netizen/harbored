@@ -115,13 +115,15 @@ Notes when Apple asks per data type:
 
 ---
 
-## Screenshots to capture (6.7" + 6.5" + 5.5" required sizes)
+## Screenshots to capture (one 6.9" set — iPhone 16 Pro Max simulator; Apple scales the rest)
 
-Shoot these from the simulator (demo mode gives a full sample network with no login):
+The app is iPhone-only, so no iPad set is needed. Shoot from the simulator **logged in as a
+real account with themes and scan results** (the native shell skips the marketing page and
+demo mode — real data reads better in screenshots anyway). Cmd+S saves a native-resolution PNG.
 1. **Common Ground** — the "Worth reaching out" list with significance scores. The hero shot.
 2. **A cleared update** — detail panel with the Claude "why this cleared the bar" rationale.
-3. **Import from Contacts** — the native picker / import modal (Phase 4).
-4. **Prep brief** — the meeting one-pager.
+3. **Shared Themes** — per-contact theme chips (the core mental model in one glance).
+4. **Import from Contacts** — the native picker / import modal.
 5. **Weekly digest** — the roundup view.
 
 Caption each with the benefit, not the feature (e.g. "Know the moment there's a reason to reach out").

@@ -49,5 +49,7 @@
 	<true/>
 	<key>NSContactsUsageDescription</key>
 	<string>Harbored imports the people you choose so it can watch for their milestones and remind you to reach out. Your contacts stay yours — they are never shared or sold.</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>
