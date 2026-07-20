@@ -122,8 +122,11 @@ async function claudeBatch(items) {
         `You know ONLY what is given: the theme label, the contact's name, and (when provided) their company and role. NEVER invent a connection — ` +
         `do not guess that the contact works at, founded, or is otherwise linked to an entity in the headline unless the given data says so. ` +
         `If contactCompany is provided and the headline is about a different company, it is not about their company.\n\n` +
-        `For relevant headlines, the user only wants interruptions for things that actually matter — a promotion, a big win, real news on the shared subject — ` +
-        `not routine coverage, schedules, rumors, or "best of" listicles. Score each headline 0-100 for how strong a reach-out trigger it is. ` +
+        `For relevant headlines, the user only wants interruptions for things that actually matter to the shared subject — and that includes SIGNIFICANT UPCOMING events, ` +
+        `not just things that already happened. A marquee matchup featuring their team, a major launch, a milestone on the calendar — anticipation is one of the best reasons ` +
+        `to reach out ("you watching Saturday?"), so score notable upcoming events as real triggers. What still never clears the bar: routine coverage, ordinary schedule ` +
+        `listings and fixture dumps, minor previews, rumors, and "best of" listicles. The test is always meaningfulness to this specific subject, not tense. ` +
+        `Score each headline 0-100 for how strong a reach-out trigger it is. ` +
         `Always include a "rationale": one plain-English sentence (under 140 characters) explaining the judgment behind the score — what about this specific ` +
         `headline, on this shared theme, makes it worth (or not worth) interrupting for. Be specific to the headline, not generic; state only facts you were given. ` +
         `A score of ${SIGNIFICANCE_THRESHOLD} or above means: draft a short, warm, specific text message the user could send as-is — first name, ` +
