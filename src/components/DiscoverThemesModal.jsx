@@ -128,7 +128,7 @@ export default function DiscoverThemesModal({ open, onClose, contact }) {
                     </span>
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#0D5C63' }}>
                       <Zap style={{ width: '11px', height: '11px' }} />
-                      {result.engine === 'claude' ? 'Claude analysis' : 'Keyword analysis'}
+                      {result.engine === 'claude' ? 'AI analysis' : 'Keyword analysis'}
                     </span>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>

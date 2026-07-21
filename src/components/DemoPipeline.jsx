@@ -21,8 +21,8 @@ const STEPS = [
   {
     n: 3,
     Icon: Zap,
-    title: 'Claude watches & scores',
-    body: 'It reads the news per theme and scores each update — you only hear about what clears the bar, message drafted.',
+    title: 'Only real reasons reach you',
+    body: 'Harbored watches those topics around the clock and only alerts you when there\'s a genuinely good reason to reconnect — with a message ready to send.',
   },
 ]
 

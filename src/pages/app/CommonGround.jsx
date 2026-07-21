@@ -792,7 +792,7 @@ export default function CommonGround({ onImportContacts }) {
                           Why this cleared the bar
                         </div>
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#0D5C63', fontWeight: 500 }}>
-                          <Zap style={{ width: '11px', height: '11px' }} /> Scored by Claude
+                          <Zap style={{ width: '11px', height: '11px' }} /> Harbored's read
                         </span>
                       </div>
                       {selected.rationale && (
