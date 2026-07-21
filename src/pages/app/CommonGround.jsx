@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Send, Edit3, ChevronLeft, Zap, Plus, X, Check, Trophy, MapPin, TrendingUp, Activity, Briefcase, Radar, RefreshCw, ExternalLink, Waves, Gift, Cake } from 'lucide-react'
+import { Send, Edit3, ChevronLeft, Zap, Plus, X, Check, Trophy, MapPin, TrendingUp, Activity, Briefcase, Radar, RefreshCw, ExternalLink, Waves, Gift } from 'lucide-react'
 import Avatar from '../../components/Avatar'
 import DemoPipeline from '../../components/DemoPipeline'
 import { themeUpdates, SIGNIFICANCE_THRESHOLD } from '../../data/commonGround'
-import { useDataStore, selectNudges, selectUpcomingBirthdays } from '../../store/dataStore'
+import { useDataStore, selectNudges } from '../../store/dataStore'
 import { useDemoStore } from '../../store/demoStore'
 import { useAuthStore } from '../../store/authStore'
 import { fetchLiveUpdates } from '../../services/monitoring'
@@ -14,7 +14,7 @@ import { openSend, sendChannelFor } from '../../services/outreach'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import ThemeSpecificityHint from '../../components/ThemeSpecificityHint'
 
-const TABS = ['Opportunities', 'Shared Themes']
+const TABS = ['Reach out', 'Shared Themes']
 
 const categoryConfig = {
   sports:   { label: 'Sports',   icon: Trophy,     color: '#2E7D5B', bg: 'rgba(46,125,91,0.08)' },
@@ -113,9 +113,8 @@ export default function CommonGround({ onImportContacts }) {
   const recordTouch = useDataStore(s => s.recordTouch)
   // Derived per render (not a subscribed selector — it returns a fresh array)
   const nudges = selectNudges({ contacts })
-  const birthdays = selectUpcomingBirthdays({ contacts })
 
-  const [activeTab, setActiveTab] = useState('Opportunities')
+  const [activeTab, setActiveTab] = useState('Reach out')
   const [selected, setSelected] = useState(null)
   const [msgText, setMsgText] = useState('')
   const [editingMsg, setEditingMsg] = useState(false)
@@ -204,15 +203,6 @@ export default function CommonGround({ onImportContacts }) {
     })
   }
 
-  function handleBirthdaySend(b) {
-    const channel = openSend(b.contact, b.opener, 'Happy birthday')
-    recordTouch(b.contact.id, {
-      channel: channel || 'email',
-      message: b.opener,
-      trigger: `Birthday ${b.when}`,
-    })
-  }
-
   function handleGive(update) {
     const contact = contacts.find(c => c.id === update.contactId)
     const msg = update.giveMessage + (update.link ? `\n\n${update.link}` : '')
@@ -272,7 +262,7 @@ export default function CommonGround({ onImportContacts }) {
             Common Ground
           </h1>
           <p style={{ fontSize: '14px', color: '#5C6B73', lineHeight: 1.5, maxWidth: '440px' }}>
-            Themes you share with {monitoredContacts.length} {monitoredContacts.length === 1 ? 'person' : 'people'}, watched for real reasons to reach out.
+            The themes that connect you, watched for real reasons to reach out.
           </p>
         </div>
 
@@ -328,7 +318,7 @@ export default function CommonGround({ onImportContacts }) {
           </button>
         </div>
 
-        {activeTab === 'Opportunities' && (
+        {activeTab === 'Reach out' && (
           <>
             {demoActive && showPipeline && (
               <DemoPipeline
@@ -409,67 +399,6 @@ export default function CommonGround({ onImportContacts }) {
                 )
               })}
             </div>
-
-            {/* Birthdays coming up — a non-news reach-out signal from contact data */}
-            {birthdays.length > 0 && (
-              <>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                  <Cake style={{ width: '13px', height: '13px', color: '#A97E2F' }} />
-                  <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 500, color: '#5C6B73' }}>
-                    Birthdays coming up — an easy reason to reach out
-                  </span>
-                </div>
-                <div style={{ borderRadius: '12px', overflow: 'hidden', background: '#FFFFFF', border: '1px solid #E6E2D8', marginBottom: '32px' }}>
-                  {birthdays.slice(0, 5).map((b, i) => (
-                    <div
-                      key={b.contact.id}
-                      style={{
-                        padding: isMobile ? '14px 16px' : '14px 20px',
-                        borderBottom: i < Math.min(birthdays.length, 5) - 1 ? '1px solid #EEEBE3' : 'none',
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '12px' : '16px' }}>
-                        <button
-                          onClick={() => navigate(`/dashboard/contact/${b.contact.id}`)}
-                          aria-label={`Open ${b.contact.name}'s profile`}
-                          style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', flexShrink: 0 }}
-                        >
-                          <Avatar initials={b.contact.initials} color={b.contact.color} size="md" />
-                        </button>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px', flexWrap: 'wrap' }}>
-                            <span style={{ fontWeight: 600, fontSize: '13px', color: '#1C2B33', whiteSpace: 'nowrap' }}>{b.contact.name}</span>
-                            <span style={{ fontSize: '11px', fontWeight: 500, padding: '2px 8px', borderRadius: '20px', background: 'rgba(169,126,47,0.1)', color: '#A97E2F', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                              Birthday {b.when}
-                            </span>
-                          </div>
-                          {!isMobile && (
-                            <p style={{ fontSize: '12px', color: '#5C6B73', fontStyle: 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              "{b.opener}"
-                            </p>
-                          )}
-                        </div>
-                        <button
-                          onClick={() => handleBirthdaySend(b)}
-                          style={{
-                            display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0,
-                            fontSize: '12px', fontWeight: 500, padding: '7px 14px', borderRadius: '8px',
-                            background: 'rgba(13,92,99,0.1)', color: '#0D5C63', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
-                          }}
-                        >
-                          <Send style={{ width: '12px', height: '12px' }} /> Reach out
-                        </button>
-                      </div>
-                      {isMobile && (
-                        <p style={{ fontSize: '12px', color: '#5C6B73', fontStyle: 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: '8px' }}>
-                          "{b.opener}"
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
 
             {/* Drifting quietly — reconnect nudges */}
             {nudges.length > 0 && (
