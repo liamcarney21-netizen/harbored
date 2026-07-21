@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { Navigate, Routes, Route, useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Menu } from 'lucide-react'
+import { motion } from 'framer-motion'
 import AnchorMark from './AnchorMark'
 import { useAuthStore } from '../store/authStore'
 import { useDataStore } from '../store/dataStore'
 import { useDemoStore } from '../store/demoStore'
 import AppSidebar from './AppSidebar'
+import BottomTabBar from './BottomTabBar'
 import Onboarding from './Onboarding'
 import AddContactModal from './AddContactModal'
 import ImportContactsModal from './ImportContactsModal'
@@ -34,7 +34,6 @@ export default function AppLayout() {
   const [addContactFirstRun, setAddContactFirstRun] = useState(false)
   const [showImportContacts, setShowImportContacts] = useState(false)
   const [composerContacts, setComposerContacts] = useState([])
-  const [drawerOpen, setDrawerOpen] = useState(false)
   if (!initialized) return null
   if (!user && !demoActive) return <Navigate to="/login" replace />
   if (dataLoading) return null
@@ -56,12 +55,10 @@ export default function AppLayout() {
   const openAddContact = () => {
     setAddContactFirstRun(false)
     setShowAddContact(true)
-    setDrawerOpen(false)
   }
 
   const openImportContacts = () => {
     setShowImportContacts(true)
-    setDrawerOpen(false)
   }
 
   return (
@@ -74,54 +71,31 @@ export default function AppLayout() {
         flexDirection: isMobile ? 'column' : 'row',
         height: '100vh',
         overflow: 'hidden',
-        background: '#F6F4EF',
+        background: isMobile ? '#F4F6F8' : '#F6F4EF',
       }}
     >
-      {/* Mobile top bar */}
+      {/* Mobile top bar — centered wordmark, navy/white/teal (no hamburger; the
+          bottom tab bar owns navigation now). */}
       {isMobile && (
         <header style={{
-          display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0,
-          padding: 'calc(env(safe-area-inset-top) + 12px) 16px 12px', background: '#FCFBF6', borderBottom: '1px solid #E6E2D8',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+          padding: 'calc(env(safe-area-inset-top) + 14px) 16px 14px',
+          background: '#FFFFFF', borderBottom: '1px solid #E4E9EC',
         }}>
-          <button
-            onClick={() => setDrawerOpen(true)}
-            aria-label="Open menu"
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#1C2B33', padding: '4px', display: 'flex' }}
-          >
-            <Menu style={{ width: '20px', height: '20px' }} />
-          </button>
           <button
             onClick={() => navigate('/dashboard')}
             style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
           >
-            <AnchorMark size={15} color="#A97E2F" />
-            <span style={{ fontFamily: '"Fraunces", Georgia, serif', fontSize: '18px', fontWeight: 600, color: '#1C2B33' }}>
+            <AnchorMark size={16} color="#0D5C63" />
+            <span style={{ fontFamily: '"Fraunces", Georgia, serif', fontSize: '19px', fontWeight: 600, color: '#0a1628' }}>
               Harbored
             </span>
           </button>
         </header>
       )}
 
-      {/* Sidebar: static column on desktop, slide-over drawer on mobile */}
+      {/* Desktop keeps the sidebar; mobile uses the bottom tab bar below. */}
       {!isMobile && <AppSidebar onAddContact={openAddContact} onImportContacts={openImportContacts} />}
-      <AnimatePresence>
-        {isMobile && drawerOpen && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={() => setDrawerOpen(false)}
-              style={{ position: 'fixed', inset: 0, zIndex: 40, background: 'rgba(28,43,51,0.45)' }}
-            />
-            <motion.div
-              initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }}
-              transition={{ type: 'spring', damping: 30, stiffness: 320 }}
-              style={{ position: 'fixed', left: 0, top: 0, bottom: 0, zIndex: 41, boxShadow: '8px 0 32px rgba(0,0,0,0.18)' }}
-            >
-              <AppSidebar onAddContact={openAddContact} onImportContacts={openImportContacts} onNavigate={() => setDrawerOpen(false)} />
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
 
       <main style={{ flex: 1, overflowY: 'auto', minWidth: 0 }}>
         {demoActive && (
@@ -162,6 +136,7 @@ export default function AppLayout() {
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </main>
+      {isMobile && <BottomTabBar />}
       {showOnboarding && <Onboarding onFinish={finishOnboarding} />}
       <AddContactModal
         open={showAddContact}
