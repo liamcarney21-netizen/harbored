@@ -265,69 +265,67 @@ export default function CommonGround({ onImportContacts }) {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3 }}
       >
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap', marginBottom: '28px' }}>
-          <div style={{ minWidth: '260px' }}>
-            <h1 style={{ fontFamily: '"Fraunces", Georgia, serif', fontSize: '27px', fontWeight: 600, color: '#1C2B33', marginBottom: '4px' }}>
-              Common Ground
-            </h1>
-            <p style={{ fontSize: '13px', color: '#5C6B73' }}>
-              {themeCount} shared themes monitored across {monitoredContacts.length} contacts · flagged only when it clears the bar
-            </p>
-          </div>
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-            <button
-              onClick={scan}
-              disabled={scanning}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '8px',
-                padding: '10px 16px', borderRadius: '8px', fontSize: '13px', fontWeight: 500,
-                background: '#FFFFFF', color: scanning ? '#5C6B73' : '#0D5C63',
-                border: '1px solid #CCC6B9', cursor: scanning ? 'default' : 'pointer',
-                fontFamily: 'Inter, sans-serif', whiteSpace: 'nowrap',
-              }}
-            >
-              <RefreshCw style={{ width: '13px', height: '13px', animation: scanning ? 'spin 1s linear infinite' : 'none' }} />
-              {scanning ? 'Scanning themes…' : 'Scan now'}
-            </button>
-            <button
-              onClick={startAddTheme}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '8px',
-                padding: '10px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
-                background: '#0D5C63', color: '#FFFFFF', border: 'none', cursor: 'pointer',
-                fontFamily: 'Inter, sans-serif', whiteSpace: 'nowrap',
-              }}
-            >
-              <Plus style={{ width: '14px', height: '14px' }} /> Add Shared Theme
-            </button>
-          </div>
+        {/* Header — clean vertical rhythm: title, one-line subtitle, segmented
+            view control, one primary action, subtle scan status. */}
+        <div style={{ marginBottom: '16px' }}>
+          <h1 style={{ fontFamily: '"Fraunces", Georgia, serif', fontSize: isMobile ? '28px' : '27px', fontWeight: 600, color: '#0a1628', marginBottom: '6px', letterSpacing: '-0.01em' }}>
+            Common Ground
+          </h1>
+          <p style={{ fontSize: '14px', color: '#5C6B73', lineHeight: 1.5, maxWidth: '440px' }}>
+            Themes you share with {monitoredContacts.length} {monitoredContacts.length === 1 ? 'person' : 'people'}, watched for real reasons to reach out.
+          </p>
         </div>
 
-        {/* Tabs */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '28px' }}>
+        {/* Segmented view control (iOS-style) */}
+        <div style={{
+          display: 'flex', gap: '4px', padding: '4px', marginBottom: '14px',
+          background: '#EBEEF1', borderRadius: '12px',
+          ...(isMobile ? {} : { maxWidth: '340px' }),
+        }}>
           {TABS.map(t => (
             <button
               key={t}
               onClick={() => setActiveTab(t)}
               style={{
-                padding: '6px 14px', borderRadius: '20px', fontSize: '12px', fontWeight: 500,
-                fontFamily: 'Inter, sans-serif', cursor: 'pointer', transition: 'all 0.15s',
-                background: activeTab === t ? '#0D5C63' : '#FFFFFF',
-                color: activeTab === t ? '#FFFFFF' : '#5C6B73',
-                border: `1px solid ${activeTab === t ? '#0D5C63' : '#D6D1C5'}`,
+                flex: 1, padding: '9px 12px', borderRadius: '9px', fontSize: '13.5px',
+                fontWeight: activeTab === t ? 600 : 500, fontFamily: 'Inter, sans-serif',
+                cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap', border: 'none',
+                background: activeTab === t ? '#FFFFFF' : 'transparent',
+                color: activeTab === t ? '#0D5C63' : '#5C6B73',
+                boxShadow: activeTab === t ? '0 1px 3px rgba(10,22,40,0.12)' : 'none',
               }}
             >
               {t}
             </button>
           ))}
-          {scannedAt && (
-            <span style={{ fontSize: '11px', color: '#5C6B73', marginLeft: 'auto' }}>
-              {liveUpdates.length > 0
-                ? `Live scan found ${liveUpdates.length} update${liveUpdates.length === 1 ? '' : 's'} · ${scannedAt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`
-                : 'Live scan: no fresh updates right now'}
-            </span>
-          )}
+        </div>
+
+        {/* Primary action + subtle scan status */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '26px', flexWrap: 'wrap' }}>
+          <button
+            onClick={startAddTheme}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+              flex: isMobile ? '1 1 100%' : '0 0 auto',
+              padding: '12px 22px', borderRadius: '10px', fontSize: '14px', fontWeight: 600,
+              background: '#0D5C63', color: '#FFFFFF', border: 'none', cursor: 'pointer',
+              fontFamily: 'Inter, sans-serif',
+            }}
+          >
+            <Plus style={{ width: '16px', height: '16px' }} /> Add a shared theme
+          </button>
+          <button
+            onClick={scan}
+            disabled={scanning}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '6px', padding: 0,
+              background: 'none', border: 'none', cursor: scanning ? 'default' : 'pointer',
+              color: '#8A97A0', fontSize: '12.5px', fontWeight: 500, fontFamily: 'Inter, sans-serif',
+            }}
+          >
+            <RefreshCw style={{ width: '13px', height: '13px', animation: scanning ? 'spin 1s linear infinite' : 'none' }} />
+            {scanning ? 'Scanning…' : (scannedAt ? `Updated ${scannedAt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` : 'Scan now')}
+          </button>
         </div>
 
         {activeTab === 'Opportunities' && (

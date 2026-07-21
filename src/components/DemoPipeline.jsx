@@ -38,7 +38,7 @@ function Step({ step, onImport }) {
         }}>
           <Icon style={{ width: '13px', height: '13px' }} />
         </span>
-        <span style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.08em', color: '#A97E2F' }}>
+        <span style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.08em', color: '#0D5C63' }}>
           STEP {n}
         </span>
       </div>
