@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ChevronLeft, Mail, Phone, Send, Check, Plus, X, MessageCircle, Compass, StickyNote, Sparkles, Calendar } from 'lucide-react'
 import Avatar from '../../components/Avatar'
-import PlatformBadge from '../../components/PlatformBadge'
 import DiscoverThemesModal from '../../components/DiscoverThemesModal'
 import { useDataStore, healthFromLastTouch } from '../../store/dataStore'
 import { openSend } from '../../services/outreach'
@@ -97,9 +96,6 @@ export default function ContactProfile() {
             <h1 style={{ fontFamily: '"Fraunces", Georgia, serif', fontSize: '24px', fontWeight: 600, color: '#1C2B33', marginBottom: '2px' }}>{contact.name}</h1>
             <p style={{ fontSize: '13px', color: '#5C6B73', marginBottom: '10px' }}>{contact.role} · {contact.company}</p>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-              <div style={{ display: 'flex', gap: '6px' }}>
-                {contact.platforms.map(p => <PlatformBadge key={p} platform={p} size="sm" />)}
-              </div>
               {contact.email && (
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: '#5C6B73' }}>
                   <Mail style={{ width: '12px', height: '12px' }} /> {contact.email}

@@ -3,10 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Search, Plus, Upload, Cake } from 'lucide-react'
 import Avatar from '../../components/Avatar'
-import PlatformBadge from '../../components/PlatformBadge'
 import { useDataStore, healthFromLastTouch, daysUntilBirthday } from '../../store/dataStore'
-
-const PLATFORMS = ['All', 'LinkedIn', 'Instagram', 'X', 'TikTok']
 
 function ContactCard({ contact, themeCount, onOpen }) {
   const health = healthFromLastTouch(contact.lastTouch)
@@ -76,10 +73,6 @@ function ContactCard({ contact, themeCount, onOpen }) {
         </div>
       </div>
 
-      {/* Platform badges */}
-      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-        {contact.platforms.map(p => <PlatformBadge key={p} platform={p} size="sm" />)}
-      </div>
     </motion.div>
   )
 }
@@ -89,15 +82,12 @@ export default function Network({ onAddContact, onImportContacts }) {
   const contacts = useDataStore(s => s.contacts)
   const themesByContact = useDataStore(s => s.themesByContact)
   const [search, setSearch] = useState('')
-  const [activePlatform, setActivePlatform] = useState('All')
 
   const filtered = contacts.filter(c => {
     const q = search.toLowerCase()
-    const matchSearch = c.name.toLowerCase().includes(q)
+    return c.name.toLowerCase().includes(q)
       || c.company.toLowerCase().includes(q)
       || c.role.toLowerCase().includes(q)
-    const matchPlatform = activePlatform === 'All' || c.platforms.includes(activePlatform.toLowerCase())
-    return matchSearch && matchPlatform
   })
 
   return (
@@ -158,23 +148,6 @@ export default function Network({ onAddContact, onImportContacts }) {
             onChange={e => setSearch(e.target.value)}
             style={{ background: 'transparent', outline: 'none', border: 'none', fontSize: '13px', color: '#1C2B33', width: '100%', fontFamily: 'Inter, sans-serif' }}
           />
-        </div>
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-          {PLATFORMS.map(p => (
-            <button
-              key={p}
-              onClick={() => setActivePlatform(p)}
-              style={{
-                padding: '6px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 500,
-                cursor: 'pointer', transition: 'all 0.15s', fontFamily: 'Inter, sans-serif',
-                background: activePlatform === p ? '#0D5C63' : '#FFFFFF',
-                color: activePlatform === p ? '#FFFFFF' : '#5C6B73',
-                border: `1px solid ${activePlatform === p ? '#0D5C63' : '#D6D1C5'}`,
-              }}
-            >
-              {p}
-            </button>
-          ))}
         </div>
       </div>
 

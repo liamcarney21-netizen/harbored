@@ -193,7 +193,6 @@ export const useDataStore = create((set, get) => {
       const colors = ['#1e3a5f', '#1a2e4a', '#1c3554', '#172b45']
       const contact = {
         id, name, initials, role, company,
-        platforms: ['linkedin'],
         color: colors[id % colors.length],
         email: email || fakeEmail(name),
         phone: phone || '',
