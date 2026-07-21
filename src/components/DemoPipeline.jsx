@@ -21,8 +21,8 @@ const STEPS = [
   {
     n: 3,
     Icon: Zap,
-    title: 'Claude watches & scores',
-    body: 'It reads the news per theme and scores each update — you only hear about what clears the bar, message drafted.',
+    title: 'Only real reasons reach you',
+    body: 'Harbored watches those topics around the clock and only alerts you when there\'s a genuinely good reason to reconnect — with a message ready to send.',
   },
 ]
 
@@ -38,7 +38,7 @@ function Step({ step, onImport }) {
         }}>
           <Icon style={{ width: '13px', height: '13px' }} />
         </span>
-        <span style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.08em', color: '#A97E2F' }}>
+        <span style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.08em', color: '#0D5C63' }}>
           STEP {n}
         </span>
       </div>

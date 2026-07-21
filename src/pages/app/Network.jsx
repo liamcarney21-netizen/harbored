@@ -1,15 +1,20 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Search, Plus, Upload } from 'lucide-react'
+import { Search, Plus, Upload, Cake } from 'lucide-react'
 import Avatar from '../../components/Avatar'
 import PlatformBadge from '../../components/PlatformBadge'
-import { useDataStore, healthFromLastTouch } from '../../store/dataStore'
+import { useDataStore, healthFromLastTouch, daysUntilBirthday } from '../../store/dataStore'
 
 const PLATFORMS = ['All', 'LinkedIn', 'Instagram', 'X', 'TikTok']
 
 function ContactCard({ contact, themeCount, onOpen }) {
   const health = healthFromLastTouch(contact.lastTouch)
+  // Birthday shows as a small celebratory pill on the card (within 10 days) —
+  // no dedicated section; the moment lives next to the person.
+  const bdays = daysUntilBirthday(contact.birthday)
+  const bday = bdays !== null && bdays <= 10 ? bdays : null
+  const bwhen = bday === 0 ? 'today' : bday === 1 ? 'tomorrow' : `in ${bday} days`
 
   return (
     <motion.div
@@ -39,6 +44,15 @@ function ContactCard({ contact, themeCount, onOpen }) {
           <p style={{ fontSize: '12px', color: '#5C6B73', fontFamily: 'Inter, sans-serif', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {contact.company}
           </p>
+          {bday !== null && (
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: '5px', marginTop: '7px',
+              fontSize: '11px', fontWeight: 600, padding: '3px 9px', borderRadius: '20px',
+              background: 'rgba(13,92,99,0.1)', color: '#0D5C63', fontFamily: 'Inter, sans-serif',
+            }}>
+              <Cake style={{ width: '12px', height: '12px' }} /> Birthday {bwhen}
+            </span>
+          )}
         </div>
       </div>
 

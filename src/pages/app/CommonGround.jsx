@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Send, Edit3, ChevronLeft, Zap, Plus, X, Check, Trophy, MapPin, TrendingUp, Activity, Briefcase, Radar, RefreshCw, ExternalLink, Waves, Gift, Cake } from 'lucide-react'
+import { Send, Edit3, ChevronLeft, Zap, Plus, X, Check, Trophy, MapPin, TrendingUp, Activity, Briefcase, Radar, RefreshCw, ExternalLink, Waves, Gift } from 'lucide-react'
 import Avatar from '../../components/Avatar'
 import DemoPipeline from '../../components/DemoPipeline'
 import { themeUpdates, SIGNIFICANCE_THRESHOLD } from '../../data/commonGround'
-import { useDataStore, selectNudges, selectUpcomingBirthdays } from '../../store/dataStore'
+import { useDataStore, selectNudges } from '../../store/dataStore'
 import { useDemoStore } from '../../store/demoStore'
 import { useAuthStore } from '../../store/authStore'
 import { fetchLiveUpdates } from '../../services/monitoring'
@@ -14,7 +14,7 @@ import { openSend, sendChannelFor } from '../../services/outreach'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import ThemeSpecificityHint from '../../components/ThemeSpecificityHint'
 
-const TABS = ['Opportunities', 'Shared Themes']
+const TABS = ['Reach out', 'Shared Themes']
 
 const categoryConfig = {
   sports:   { label: 'Sports',   icon: Trophy,     color: '#2E7D5B', bg: 'rgba(46,125,91,0.08)' },
@@ -113,9 +113,8 @@ export default function CommonGround({ onImportContacts }) {
   const recordTouch = useDataStore(s => s.recordTouch)
   // Derived per render (not a subscribed selector — it returns a fresh array)
   const nudges = selectNudges({ contacts })
-  const birthdays = selectUpcomingBirthdays({ contacts })
 
-  const [activeTab, setActiveTab] = useState('Opportunities')
+  const [activeTab, setActiveTab] = useState('Reach out')
   const [selected, setSelected] = useState(null)
   const [msgText, setMsgText] = useState('')
   const [editingMsg, setEditingMsg] = useState(false)
@@ -204,15 +203,6 @@ export default function CommonGround({ onImportContacts }) {
     })
   }
 
-  function handleBirthdaySend(b) {
-    const channel = openSend(b.contact, b.opener, 'Happy birthday')
-    recordTouch(b.contact.id, {
-      channel: channel || 'email',
-      message: b.opener,
-      trigger: `Birthday ${b.when}`,
-    })
-  }
-
   function handleGive(update) {
     const contact = contacts.find(c => c.id === update.contactId)
     const msg = update.giveMessage + (update.link ? `\n\n${update.link}` : '')
@@ -265,72 +255,70 @@ export default function CommonGround({ onImportContacts }) {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3 }}
       >
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap', marginBottom: '28px' }}>
-          <div style={{ minWidth: '260px' }}>
-            <h1 style={{ fontFamily: '"Fraunces", Georgia, serif', fontSize: '27px', fontWeight: 600, color: '#1C2B33', marginBottom: '4px' }}>
-              Common Ground
-            </h1>
-            <p style={{ fontSize: '13px', color: '#5C6B73' }}>
-              {themeCount} shared themes monitored across {monitoredContacts.length} contacts · flagged only when it clears the bar
-            </p>
-          </div>
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-            <button
-              onClick={scan}
-              disabled={scanning}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '8px',
-                padding: '10px 16px', borderRadius: '8px', fontSize: '13px', fontWeight: 500,
-                background: '#FFFFFF', color: scanning ? '#5C6B73' : '#0D5C63',
-                border: '1px solid #CCC6B9', cursor: scanning ? 'default' : 'pointer',
-                fontFamily: 'Inter, sans-serif', whiteSpace: 'nowrap',
-              }}
-            >
-              <RefreshCw style={{ width: '13px', height: '13px', animation: scanning ? 'spin 1s linear infinite' : 'none' }} />
-              {scanning ? 'Scanning themes…' : 'Scan now'}
-            </button>
-            <button
-              onClick={startAddTheme}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '8px',
-                padding: '10px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
-                background: '#0D5C63', color: '#FFFFFF', border: 'none', cursor: 'pointer',
-                fontFamily: 'Inter, sans-serif', whiteSpace: 'nowrap',
-              }}
-            >
-              <Plus style={{ width: '14px', height: '14px' }} /> Add Shared Theme
-            </button>
-          </div>
+        {/* Header — clean vertical rhythm: title, one-line subtitle, segmented
+            view control, one primary action, subtle scan status. */}
+        <div style={{ marginBottom: '16px' }}>
+          <h1 style={{ fontFamily: '"Fraunces", Georgia, serif', fontSize: isMobile ? '28px' : '27px', fontWeight: 600, color: '#0a1628', marginBottom: '6px', letterSpacing: '-0.01em' }}>
+            Common Ground
+          </h1>
+          <p style={{ fontSize: '14px', color: '#5C6B73', lineHeight: 1.5, maxWidth: '440px' }}>
+            The themes that connect you, watched for real reasons to reach out.
+          </p>
         </div>
 
-        {/* Tabs */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '28px' }}>
+        {/* Segmented view control (iOS-style) */}
+        <div style={{
+          display: 'flex', gap: '4px', padding: '4px', marginBottom: '14px',
+          background: '#EBEEF1', borderRadius: '12px',
+          ...(isMobile ? {} : { maxWidth: '340px' }),
+        }}>
           {TABS.map(t => (
             <button
               key={t}
               onClick={() => setActiveTab(t)}
               style={{
-                padding: '6px 14px', borderRadius: '20px', fontSize: '12px', fontWeight: 500,
-                fontFamily: 'Inter, sans-serif', cursor: 'pointer', transition: 'all 0.15s',
-                background: activeTab === t ? '#0D5C63' : '#FFFFFF',
-                color: activeTab === t ? '#FFFFFF' : '#5C6B73',
-                border: `1px solid ${activeTab === t ? '#0D5C63' : '#D6D1C5'}`,
+                flex: 1, padding: '9px 12px', borderRadius: '9px', fontSize: '13.5px',
+                fontWeight: activeTab === t ? 600 : 500, fontFamily: 'Inter, sans-serif',
+                cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap', border: 'none',
+                background: activeTab === t ? '#FFFFFF' : 'transparent',
+                color: activeTab === t ? '#0D5C63' : '#5C6B73',
+                boxShadow: activeTab === t ? '0 1px 3px rgba(10,22,40,0.12)' : 'none',
               }}
             >
               {t}
             </button>
           ))}
-          {scannedAt && (
-            <span style={{ fontSize: '11px', color: '#5C6B73', marginLeft: 'auto' }}>
-              {liveUpdates.length > 0
-                ? `Live scan found ${liveUpdates.length} update${liveUpdates.length === 1 ? '' : 's'} · ${scannedAt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`
-                : 'Live scan: no fresh updates right now'}
-            </span>
-          )}
         </div>
 
-        {activeTab === 'Opportunities' && (
+        {/* Primary action + subtle scan status */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '26px', flexWrap: 'wrap' }}>
+          <button
+            onClick={startAddTheme}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+              flex: isMobile ? '1 1 100%' : '0 0 auto',
+              padding: '12px 22px', borderRadius: '10px', fontSize: '14px', fontWeight: 600,
+              background: '#0D5C63', color: '#FFFFFF', border: 'none', cursor: 'pointer',
+              fontFamily: 'Inter, sans-serif',
+            }}
+          >
+            <Plus style={{ width: '16px', height: '16px' }} /> Add a shared theme
+          </button>
+          <button
+            onClick={scan}
+            disabled={scanning}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '6px', padding: 0,
+              background: 'none', border: 'none', cursor: scanning ? 'default' : 'pointer',
+              color: '#8A97A0', fontSize: '12.5px', fontWeight: 500, fontFamily: 'Inter, sans-serif',
+            }}
+          >
+            <RefreshCw style={{ width: '13px', height: '13px', animation: scanning ? 'spin 1s linear infinite' : 'none' }} />
+            {scanning ? 'Scanning…' : (scannedAt ? `Updated ${scannedAt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` : 'Scan now')}
+          </button>
+        </div>
+
+        {activeTab === 'Reach out' && (
           <>
             {demoActive && showPipeline && (
               <DemoPipeline
@@ -411,67 +399,6 @@ export default function CommonGround({ onImportContacts }) {
                 )
               })}
             </div>
-
-            {/* Birthdays coming up — a non-news reach-out signal from contact data */}
-            {birthdays.length > 0 && (
-              <>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                  <Cake style={{ width: '13px', height: '13px', color: '#A97E2F' }} />
-                  <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 500, color: '#5C6B73' }}>
-                    Birthdays coming up — an easy reason to reach out
-                  </span>
-                </div>
-                <div style={{ borderRadius: '12px', overflow: 'hidden', background: '#FFFFFF', border: '1px solid #E6E2D8', marginBottom: '32px' }}>
-                  {birthdays.slice(0, 5).map((b, i) => (
-                    <div
-                      key={b.contact.id}
-                      style={{
-                        padding: isMobile ? '14px 16px' : '14px 20px',
-                        borderBottom: i < Math.min(birthdays.length, 5) - 1 ? '1px solid #EEEBE3' : 'none',
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '12px' : '16px' }}>
-                        <button
-                          onClick={() => navigate(`/dashboard/contact/${b.contact.id}`)}
-                          aria-label={`Open ${b.contact.name}'s profile`}
-                          style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', flexShrink: 0 }}
-                        >
-                          <Avatar initials={b.contact.initials} color={b.contact.color} size="md" />
-                        </button>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px', flexWrap: 'wrap' }}>
-                            <span style={{ fontWeight: 600, fontSize: '13px', color: '#1C2B33', whiteSpace: 'nowrap' }}>{b.contact.name}</span>
-                            <span style={{ fontSize: '11px', fontWeight: 500, padding: '2px 8px', borderRadius: '20px', background: 'rgba(169,126,47,0.1)', color: '#A97E2F', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                              Birthday {b.when}
-                            </span>
-                          </div>
-                          {!isMobile && (
-                            <p style={{ fontSize: '12px', color: '#5C6B73', fontStyle: 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              "{b.opener}"
-                            </p>
-                          )}
-                        </div>
-                        <button
-                          onClick={() => handleBirthdaySend(b)}
-                          style={{
-                            display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0,
-                            fontSize: '12px', fontWeight: 500, padding: '7px 14px', borderRadius: '8px',
-                            background: 'rgba(13,92,99,0.1)', color: '#0D5C63', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
-                          }}
-                        >
-                          <Send style={{ width: '12px', height: '12px' }} /> Reach out
-                        </button>
-                      </div>
-                      {isMobile && (
-                        <p style={{ fontSize: '12px', color: '#5C6B73', fontStyle: 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: '8px' }}>
-                          "{b.opener}"
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
 
             {/* Drifting quietly — reconnect nudges */}
             {nudges.length > 0 && (
@@ -865,7 +792,7 @@ export default function CommonGround({ onImportContacts }) {
                           Why this cleared the bar
                         </div>
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#0D5C63', fontWeight: 500 }}>
-                          <Zap style={{ width: '11px', height: '11px' }} /> Scored by Claude
+                          <Zap style={{ width: '11px', height: '11px' }} /> Harbored's read
                         </span>
                       </div>
                       {selected.rationale && (
