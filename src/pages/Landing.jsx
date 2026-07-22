@@ -612,7 +612,7 @@ export default function Landing() {
         points={[
           'Themes across sports, places, markets, hobbies, and industries',
           'A visible reach-out bar at 70 — below it, logged quietly',
-          'Message drafted for you to review and send — Auto-Send is opt-in, not the default',
+          'A personalized message, drafted for you to review and send',
         ]}
         cta="Explore Common Ground"
         onCta={() => openModal()}
@@ -674,21 +674,19 @@ export default function Landing() {
         </Reveal>
       </section>
 
-      {/* ══════════════════ TESTIMONIAL — single, big ══════════════════ */}
+      {/* ══════════════════ FOUNDER NOTE — the real origin, no fabricated testimonial ══════════════════ */}
       <section style={{ padding: 'clamp(72px, 10vw, 128px) clamp(20px, 6vw, 80px)', background: C.cream }}>
         <Reveal style={{ maxWidth: 880, margin: '0 auto' }}>
-          <div style={{ fontFamily: SERIF, fontSize: 80, lineHeight: 0.6, color: C.brassPale, marginBottom: 26, userSelect: 'none' }}>"</div>
+          <div style={{ fontFamily: SANS, fontSize: 11, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: C.brass, marginBottom: 22 }}>
+            Why we're building this
+          </div>
           <blockquote style={{ fontFamily: SERIF, fontSize: 'clamp(22px, 3vw, 34px)', fontWeight: 500, fontStyle: 'italic', lineHeight: 1.4, color: C.ink, margin: '0 0 30px' }}>
-            My college roommate and I share exactly one thing: Villanova basketball. Harbored pinged
-            me the second the transfer news broke, message already written. We hadn't talked in
-            months — now we're going to a game.
+            I once sat across from someone in an industry I wanted to break into, and had nothing to
+            say. Everyone tells you to "stay in touch" — no one tells you how, when you can't see
+            what's happening in someone's world. That's the whole problem I set out to solve.
           </blockquote>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            <img src="https://i.pravatar.cc/80?img=11" alt="Jake M." width={46} height={46} style={{ borderRadius: '50%', objectFit: 'cover' }} />
-            <div>
-              <div style={{ fontFamily: SANS, fontWeight: 600, fontSize: 14.5, color: C.ink }}>Jake M.</div>
-              <div style={{ fontFamily: SANS, fontWeight: 300, fontSize: 13, color: C.muted }}>Account Executive · early access user</div>
-            </div>
+          <div style={{ fontFamily: SANS, fontWeight: 600, fontSize: 14.5, color: C.ink }}>
+            Liam Carney <span style={{ fontWeight: 300, color: C.muted }}>· Founder</span>
           </div>
         </Reveal>
       </section>
@@ -741,7 +739,7 @@ export default function Landing() {
                   <p style={{ fontFamily: SANS, fontWeight: 300, fontSize: 13, color: 'rgba(250,248,243,0.5)', marginTop: 10, lineHeight: 1.5 }}>For professionals who want their relationships to keep up with their careers.</p>
                 </div>
                 <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 22, flex: 1 }}>
-                  {['Unlimited contacts & Common Ground themes', 'Common Ground discovery from your conversations', 'AI message drafting in your voice', 'Auto-Send mode', 'All notification channels'].map(f => (
+                  {['Unlimited contacts & Common Ground themes', 'Common Ground discovery from your conversations', 'A personalized message drafted for every reach-out', 'Push and email alerts'].map(f => (
                     <div key={f} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 12 }}>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.brassPale} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}><polyline points="20 6 9 17 4 12"/></svg>
                       <span style={{ fontFamily: SANS, fontSize: 14, color: 'rgba(250,248,243,0.78)' }}>{f}</span>

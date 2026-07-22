@@ -22,7 +22,7 @@ const STEPS = [
     icon: Gauge,
     kicker: 'Signal, not noise',
     title: 'We only interrupt you when it matters.',
-    body: "Harbored monitors every shared theme around the clock and scores each development for significance. Routine news gets logged quietly. Only updates that clear the reach-out bar arrive at your door — with the message already drafted in your voice. You decide with one click.",
+    body: "Harbored monitors every shared theme around the clock and scores each development for significance. Routine news gets logged quietly. Only updates that clear the reach-out bar arrive at your door — with a personalized message already drafted. You decide with one click.",
     visual: 'gauge',
   },
   {

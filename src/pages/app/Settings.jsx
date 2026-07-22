@@ -83,7 +83,6 @@ export default function Settings() {
   const [notifToggles, setNotifToggles] = useState({ email: true, sms: true, slack: false, whatsapp: false, teams: false })
   const [notifValues, setNotifValues] = useState({ email: 'harboredsupport@gmail.com', sms: '', slack: '', whatsapp: '', teams: '' })
   const [connectedPlatforms, setConnectedPlatforms] = useState(Object.fromEntries(PLATFORMS.map(p => [p.key, p.connected])))
-  const [autoSend, setAutoSend] = useState(false)
   const [saved, setSaved] = useState(false)
 
   function handleSave() {
@@ -215,27 +214,6 @@ export default function Settings() {
               )
             })}
           </div>
-        </motion.section>
-
-        {/* Auto-Send */}
-        <motion.section variants={fadeUp} style={{ borderRadius: '16px', padding: '24px', background: '#FFFFFF', border: '1px solid #E6E2D8' }}>
-          <SectionHeader icon={Zap} title="Auto-Send" />
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '24px' }}>
-            <p style={{ fontSize: '13px', lineHeight: 1.6, color: '#5C6B73' }}>
-              When enabled, Harbored will automatically send drafted messages without requiring your approval.
-              You can customize this per contact in My Network.
-            </p>
-            <Toggle checked={autoSend} onChange={setAutoSend} />
-          </div>
-          {autoSend && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              style={{ marginTop: '16px', padding: '12px 16px', borderRadius: '10px', fontSize: '13px', background: 'rgba(13,92,99,0.08)', color: '#0D5C63', border: '1px solid rgba(13,92,99,0.15)' }}
-            >
-              Auto-Send is active. Messages will be sent automatically when Harbored detects an event.
-            </motion.div>
-          )}
         </motion.section>
 
         {/* Product Tour */}
