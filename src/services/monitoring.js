@@ -73,7 +73,7 @@ export async function fetchLiveUpdates(contacts, themesByContact, { maxThemes = 
 
   const newsResults = await Promise.allSettled(
     sample.map(async ({ contact, theme }) => {
-      const resp = await fetch(apiUrl(`/api/news?q=${encodeURIComponent(theme.label)}&limit=3`))
+      const resp = await fetch(apiUrl(`/api/news?q=${encodeURIComponent(theme.query || theme.label)}&limit=3`))
       if (!resp.ok) throw new Error('news fetch failed')
       const { items } = await resp.json()
       if (!items?.length) return null

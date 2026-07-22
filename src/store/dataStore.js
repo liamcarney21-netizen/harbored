@@ -205,18 +205,25 @@ export const useDataStore = create((set, get) => {
         contacts: [...s.contacts, contact],
         themesByContact: {
           ...s.themesByContact,
-          [id]: themes.map((t, i) => ({ id: `t${id}-${i}`, label: t.label, category: t.category, updatesThisMonth: 0 })),
+          [id]: themes.map((t, i) => ({ id: `t${id}-${i}`, label: t.label, category: t.category, updatesThisMonth: 0, query: t.query || null, entityType: t.entityType || null, watchFor: t.watchFor || null })),
         },
       }))
       return contact
     },
 
-    addTheme: (contactId, label, category) => syncedSet(s => ({
+    // refinement (optional): { query, entityType, watchFor } from /api/refine-theme.
+    // The scan searches news with `query` when present, falling back to `label`.
+    addTheme: (contactId, label, category, refinement = {}) => syncedSet(s => ({
       themesByContact: {
         ...s.themesByContact,
         [contactId]: [
           ...(s.themesByContact[contactId] || []),
-          { id: `t${Date.now()}`, label, category, updatesThisMonth: 0 },
+          {
+            id: `t${Date.now()}`, label, category, updatesThisMonth: 0,
+            query: refinement.query || null,
+            entityType: refinement.entityType || null,
+            watchFor: refinement.watchFor || null,
+          },
         ],
       },
     })),
