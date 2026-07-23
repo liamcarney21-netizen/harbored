@@ -142,7 +142,9 @@ async function processUser(supabase, userId, data, pairs) {
   if (pairs.length) {
     const newsResults = await Promise.allSettled(
       pairs.map(async ({ contact, theme }) => {
-        const items = await fetchThemeNews(theme.label, 1)
+        // Search with the refined query when the theme has one (precise, entity-
+        // grounded), else the raw label. Scoring still sees the human theme.label.
+        const items = await fetchThemeNews(theme.query || theme.label, 1)
         if (!items?.length) return null
         return { contact, theme, item: items[0] }
       })

@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Plus, Check, ArrowRight } from 'lucide-react'
 import { useDataStore } from '../store/dataStore'
+import { apiUrl } from '../lib/apiBase'
 import Avatar from './Avatar'
 import ThemeSpecificityHint from './ThemeSpecificityHint'
 
@@ -34,12 +35,32 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
   // so a new import remounts it (no reset-in-effect needed).
   function resetForContact() { setThemes([]); setLabel(''); setCategory('sports') }
 
-  function addChip() {
+  // Add the theme immediately, then refine it in the background: one call turns
+  // the raw label into a precise, entity-grounded news query + a plain-English
+  // "here's what we'll watch" the user can eyeball before committing.
+  async function addChip() {
     const l = label.trim()
     if (!l) return
-    setThemes(t => [...t, { label: l, category }])
+    const cid = `c${Date.now()}`
+    const cat = category
+    setThemes(t => [...t, { cid, label: l, category: cat, refining: true }])
     setLabel('')
     inputRef.current?.focus()
+    try {
+      const resp = await fetch(apiUrl('/api/refine-theme'), {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ label: l, contactName: current?.name, contactCompany: current?.company, contactRole: current?.role }),
+      })
+      const data = resp.ok ? await resp.json() : null
+      setThemes(t => t.map(x => x.cid === cid ? {
+        ...x, refining: false,
+        display: data?.display || null,
+        refinement: data ? { query: data.query, entityType: data.entityType, watchFor: data.watchFor } : null,
+      } : x))
+    } catch {
+      setThemes(t => t.map(x => x.cid === cid ? { ...x, refining: false } : x))
+    }
   }
 
   // Persist the current contact's themes (plus any text left un-added in the field).
@@ -47,7 +68,7 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
     if (!current) return
     const pending = label.trim()
     const all = pending ? [...themes, { label: pending, category }] : themes
-    all.forEach(t => addTheme(current.id, t.label, t.category))
+    all.forEach(t => addTheme(current.id, t.label, t.category, t.refinement || {}))
   }
 
   function advance() {
@@ -119,23 +140,25 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
                   company, the team, the place.
                 </p>
 
-                {/* Added chips */}
+                {/* Added themes — each shows what Harbored will actually watch, so
+                    the user can confirm we resolved the right thing before saving. */}
                 {themes.length > 0 && (
-                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
-                    {themes.map((t, i) => {
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }}>
+                    {themes.map((t) => {
                       const c = catOf(t.category)
                       return (
-                        <span key={i} style={{
-                          display: 'inline-flex', alignItems: 'center', gap: 7, padding: '6px 10px',
-                          borderRadius: 20, fontSize: 13, fontWeight: 500,
-                          background: c.bg, color: c.color, border: `1px solid ${c.color}33`,
-                        }}>
-                          {t.label}
-                          <button onClick={() => setThemes(ts => ts.filter((_, j) => j !== i))} aria-label={`Remove ${t.label}`}
-                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: 0, display: 'flex' }}>
-                            <X style={{ width: 12, height: 12 }} />
-                          </button>
-                        </span>
+                        <div key={t.cid} style={{ padding: '10px 12px', borderRadius: 10, background: c.bg, border: `1px solid ${c.color}33` }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                            <span style={{ fontSize: 13.5, fontWeight: 600, color: c.color }}>{t.label}</span>
+                            <button onClick={() => setThemes(ts => ts.filter(x => x.cid !== t.cid))} aria-label={`Remove ${t.label}`}
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', color: c.color, padding: 0, display: 'flex', flexShrink: 0 }}>
+                              <X style={{ width: 13, height: 13 }} />
+                            </button>
+                          </div>
+                          <div style={{ fontSize: 12, color: '#5C6B73', marginTop: 3, lineHeight: 1.45, fontStyle: t.refining ? 'italic' : 'normal' }}>
+                            {t.refining ? 'Working out what to watch…' : (t.display || "We'll watch this for significant news.")}
+                          </div>
+                        </div>
                       )
                     })}
                   </div>

@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { handleNewsRequest } from './server/newsHandler.js'
 import { handleDiscoverRequest } from './server/discoverHandler.js'
+import { handleRefineRequest } from './server/refineHandler.js'
 import { handleWaitlistRequest } from './server/waitlistHandler.js'
 import { handleScoreRequest } from './server/scoreHandler.js'
 import { runScan, createServiceClient } from './server/scanHandler.js'
@@ -40,6 +41,16 @@ function harboredApi() {
         let payload = {}
         try { payload = JSON.parse(raw || '{}') } catch { /* handled below as empty */ }
         const { status, body } = await handleDiscoverRequest(payload)
+        res.statusCode = status
+        res.setHeader('content-type', 'application/json')
+        res.end(JSON.stringify(body))
+      })
+      server.middlewares.use('/api/refine-theme', async (req, res) => {
+        let raw = ''
+        for await (const chunk of req) raw += chunk
+        let payload = {}
+        try { payload = JSON.parse(raw || '{}') } catch { /* handled below as empty */ }
+        const { status, body } = await handleRefineRequest(payload)
         res.statusCode = status
         res.setHeader('content-type', 'application/json')
         res.end(JSON.stringify(body))
