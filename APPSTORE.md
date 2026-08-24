@@ -67,8 +67,6 @@ network,contacts,relationships,keep in touch,networking,CRM,reminders,follow up,
 > • **Weekly digest** — a quiet roundup of everyone worth reaching out to this week.
 > • **Discovery** — just met someone? Tell Harbored what you talked about and it surfaces the
 >   themes worth watching.
-> • **Prep briefs** — walking into a meeting? Get a one-page brief with the latest on them and
->   talking points that don't feel forced.
 > • **Worth sending** — Harbored also flags things worth forwarding as a no-ask favor, so you
 >   show up useful, not needy.
 >
@@ -121,7 +119,7 @@ The app is iPhone-only, so no iPad set is needed. Shoot from the simulator **log
 real account with themes and scan results** (the native shell skips the marketing page and
 demo mode — real data reads better in screenshots anyway). Cmd+S saves a native-resolution PNG.
 1. **Common Ground** — the "Worth reaching out" list with significance scores. The hero shot.
-2. **A cleared update** — detail panel with the Claude "why this cleared the bar" rationale.
+2. **A cleared update** — detail panel showing "why this cleared the bar" (the "Harbored's read" rationale).
 3. **Shared Themes** — per-contact theme chips (the core mental model in one glance).
 4. **Import from Contacts** — the native picker / import modal.
 5. **Weekly digest** — the roundup view.
