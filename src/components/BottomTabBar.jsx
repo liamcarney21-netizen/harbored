@@ -1,27 +1,41 @@
 import { NavLink } from 'react-router-dom'
-import { Compass, Users, Mail, Settings } from 'lucide-react'
 
-// Mobile primary navigation — a LinkedIn-style bottom tab bar that replaces the
-// old hamburger drawer, so the installed app reads like a native app instead of
-// a website in a shell. Palette matches the landing: navy / white / teal.
+// Mobile primary navigation — three tabs, "Alter × Claude" style: blush paper,
+// mono caps labels, vermilion for the active tab only. Digest folds into Today;
+// Settings becomes "You".
 const TABS = [
-  { path: '/dashboard',          label: 'Common Ground', icon: Compass, end: true },
-  { path: '/dashboard/network',  label: 'Network',       icon: Users },
-  { path: '/dashboard/digest',   label: 'Digest',        icon: Mail },
-  { path: '/dashboard/settings', label: 'Settings',      icon: Settings },
+  { path: '/dashboard',          label: 'TODAY',  end: true,
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+        <circle cx="12" cy="12" r="8.5" /><path d="M12 8v4.5l3 2" />
+      </svg>
+    ) },
+  { path: '/dashboard/network',  label: 'PEOPLE',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+        <circle cx="9" cy="8" r="3.2" /><path d="M3.5 19c.6-3 2.8-4.8 5.5-4.8s4.9 1.8 5.5 4.8" />
+        <circle cx="16.5" cy="9" r="2.6" /><path d="M15.5 14.6c2.4.2 4.3 1.8 4.9 4.4" />
+      </svg>
+    ) },
+  { path: '/dashboard/settings', label: 'YOU',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+        <circle cx="12" cy="9" r="3.4" /><path d="M5 20c.8-3.6 3.6-5.8 7-5.8s6.2 2.2 7 5.8" />
+      </svg>
+    ) },
 ]
 
-const TEAL = '#0D5C63'
-const MUTED = '#8A97A0'
+const ACCENT = '#DE4A2C'
+const MUTED = '#9C8B80'
 
 export default function BottomTabBar() {
   return (
     <nav style={{
-      flexShrink: 0, display: 'flex', background: '#FFFFFF',
-      borderTop: '1px solid #E4E9EC',
-      padding: '7px 4px calc(env(safe-area-inset-bottom) + 7px)',
+      flexShrink: 0, display: 'flex',
+      borderTop: '1px solid rgba(27,22,19,0.1)',
+      padding: '10px 4px calc(env(safe-area-inset-bottom) + 8px)',
     }}>
-      {TABS.map(({ path, label, icon: Icon, end }) => (
+      {TABS.map(({ path, label, icon, end }) => (
         <NavLink
           key={path}
           to={path}
@@ -29,15 +43,17 @@ export default function BottomTabBar() {
           style={{ flex: 1, textDecoration: 'none' }}
         >
           {({ isActive }) => (
-            <div style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px',
-              padding: '4px 0', color: isActive ? TEAL : MUTED,
-              transition: 'color 0.15s ease',
+            <div className="alter-press" style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
+              padding: '4px 0', minHeight: '44px',
+              color: isActive ? ACCENT : MUTED,
             }}>
-              <Icon style={{ width: 23, height: 23 }} strokeWidth={isActive ? 2.4 : 1.9} />
+              <span style={{ display: 'flex' }}>
+                {icon}
+              </span>
               <span style={{
-                fontFamily: 'Inter, sans-serif', fontSize: '10.5px',
-                fontWeight: isActive ? 600 : 500, letterSpacing: '0.01em',
+                fontSize: '10px', letterSpacing: '0.08em',
+                fontWeight: isActive ? 700 : 400,
               }}>{label}</span>
             </div>
           )}

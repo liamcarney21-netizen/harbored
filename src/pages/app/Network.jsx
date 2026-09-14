@@ -1,80 +1,24 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import { Search, Plus, Upload, Cake } from 'lucide-react'
-import Avatar from '../../components/Avatar'
+import { ChevronRight, Search } from 'lucide-react'
+import WarmAvatar from '../../components/WarmAvatar'
 import { useDataStore, healthFromLastTouch, daysUntilBirthday } from '../../store/dataStore'
 
-function ContactCard({ contact, themeCount, onOpen }) {
-  const health = healthFromLastTouch(contact.lastTouch)
-  // Birthday shows as a small celebratory pill on the card (within 10 days) —
-  // no dedicated section; the moment lives next to the person.
+const INK = '#1B1613'
+const MUTED = '#8A7A70'
+const ACCENT = '#DE4A2C'
+const CARD = '#FFFFFF'
+
+// Plain-language status — one line, coral only when it needs attention.
+function statusFor(contact) {
   const bdays = daysUntilBirthday(contact.birthday)
-  const bday = bdays !== null && bdays <= 10 ? bdays : null
-  const bwhen = bday === 0 ? 'today' : bday === 1 ? 'tomorrow' : `in ${bday} days`
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="group"
-      onClick={onOpen}
-      style={{
-        position: 'relative', borderRadius: '12px', padding: '20px',
-        display: 'flex', flexDirection: 'column', gap: '12px',
-        background: '#FFFFFF', border: '1px solid #E5E1D7',
-        overflow: 'hidden', transition: 'border-color 0.2s',
-        cursor: 'pointer', height: '100%', boxSizing: 'border-box',
-      }}
-      whileHover={{ scale: 1.015, borderColor: 'rgba(13,92,99,0.35)' }}
-    >
-      {/* Avatar + info */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-        <Avatar initials={contact.initials} color={contact.color} size="lg" />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <h3 style={{ fontWeight: 600, fontSize: '13px', color: '#1C2B33', fontFamily: 'Inter, sans-serif', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {contact.name}
-          </h3>
-          <p style={{ fontSize: '12px', color: '#5C6B73', fontFamily: 'Inter, sans-serif', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {contact.role}
-          </p>
-          <p style={{ fontSize: '12px', color: '#5C6B73', fontFamily: 'Inter, sans-serif', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {contact.company}
-          </p>
-          {bday !== null && (
-            <span style={{
-              display: 'inline-flex', alignItems: 'center', gap: '5px', marginTop: '7px',
-              fontSize: '11px', fontWeight: 600, padding: '3px 9px', borderRadius: '20px',
-              background: 'rgba(13,92,99,0.1)', color: '#0D5C63', fontFamily: 'Inter, sans-serif',
-            }}>
-              <Cake style={{ width: '12px', height: '12px' }} /> Birthday {bwhen}
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* Last touch / themes line */}
-      <div style={{ fontSize: '11px', padding: '6px 10px', borderRadius: '8px', textAlign: 'center', background: 'rgba(13,92,99,0.06)', color: '#0D5C63', fontFamily: 'Inter, sans-serif' }}>
-        {themeCount > 0
-          ? `${themeCount} shared theme${themeCount === 1 ? '' : 's'} monitored`
-          : contact.lastTouch
-            ? `Last touch ${health.days === 0 ? 'today' : `${health.days}d ago`}`
-            : 'No touchpoints yet'}
-      </div>
-
-      {/* Relationship health */}
-      <div>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
-          <span style={{ fontSize: '11px', color: '#5C6B73', fontFamily: 'Inter, sans-serif' }}>Relationship Health</span>
-          <span style={{ fontSize: '11px', fontWeight: 500, color: health.color, fontFamily: 'Inter, sans-serif' }}>{health.label}</span>
-        </div>
-        <div style={{ height: '4px', borderRadius: '2px', overflow: 'hidden', background: '#E5E1D7' }}>
-          <div style={{ width: `${health.pct}%`, height: '100%', borderRadius: '2px', background: health.color }} />
-        </div>
-      </div>
-
-    </motion.div>
-  )
+  if (bdays === 0) return { text: 'birthday today', hot: true }
+  if (bdays === 1) return { text: 'birthday tomorrow', hot: true }
+  const health = healthFromLastTouch(contact.lastTouch)
+  if (!contact.lastTouch) return { text: 'no touchpoints yet', hot: false }
+  if (health.days >= 45) return { text: `drifting · ${health.days} days quiet`, hot: true }
+  if (health.days >= 21) return { text: `quiet · ${health.days} days`, hot: false }
+  return { text: `in touch · ${health.days === 0 ? 'today' : `${health.days}d ago`}`, hot: false }
 }
 
 export default function Network({ onAddContact, onImportContacts }) {
@@ -86,93 +30,108 @@ export default function Network({ onAddContact, onImportContacts }) {
   const filtered = contacts.filter(c => {
     const q = search.toLowerCase()
     return c.name.toLowerCase().includes(q)
-      || c.company.toLowerCase().includes(q)
-      || c.role.toLowerCase().includes(q)
+      || (c.company || '').toLowerCase().includes(q)
+      || (c.role || '').toLowerCase().includes(q)
   })
+  const withNews = contacts.filter(c => statusFor(c).hot).length
 
   return (
-    <motion.div
-      style={{ minHeight: '100%', padding: 'clamp(20px, 4vw, 40px)', fontFamily: 'Inter, sans-serif' }}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
-    >
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap', marginBottom: '28px' }}>
-        <div>
-          <h1 style={{ fontFamily: '"Fraunces", Georgia, serif', fontSize: '27px', fontWeight: 600, color: '#1C2B33', marginBottom: '4px' }}>
-            My Network
-          </h1>
-          <p style={{ fontSize: '13px', color: '#5C6B73' }}>
-            {contacts.length} relationships, quietly monitored
-          </p>
-        </div>
-        <div style={{ display: 'flex', gap: '10px', flexShrink: 0 }}>
-          <button
-            onClick={onImportContacts}
-            style={{
-              display: 'flex', alignItems: 'center', gap: '8px',
-              padding: '10px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
-              background: '#0D5C63', color: '#FFFFFF', border: 'none', cursor: 'pointer',
-              fontFamily: 'Inter, sans-serif',
-            }}
-          >
-            <Upload style={{ width: '14px', height: '14px' }} /> Import Contacts
-          </button>
-          <button
-            onClick={onAddContact}
-            style={{
-              display: 'flex', alignItems: 'center', gap: '8px',
-              padding: '10px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
-              background: 'none', color: '#0D5C63', border: '1px solid rgba(13,92,99,0.25)', cursor: 'pointer',
-              fontFamily: 'Inter, sans-serif',
-            }}
-          >
-            <Plus style={{ width: '14px', height: '14px' }} /> Add manually
-          </button>
-        </div>
+    <div style={{ width: '100%', maxWidth: '520px', alignSelf: 'center', padding: '18px 24px 32px' }}>
+
+      <h1 className="alter-display" style={{ fontSize: '38px', fontWeight: 500, color: INK, lineHeight: 1 }}>
+        People.
+      </h1>
+      <p style={{ fontSize: '12px', color: MUTED, marginTop: '8px' }}>
+        {contacts.length} watched{withNews > 0 ? ` · ${withNews} need${withNews === 1 ? 's' : ''} attention` : ''}
+      </p>
+
+      <button
+        className="alter-cta alter-press"
+        onClick={onImportContacts}
+        style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+          width: '100%', height: '54px', borderRadius: '27px', border: 'none', cursor: 'pointer',
+          marginTop: '22px',
+        }}
+      >
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#FFF6F0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="5" width="18" height="14" rx="2" /><circle cx="9" cy="11" r="2" />
+          <path d="M6.5 15.5c.5-1.3 1.4-2 2.5-2s2 .7 2.5 2" /><path d="M14.5 9.5h4M14.5 13h3" />
+        </svg>
+        <span className="alter-display" style={{ fontSize: '15px', fontWeight: 500, letterSpacing: '0.08em', color: '#FFF6F0' }}>
+          IMPORT FROM CONTACTS
+        </span>
+      </button>
+      <div style={{ fontSize: '11px', color: MUTED, textAlign: 'center', marginTop: '10px' }}>
+        or{' '}
+        <button
+          className="alter-press"
+          onClick={onAddContact}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: MUTED, fontFamily: 'inherit', fontSize: '11px', textDecoration: 'underline', padding: 0 }}
+        >
+          add someone by hand
+        </button>
       </div>
 
-      {/* Search + Filters */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '28px', flexWrap: 'wrap' }}>
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: '10px',
-          padding: '10px 14px', borderRadius: '12px', flex: 1, minWidth: '224px', maxWidth: '320px',
-          background: '#FFFFFF', border: '1px solid #E3DFD5',
-        }}>
-          <Search style={{ width: '14px', height: '14px', color: '#5C6B73', flexShrink: 0 }} />
-          <input
-            type="text"
-            placeholder="Search by name, role, or company..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            style={{ background: 'transparent', outline: 'none', border: 'none', fontSize: '13px', color: '#1C2B33', width: '100%', fontFamily: 'Inter, sans-serif' }}
-          />
-        </div>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: '10px', height: '46px', padding: '0 14px',
+        borderRadius: '13px', background: CARD, marginTop: '18px',
+      }}>
+        <Search style={{ width: 15, height: 15, color: MUTED, flexShrink: 0 }} />
+        <input
+          type="text"
+          placeholder="search your people"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          style={{
+            background: 'transparent', outline: 'none', border: 'none',
+            fontSize: '16px', color: INK, width: '100%', fontFamily: 'inherit',
+          }}
+        />
       </div>
 
-      {/* Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px' }}>
-        {filtered.map((contact, i) => (
-          <motion.div
-            key={contact.id}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: Math.min(i * 0.04, 0.4), duration: 0.25 }}
-          >
-            <ContactCard
-              contact={contact}
-              themeCount={(themesByContact[contact.id] || []).length}
-              onOpen={() => navigate(`/dashboard/contact/${contact.id}`)}
-            />
-          </motion.div>
-        ))}
+      <div style={{ background: CARD, borderRadius: '20px', marginTop: '14px', overflow: 'hidden' }}>
         {filtered.length === 0 && (
-          <div style={{ gridColumn: '1 / -1', padding: '64px 0', textAlign: 'center', color: '#5C6B73' }}>
-            No contacts found.
+          <div style={{ padding: '40px 0', textAlign: 'center', fontSize: '12px', color: MUTED }}>
+            no one found
           </div>
         )}
+        {filtered.map((c, i) => {
+          const status = statusFor(c)
+          const themeCount = (themesByContact[c.id] || []).length
+          return (
+            <button
+              key={c.id}
+              className="alter-press"
+              onClick={() => navigate(`/dashboard/contact/${c.id}`)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '13px', width: '100%', textAlign: 'left',
+                padding: '14px 18px', minHeight: '44px', cursor: 'pointer',
+                background: 'none', border: 'none', fontFamily: 'inherit',
+                borderBottom: i < filtered.length - 1 ? '1px solid #F2E6DD' : 'none',
+              }}
+            >
+              <WarmAvatar initials={c.initials} size="md" />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', flex: 1, minWidth: 0 }}>
+                <span className="alter-display" style={{ fontSize: '15px', fontWeight: 500, letterSpacing: '0.03em', color: INK }}>
+                  {c.name}
+                </span>
+                <span style={{
+                  display: 'flex', alignItems: 'center', gap: '6px',
+                  fontSize: '11px', color: status.hot ? ACCENT : MUTED, fontWeight: status.hot ? 700 : 400,
+                }}>
+                  {status.hot && <span style={{ width: 6, height: 6, borderRadius: '50%', background: ACCENT, flexShrink: 0 }} />}
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {status.text}{themeCount > 0 ? ` · ${themeCount} theme${themeCount === 1 ? '' : 's'}` : ''}
+                  </span>
+                </span>
+              </div>
+              <ChevronRight style={{ width: 15, height: 15, color: '#C9B8AC', flexShrink: 0 }} />
+            </button>
+          )
+        })}
       </div>
-    </motion.div>
+
+    </div>
   )
 }

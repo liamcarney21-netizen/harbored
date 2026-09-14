@@ -62,6 +62,7 @@ export default function AppLayout() {
 
   return (
     <motion.div
+      className="alter-app"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.35 }}
@@ -70,58 +71,58 @@ export default function AppLayout() {
         flexDirection: isMobile ? 'column' : 'row',
         height: '100vh',
         overflow: 'hidden',
-        background: isMobile ? '#F4F6F8' : '#F6F4EF',
       }}
     >
-      {/* Mobile top bar — centered wordmark, navy/white/teal (no hamburger; the
-          bottom tab bar owns navigation now). */}
+      {/* Mobile top bar — wordmark left, date right, on the blush paper itself
+          (no white chrome bar; the bottom tab bar owns navigation). */}
       {isMobile && (
         <header style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-          padding: 'calc(env(safe-area-inset-top) + 14px) 16px 14px',
-          background: '#FFFFFF', borderBottom: '1px solid #E4E9EC',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
+          padding: 'calc(env(safe-area-inset-top) + 16px) 24px 4px',
         }}>
           <button
+            className="alter-press"
             onClick={() => navigate('/dashboard')}
-            style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+            style={{ display: 'flex', alignItems: 'center', gap: '7px', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
           >
-            <AnchorMark size={16} color="#0D5C63" />
-            <span style={{ fontFamily: '"Fraunces", Georgia, serif', fontSize: '19px', fontWeight: 600, color: '#0a1628' }}>
+            <AnchorMark size={16} color="#DE4A2C" />
+            <span className="alter-display" style={{ fontSize: '17px', fontWeight: 600, letterSpacing: '0.04em', color: '#1B1613' }}>
               Harbored
             </span>
           </button>
+          <span style={{ fontSize: '11px', color: '#8A7A70' }}>
+            {new Date().toLocaleDateString([], { weekday: 'short', month: '2-digit', day: '2-digit' }).toLowerCase()}
+          </span>
         </header>
       )}
 
       {/* Desktop keeps the sidebar; mobile uses the bottom tab bar below. */}
       {!isMobile && <AppSidebar onAddContact={openAddContact} onImportContacts={openImportContacts} />}
 
-      <main style={{ flex: 1, overflowY: 'auto', minWidth: 0 }}>
+      <main style={{ flex: 1, overflowY: 'auto', minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
         {demoActive && (
           <div style={{
             position: 'sticky', top: 0, zIndex: 30,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             flexWrap: 'wrap', gap: '4px 12px',
-            padding: '9px 16px', background: '#0D5C63', color: '#FCFBF6',
-            fontFamily: 'Inter, sans-serif', fontSize: '12.5px', fontWeight: 500,
-            textAlign: 'center',
+            padding: '8px 16px', background: '#1B1613', color: '#F4E3DA',
+            fontSize: '11px', textAlign: 'center',
           }}>
             <span>
-              <strong style={{ fontWeight: 700 }}>Live demo</strong>
-              {isMobile
-                ? ' — nothing here is saved.'
-                : ' — a sample network, fully interactive. Nothing you do here is saved.'}
+              <strong style={{ fontWeight: 700, color: '#F4A48E' }}>live demo</strong>
+              {' — nothing here is saved'}
             </span>
             <button
+              className="alter-press"
               onClick={leaveDemo}
               style={{
-                background: 'rgba(252,251,246,0.16)', color: '#FCFBF6',
-                border: '1px solid rgba(252,251,246,0.35)', borderRadius: '999px',
-                padding: '3px 12px', fontSize: '12px', fontWeight: 600,
-                cursor: 'pointer', fontFamily: 'Inter, sans-serif', whiteSpace: 'nowrap',
+                background: 'none', color: '#F4E3DA',
+                border: '1px solid rgba(244,227,218,0.4)', borderRadius: '999px',
+                padding: '3px 12px', fontSize: '11px', fontWeight: 700,
+                cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap',
               }}
             >
-              Back to Harbored
+              exit
             </button>
           </div>
         )}
