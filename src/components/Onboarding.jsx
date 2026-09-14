@@ -207,7 +207,7 @@ export default function Onboarding({ onFinish }) {
             onMouseLeave={e => e.currentTarget.style.background = '#0D5C63'}
           >
             {isLast ? (
-              <>Add your first contact <Check style={{ width: '13px', height: '13px' }} /></>
+              <>Bring in your people <Check style={{ width: '13px', height: '13px' }} /></>
             ) : (
               <>Continue <ArrowRight style={{ width: '13px', height: '13px' }} /></>
             )}

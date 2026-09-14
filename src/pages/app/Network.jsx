@@ -113,7 +113,7 @@ export default function Network({ onAddContact, onImportContacts }) {
             style={{
               display: 'flex', alignItems: 'center', gap: '8px',
               padding: '10px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
-              background: 'none', color: '#0D5C63', border: '1px solid rgba(13,92,99,0.25)', cursor: 'pointer',
+              background: '#0D5C63', color: '#FFFFFF', border: 'none', cursor: 'pointer',
               fontFamily: 'Inter, sans-serif',
             }}
           >
@@ -124,11 +124,11 @@ export default function Network({ onAddContact, onImportContacts }) {
             style={{
               display: 'flex', alignItems: 'center', gap: '8px',
               padding: '10px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
-              background: '#0D5C63', color: '#FFFFFF', border: 'none', cursor: 'pointer',
+              background: 'none', color: '#0D5C63', border: '1px solid rgba(13,92,99,0.25)', cursor: 'pointer',
               fontFamily: 'Inter, sans-serif',
             }}
           >
-            <Plus style={{ width: '14px', height: '14px' }} /> Add Contact
+            <Plus style={{ width: '14px', height: '14px' }} /> Add manually
           </button>
         </div>
       </div>

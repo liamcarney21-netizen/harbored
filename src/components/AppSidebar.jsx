@@ -97,7 +97,7 @@ export default function AppSidebar({ onAddContact, onImportContacts, onNavigate 
       {/* Add contact */}
       <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
         <button
-          onClick={onAddContact}
+          onClick={onImportContacts}
           style={{
             width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
             padding: '9px 12px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
@@ -107,10 +107,10 @@ export default function AppSidebar({ onAddContact, onImportContacts, onNavigate 
           onMouseEnter={e => e.currentTarget.style.background = '#09454B'}
           onMouseLeave={e => e.currentTarget.style.background = '#0D5C63'}
         >
-          <UserPlus style={{ width: '14px', height: '14px' }} /> Add Contact
+          <Upload style={{ width: '14px', height: '14px' }} /> Import Contacts
         </button>
         <button
-          onClick={onImportContacts}
+          onClick={onAddContact}
           style={{
             width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
             padding: '9px 12px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
@@ -118,7 +118,7 @@ export default function AppSidebar({ onAddContact, onImportContacts, onNavigate 
             fontFamily: 'Inter, sans-serif',
           }}
         >
-          <Upload style={{ width: '14px', height: '14px' }} /> Import Contacts
+          <UserPlus style={{ width: '14px', height: '14px' }} /> Add manually
         </button>
       </div>
 

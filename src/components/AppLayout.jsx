@@ -43,13 +43,12 @@ export default function AppLayout() {
   // /dashboard, would trip the guard below and bounce to /login instead.
   const leaveDemo = () => navigate('/')
 
-  function finishOnboarding(andAddContact = false) {
+  // Import-first: onboarding hands off to the contacts importer, not the
+  // manual-entry form — nobody types their network in by hand.
+  function finishOnboarding(andBringContacts = false) {
     localStorage.setItem('harbored_onboarded', 'true')
     setShowOnboarding(false)
-    if (andAddContact) {
-      setAddContactFirstRun(true)
-      setShowAddContact(true)
-    }
+    if (andBringContacts) setShowImportContacts(true)
   }
 
   const openAddContact = () => {
