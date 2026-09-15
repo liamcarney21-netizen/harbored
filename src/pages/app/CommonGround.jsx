@@ -224,7 +224,7 @@ export default function CommonGround({ onImportContacts }) {
     const monitored = contacts.filter(c => (themesByContact[c.id] || []).length > 0 || addingFor === c.id)
     const unmonitored = contacts.filter(c => (themesByContact[c.id] || []).length === 0 && addingFor !== c.id)
     return (
-      <div style={{ maxWidth: '520px', margin: '0 auto', padding: '18px 24px 32px' }}>
+      <div style={{ maxWidth: '620px', margin: '0 auto', padding: '18px 24px 32px' }}>
         <button
           className="hb-press"
           onClick={() => setView('today')}
@@ -375,16 +375,42 @@ export default function CommonGround({ onImportContacts }) {
     )
   }
 
+  // Shared derivation for a reason card — the phone deck and the desktop
+  // front page render the same facts at different scales.
+  function reasonView(r) {
+    const u = r.update
+    const contact = r.kind === 'drift' ? r.nudge.contact : contacts.find(c => c.id === u.contactId)
+    const { head, rest } = r.kind === 'drift'
+      ? { head: `It's been ${r.nudge.health.days} days quiet with ${firstName(r.nudge.contact.name)}.`, rest: '' }
+      : splitHeadline(u.headline)
+    const kicker = r.kind === 'news'
+      ? [u.themeLabel, u.source].filter(Boolean).join(' · ')
+      : r.kind === 'favor'
+        ? ['A favor to send', u.themeLabel].filter(Boolean).join(' · ')
+        : 'Drifting'
+    const body = r.kind === 'news'
+      ? (rest
+        ? `${rest}${/[.!?]$/.test(rest) ? '' : '.'}${u.time ? ` ${u.time.charAt(0).toUpperCase()}${u.time.slice(1)}.` : ''}`
+        : `Big news on the theme you share with ${firstName(u.contactName)}.${u.time ? ` ${u.time.charAt(0).toUpperCase()}${u.time.slice(1)}.` : ''}`)
+      : r.kind === 'favor'
+        ? `Below the bar, but useful to ${firstName(u.contactName)} — a no-ask favor.`
+        : 'No news needed — a two-line check-in keeps it warm.'
+    const draftPreview = r.kind === 'drift' ? r.nudge.opener : (r.kind === 'favor' ? u.giveMessage : u.draftMessage)
+    return { u, contact, head, kicker, body, draftPreview }
+  }
+
+  const leadIdx = Math.min(activeIdx, Math.max(0, queue.length - 1))
+
   // ── Today ──────────────────────────────────────────────────────────
   return (
     <div style={{
-      flex: '1 1 0', minHeight: 0, width: '100%', maxWidth: '520px', alignSelf: 'center',
+      flex: '1 1 0', minHeight: 0, width: '100%', maxWidth: isMobile ? '520px' : '1120px', alignSelf: 'center',
       display: 'flex', flexDirection: 'column', overflow: 'hidden',
       justifyContent: isMobile ? 'flex-start' : 'center',
     }}>
 
-      {/* Progress — segments up to 6 reasons, a single track beyond */}
-      {queue.length > 1 && (
+      {/* Progress — segments up to 6 reasons, a single track beyond (phone only) */}
+      {isMobile && queue.length > 1 && (
         <div style={{ flexShrink: 0, padding: '16px 24px 0' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             {queue.length <= 6 ? (
@@ -420,8 +446,8 @@ export default function CommonGround({ onImportContacts }) {
       )}
 
       {/* The deck — swipe between reasons */}
-      {queue.length > 0 ? (
-        <div ref={deckRef} className="hb-deck" onScroll={onDeckScroll} style={{ flex: isMobile ? 1 : '0 1 auto', minHeight: 0 }}>
+      {queue.length > 0 ? (isMobile ? (
+        <div ref={deckRef} className="hb-deck" onScroll={onDeckScroll} style={{ flex: 1, minHeight: 0 }}>
           {queue.map((r) => {
             const u = r.update
             const contact = r.kind === 'drift' ? r.nudge.contact : contacts.find(c => c.id === u.contactId)
@@ -515,6 +541,120 @@ export default function CommonGround({ onImportContacts }) {
           })}
         </div>
       ) : (
+        // Desktop front page: the lead reason large on the left, the rest of
+        // the day's reasons as a headline rail on the right.
+        (() => {
+          const lead = queue[leadIdx]
+          const v = reasonView(lead)
+          return (
+            <div style={{ flex: '0 1 auto', minHeight: 0, overflowY: 'auto', padding: '24px 48px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 320px', gap: '64px', alignItems: 'start' }}>
+
+                {/* Lead story */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ width: 7, height: 7, borderRadius: '50%', background: ACCENT, flexShrink: 0 }} />
+                    <span style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: MUTED }}>
+                      {v.kicker}
+                    </span>
+                  </div>
+                  <h1 className="hb-display" style={{
+                    fontSize: v.head.length > 60 ? '34px' : '40px',
+                    fontWeight: 500, color: INK, lineHeight: 1.2, margin: '16px 0 0', maxWidth: '620px',
+                  }}>
+                    {v.head}
+                  </h1>
+                  <p style={{ fontSize: '15px', lineHeight: 1.6, color: '#C2CBD8', marginTop: '14px', maxWidth: '560px' }}>
+                    {v.body}
+                  </p>
+                  <button
+                    className="hb-press"
+                    onClick={() => v.contact && navigate(`/dashboard/contact/${v.contact.id}`)}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: '12px', textAlign: 'left',
+                      background: CARD, border: `1px solid ${HAIRLINE}`, borderRadius: '16px', padding: '12px 18px 12px 14px',
+                      marginTop: '24px', cursor: 'pointer', fontFamily: 'inherit',
+                    }}
+                  >
+                    <WarmAvatar initials={lead.kind === 'drift' ? lead.nudge.contact.initials : v.u.contactInitials} size="md" />
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', minWidth: 0 }}>
+                      <span style={{ fontSize: '15px', fontWeight: 600, color: INK }}>
+                        {v.contact ? v.contact.name : (v.u ? v.u.contactName : '')}
+                      </span>
+                      <span style={{ fontSize: '12px', color: MUTED }}>
+                        {lead.kind === 'drift' ? `Last touch ${lead.nudge.health.days} days ago` : 'Shared theme'}
+                      </span>
+                    </div>
+                  </button>
+                  {v.draftPreview && (
+                    <div style={{ display: 'flex', gap: '14px', marginTop: '22px', maxWidth: '560px' }}>
+                      <div style={{ width: '2px', borderRadius: '1px', background: ACCENT, flexShrink: 0, alignSelf: 'stretch' }} />
+                      <p className="hb-display" style={{ fontStyle: 'italic', fontSize: '16px', lineHeight: 1.55, color: '#C2CBD8', minWidth: 0 }}>
+                        &ldquo;{clip(v.draftPreview, 180)}&rdquo;
+                      </p>
+                    </div>
+                  )}
+                  <button
+                    className="hb-cta hb-press"
+                    onClick={() => openReason(lead)}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+                      height: '50px', borderRadius: '14px', border: 'none', cursor: 'pointer',
+                      padding: '0 30px', marginTop: '28px',
+                    }}
+                  >
+                    <span style={{ fontSize: '15px', fontWeight: 600, color: '#0a1628' }}>
+                      {lead.kind === 'favor' ? 'Send the favor' : 'Review the draft'}
+                    </span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0a1628" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="M13 6l6 6-6 6" /></svg>
+                  </button>
+                  <div style={{ fontSize: '12px', color: MUTED, marginTop: '12px' }}>
+                    Drafted for you &mdash; nothing sends itself
+                  </div>
+                </div>
+
+                {/* Headline rail */}
+                <aside>
+                  <div style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: MUTED, paddingBottom: '10px', borderBottom: `1px solid ${HAIRLINE}` }}>
+                    Today &middot; {queue.length} reason{queue.length === 1 ? '' : 's'}
+                  </div>
+                  {queue.map((r, i) => {
+                    const rv = reasonView(r)
+                    const active = i === leadIdx
+                    return (
+                      <button
+                        key={r.id}
+                        className="hb-press"
+                        onClick={() => setActiveIdx(i)}
+                        style={{
+                          display: 'block', width: '100%', textAlign: 'left', cursor: 'pointer',
+                          background: 'none', border: 'none', fontFamily: 'inherit',
+                          padding: '14px 0 14px 14px', borderBottom: `1px solid ${HAIRLINE}`,
+                          borderLeft: `2px solid ${active ? ACCENT : 'transparent'}`,
+                        }}
+                      >
+                        <div style={{ fontSize: '10px', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: active ? ACCENT : MUTED, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {rv.kicker}
+                        </div>
+                        <div style={{
+                          fontSize: '14px', fontWeight: 600, color: INK, lineHeight: 1.4, marginTop: '5px',
+                          display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                        }}>
+                          {rv.head}
+                        </div>
+                        <div style={{ fontSize: '12px', color: MUTED, marginTop: '4px' }}>
+                          {rv.contact ? rv.contact.name : (rv.u ? rv.u.contactName : '')}
+                        </div>
+                      </button>
+                    )
+                  })}
+                </aside>
+
+              </div>
+            </div>
+          )
+        })()
+      )) : (
         // Empty states — scanning, no contacts, or genuinely all quiet.
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '0 32px', textAlign: 'center', gap: '16px' }}>
           <AsteriskMark size={34} spinning={scanning} />

@@ -89,7 +89,7 @@ export default function Settings() {
   }
 
   return (
-    <div style={{ width: '100%', maxWidth: '520px', alignSelf: 'center', padding: '18px 24px 32px' }}>
+    <div style={{ width: '100%', maxWidth: '620px', alignSelf: 'center', padding: '18px 24px 32px' }}>
 
       <h1 className="hb-display" style={{ fontSize: '30px', fontWeight: 500, color: INK, lineHeight: 1.1 }}>
         You
