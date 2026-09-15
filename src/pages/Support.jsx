@@ -22,7 +22,7 @@ const FAQ = [
   },
   {
     q: 'How do I import my contacts?',
-    a: 'On iPhone, pick the people you want straight from your contacts — only the fields Harbored needs (name, email, phone, company) come across. On the web, connect Google Contacts with read-only access, or add people one at a time. Harbored never reads your whole address book without your action.',
+    a: 'On iPhone, pick the people you want straight from your contacts — only the fields Harbored needs (name, email, phone, company) come across. On the web, add people one at a time — one-tap import lives in the iPhone app. Harbored never reads your whole address book without your action.',
   },
   {
     q: 'How do I turn notifications on or off?',

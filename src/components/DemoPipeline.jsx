@@ -9,7 +9,7 @@ const STEPS = [
     n: 1,
     Icon: Smartphone,
     title: 'Bring in your people',
-    body: 'Import straight from your phone's contacts or Google Contacts — one tap, no files.',
+    body: 'Import straight from your phone's contacts — one tap, no files.',
     action: true,
   },
   {

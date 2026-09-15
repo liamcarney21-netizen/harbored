@@ -6,24 +6,10 @@ import { useDemoStore } from '../store/demoStore'
 import { parseVCard } from '../services/vcard'
 import { SAMPLE_VCARD } from '../data/sampleContacts'
 import { isNativeContactsAvailable, pickNativeContacts } from '../services/contacts'
-import { fetchGoogleContacts } from '../services/googleContacts'
 
 const hasContactPicker = typeof navigator !== 'undefined' && 'contacts' in navigator && 'ContactsManager' in window
 
-// The standard Google "G", drawn in currentColor so it sits quietly on either
-// button style.
-function GoogleG({ size = 15 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M21.6 12.23c0-.68-.06-1.36-.19-2.02H12v3.83h5.4a4.6 4.6 0 0 1-2 3.02v2.5h3.23c1.9-1.74 2.97-4.3 2.97-7.33z" />
-      <path d="M12 21.5c2.7 0 4.96-.89 6.62-2.4l-3.23-2.5c-.9.6-2.05.95-3.39.95-2.61 0-4.82-1.76-5.6-4.12H3.05v2.58A10 10 0 0 0 12 21.5z" />
-      <path d="M6.4 13.43a5.99 5.99 0 0 1 0-3.85V7A10 10 0 0 0 3.05 12c0 1.61.39 3.14 1.07 4.5l2.28-3.07z" />
-      <path d="M12 6.46c1.47 0 2.79.5 3.83 1.5l2.86-2.86A10 10 0 0 0 3.05 7l3.35 2.58C7.18 8.22 9.39 6.46 12 6.46z" />
-    </svg>
-  )
-}
-
-export default function ImportContactsModal({ open, onClose, onImported }) {
+export default function ImportContactsModal({ open, onClose, onImported, onAddManually }) {
   const contacts = useDataStore(s => s.contacts)
   const addContact = useDataStore(s => s.addContact)
   const demoActive = useDemoStore(s => s.active)
@@ -34,7 +20,6 @@ export default function ImportContactsModal({ open, onClose, onImported }) {
   const [error, setError] = useState('')
   const [importing, setImporting] = useState(false)
   const [loadingNative, setLoadingNative] = useState(false)
-  const [loadingGoogle, setLoadingGoogle] = useState(false)
 
   const nativeContacts = isNativeContactsAvailable()
 
@@ -45,7 +30,6 @@ export default function ImportContactsModal({ open, onClose, onImported }) {
     setError('')
     setImporting(false)
     setLoadingNative(false)
-    setLoadingGoogle(false)
   }
 
   function handleClose() {
@@ -79,24 +63,6 @@ export default function ImportContactsModal({ open, onClose, onImported }) {
   function handleSample() {
     setError('')
     ingest(parseVCard(SAMPLE_VCARD))
-  }
-
-  // Web path: Google's own consent popup, then the People API — no files.
-  async function handleGoogle() {
-    setError('')
-    setLoadingGoogle(true)
-    try {
-      const parsed = await fetchGoogleContacts()
-      if (!parsed.length) {
-        setError('No contacts with a name were found in that Google account.')
-        return
-      }
-      ingest(parsed)
-    } catch (err) {
-      setError(err?.message || 'Could not read your Google contacts.')
-    } finally {
-      setLoadingGoogle(false)
-    }
   }
 
   // Native iOS path: the system contacts permission prompt + address book,
@@ -239,22 +205,23 @@ export default function ImportContactsModal({ open, onClose, onImported }) {
                       <Smartphone style={{ width: '15px', height: '15px' }} /> Pick from your phone's contacts
                     </button>
                   )}
-                  {!nativeContacts && (
+                  {!nativeContacts && !hasContactPicker && (
                     <div>
-                      <button className="hb-press" onClick={handleGoogle} disabled={loadingGoogle} style={{
+                      <p style={{ fontSize: '13px', color: '#C2CBD8', lineHeight: 1.55 }}>
+                        One-tap import lives in the Harbored iPhone app, straight from your
+                        contacts. On the web, add your people by hand — a name is enough to start.
+                      </p>
+                      <button className="hb-press" onClick={() => { handleClose(); onAddManually?.() }} style={{
                         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                         width: '100%', padding: '14px', borderRadius: '12px', fontSize: '14px', fontWeight: 600,
-                        background: (demoActive || hasContactPicker) ? 'none' : '#D3A95C',
-                        color: (demoActive || hasContactPicker) ? '#D3A95C' : '#0a1628',
-                        border: (demoActive || hasContactPicker) ? '1px solid rgba(211,169,92,0.4)' : 'none',
-                        cursor: loadingGoogle ? 'default' : 'pointer', opacity: loadingGoogle ? 0.7 : 1, fontFamily: 'Inter, sans-serif',
+                        marginTop: '12px',
+                        background: demoActive ? 'none' : '#D3A95C',
+                        color: demoActive ? '#D3A95C' : '#0a1628',
+                        border: demoActive ? '1px solid rgba(211,169,92,0.4)' : 'none',
+                        cursor: 'pointer', fontFamily: 'Inter, sans-serif',
                       }}>
-                        <GoogleG />
-                        {loadingGoogle ? 'Connecting to Google…' : 'Import from Google Contacts'}
+                        Add someone by hand
                       </button>
-                      <p style={{ fontSize: '12px', color: '#8C9AAD', marginTop: '10px', lineHeight: 1.5 }}>
-                        Approve read-only access in Google's own popup. Harbored never sees your password and never changes your contacts.
-                      </p>
                     </div>
                   )}
 

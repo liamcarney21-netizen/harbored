@@ -149,6 +149,7 @@ export default function AppLayout() {
         open={showImportContacts}
         onClose={() => setShowImportContacts(false)}
         onImported={setComposerContacts}
+        onAddManually={openAddContact}
       />
       <ThemeComposerModal
         key={composerContacts.length ? composerContacts[0].id : 'empty'}

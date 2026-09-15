@@ -80,9 +80,10 @@ Replace TOKEN with a fresh Personal Access Token from github.com/settings/tokens
 ## Owner
 Liam Carney — liamcarney21@gmail.com
 
-## Google Contacts import (web)
-`src/services/googleContacts.js` — client-side Google Identity Services token flow +
-People API (`contacts.readonly`). Needs `VITE_GOOGLE_CLIENT_ID` (Google Cloud Console:
-OAuth Web client with localhost:5173 + prod domain as authorized JS origins, People API
-enabled). Without it, the button shows and errors politely. Native iOS keeps the system
-contacts picker; the .vcf upload path was removed 2026-09-14.
+## Contact import
+Native iOS uses the system contacts picker (services/contacts.js). The web has no bulk
+import by design: the .vcf upload was removed 2026-09-14, and a Google Contacts OAuth
+import was built the same day and then removed at Liam's call (an unverified-app Google
+consent read as sketchy; the web is demo + desktop companion, not the flagship). If it
+ever comes back, see git history for src/services/googleContacts.js — the GCP project
+`harbored` (People API, OAuth client "Harbored web") still exists under Liam's account.

@@ -62,7 +62,7 @@ export default function Privacy() {
         <Section title="Information you give us">
           <ul style={{ paddingLeft: 20, margin: '4px 0 0' }}>
             <Bullet><strong>Account details.</strong> The email address and password you use to sign in. Authentication is handled by Supabase; we never see your password in plain text.</Bullet>
-            <Bullet><strong>Contacts you import.</strong> When you import from your phone's contacts or Google Contacts (read-only), Harbored reads only the contacts you select, and only these fields: name, email address, phone number, and company/role. We do not read your entire address book without your action, and we don't collect fields you don't need us to.</Bullet>
+            <Bullet><strong>Contacts you import.</strong> When you import from your phone's contacts, Harbored reads only the contacts you select, and only these fields: name, email address, phone number, and company/role. We do not read your entire address book without your action, and we don't collect fields you don't need us to.</Bullet>
             <Bullet><strong>Themes and notes.</strong> The shared themes, notes, and reminders you add for each contact — these are the basis of what Harbored watches for you.</Bullet>
             <Bullet><strong>Conversation text you paste into Discovery.</strong> When you use Discovery to surface shared themes, the text you paste is sent for analysis (see "AI processing" below) and is not stored after the themes are returned.</Bullet>
           </ul>
