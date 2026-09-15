@@ -13,9 +13,9 @@ import { openSend, sendChannelFor } from '../../services/outreach'
 import ThemeSpecificityHint from '../../components/ThemeSpecificityHint'
 
 const INK = '#F5F4EF'
-const MUTED = '#A8A49C'
-const ACCENT = '#D97757'
-const CARD = '#30302E'
+const MUTED = '#8C9AAD'
+const ACCENT = '#D3A95C'
+const CARD = '#0f2040'
 const HAIRLINE = 'rgba(255,255,255,0.08)'
 
 const categoryConfig = {
@@ -47,7 +47,7 @@ function Pill({ children }) {
       background: CARD, border: `1px solid ${HAIRLINE}`, borderRadius: '22px', padding: '8px 14px',
     }}>
       <span style={{ width: 7, height: 7, borderRadius: '50%', background: ACCENT }} />
-      <span style={{ fontSize: '12px', fontWeight: 600, color: '#C9C5BC' }}>
+      <span style={{ fontSize: '12px', fontWeight: 600, color: '#C2CBD8' }}>
         {children}
       </span>
     </span>
@@ -246,7 +246,7 @@ export default function CommonGround({ onImportContacts }) {
                     <span key={t.id} style={{
                       display: 'inline-flex', alignItems: 'center', gap: '7px',
                       padding: '7px 13px', borderRadius: '20px', fontSize: '11px',
-                      background: '#3A3936', color: '#C9C5BC',
+                      background: '#1a3558', color: '#C2CBD8',
                     }}>
                       {t.label}
                       <button
@@ -263,7 +263,7 @@ export default function CommonGround({ onImportContacts }) {
                     <span style={{
                       display: 'inline-flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', maxWidth: '100%',
                       padding: '5px 6px 5px 13px', borderRadius: '20px',
-                      background: '#3A3936', border: `1px solid ${ACCENT}`,
+                      background: '#1a3558', border: `1px solid ${ACCENT}`,
                     }}>
                       <input
                         autoFocus
@@ -299,7 +299,7 @@ export default function CommonGround({ onImportContacts }) {
                         style={{
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                           width: '26px', height: '26px', borderRadius: '50%',
-                          background: ACCENT, color: '#FFFFFF', border: 'none', cursor: 'pointer',
+                          background: ACCENT, color: '#0a1628', border: 'none', cursor: 'pointer',
                         }}
                       >
                         <Check style={{ width: 13, height: 13 }} />
@@ -413,7 +413,7 @@ export default function CommonGround({ onImportContacts }) {
                 }}>
                   {headline}
                 </h1>
-                <p style={{ fontSize: '14px', lineHeight: 1.6, color: '#C9C5BC', marginTop: '14px' }}>
+                <p style={{ fontSize: '14px', lineHeight: 1.6, color: '#C2CBD8', marginTop: '14px' }}>
                   {r.kind === 'news' && `Big news on the theme you share with ${firstName(u.contactName)}. ${u.source ? `${u.source}, ${u.time}.` : ''}`}
                   {r.kind === 'favor' && `Below the bar, but useful to ${firstName(u.contactName)} — a no-ask favor.`}
                   {r.kind === 'drift' && 'No news needed — a two-line check-in keeps it warm.'}
@@ -451,10 +451,10 @@ export default function CommonGround({ onImportContacts }) {
                     flexShrink: 0,
                   }}
                 >
-                  <span style={{ fontSize: '15px', fontWeight: 600, color: '#FFFFFF' }}>
+                  <span style={{ fontSize: '15px', fontWeight: 600, color: '#0a1628' }}>
                     {r.kind === 'favor' ? 'Send the favor' : 'Review the draft'}
                   </span>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="M13 6l6 6-6 6" /></svg>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0a1628" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="M13 6l6 6-6 6" /></svg>
                 </button>
                 <div style={{ fontSize: '12px', color: MUTED, textAlign: 'center', margin: '10px 0 14px', flexShrink: 0 }}>
                   Drafted for you &mdash; nothing sends itself
@@ -472,7 +472,7 @@ export default function CommonGround({ onImportContacts }) {
               <h1 className="hb-display" style={{ fontSize: '30px', fontWeight: 500, color: INK, lineHeight: 1.2 }}>
                 Bring in your people
               </h1>
-              <p style={{ fontSize: '14px', lineHeight: 1.6, color: '#C9C5BC' }}>
+              <p style={{ fontSize: '14px', lineHeight: 1.6, color: '#C2CBD8' }}>
                 Import your contacts, tell Harbored what you share, and it watches for real reasons to reach out.
               </p>
               <button
@@ -484,7 +484,7 @@ export default function CommonGround({ onImportContacts }) {
                   padding: '0 32px', marginTop: '8px',
                 }}
               >
-                <span style={{ fontSize: '15px', fontWeight: 600, color: '#FFFFFF' }}>
+                <span style={{ fontSize: '15px', fontWeight: 600, color: '#0a1628' }}>
                   Import from Contacts
                 </span>
               </button>
@@ -494,7 +494,7 @@ export default function CommonGround({ onImportContacts }) {
               <h1 className="hb-display" style={{ fontSize: '30px', fontWeight: 500, color: INK, lineHeight: 1.2 }}>
                 {scanning ? 'Scanning your themes' : 'All quiet'}
               </h1>
-              <p style={{ fontSize: '14px', lineHeight: 1.6, color: '#C9C5BC' }}>
+              <p style={{ fontSize: '14px', lineHeight: 1.6, color: '#C2CBD8' }}>
                 {scanning
                   ? 'Checking the news on everything you share.'
                   : `Harbored is watching ${themeCount} theme${themeCount === 1 ? '' : 's'} across ${contacts.length} people. You'll hear when something clears the bar.`}
@@ -605,8 +605,8 @@ export default function CommonGround({ onImportContacts }) {
                   height: '54px', borderRadius: '14px', border: 'none', cursor: 'pointer', flexShrink: 0,
                 }}
               >
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 4L11 14" /><path d="M21 4l-6.5 17-3.5-7-7-3.5z" /></svg>
-                <span style={{ fontSize: '15px', fontWeight: 600, color: '#FFFFFF' }}>
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#0a1628" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 4L11 14" /><path d="M21 4l-6.5 17-3.5-7-7-3.5z" /></svg>
+                <span style={{ fontSize: '15px', fontWeight: 600, color: '#0a1628' }}>
                   {sendLabel}
                 </span>
               </button>

@@ -25,8 +25,8 @@ const TABS = [
     ) },
 ]
 
-const ACCENT = '#D97757'
-const MUTED = '#7D7A73'
+const ACCENT = '#D3A95C'
+const MUTED = '#6E7C92'
 
 export default function BottomTabBar() {
   return (

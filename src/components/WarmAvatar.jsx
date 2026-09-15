@@ -1,7 +1,7 @@
-// Claude-dark avatar: muted warm tones on charcoal, cream initials.
+// Harbor-dark avatar: muted navy tones, cream initials.
 // Tone is picked deterministically from the initials so a contact keeps
 // their color everywhere without storing anything new.
-const TONES = ['#4D4238', '#3F4542', '#4A3E4C', '#37424D', '#4D4A38', '#463A3C']
+const TONES = ['#1E3252', '#27364B', '#324663', '#1C3A47', '#3A3A5E', '#2C405C']
 
 const SIZES = {
   sm: { box: 34, font: 12 },

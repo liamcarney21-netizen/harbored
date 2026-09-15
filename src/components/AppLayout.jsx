@@ -85,12 +85,12 @@ export default function AppLayout() {
             onClick={() => navigate('/dashboard')}
             style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
           >
-            <AnchorMark size={16} color="#D97757" />
+            <AnchorMark size={16} color="#D3A95C" />
             <span className="hb-display" style={{ fontSize: '19px', fontWeight: 500, color: '#F5F4EF' }}>
               Harbored
             </span>
           </button>
-          <span style={{ fontSize: '12px', color: '#A8A49C' }}>
+          <span style={{ fontSize: '12px', color: '#8C9AAD' }}>
             {new Date().toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}
           </span>
         </header>
@@ -105,12 +105,12 @@ export default function AppLayout() {
             position: 'sticky', top: 0, zIndex: 30,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             flexWrap: 'wrap', gap: '4px 12px',
-            padding: '8px 16px', background: '#30302E', color: '#C9C5BC',
+            padding: '8px 16px', background: '#0f2040', color: '#C2CBD8',
             borderBottom: '1px solid rgba(255,255,255,0.08)',
             fontSize: '12px', textAlign: 'center',
           }}>
             <span>
-              <strong style={{ fontWeight: 600, color: '#D97757' }}>Live demo</strong>
+              <strong style={{ fontWeight: 600, color: '#D3A95C' }}>Live demo</strong>
               {' — nothing here is saved'}
             </span>
             <button

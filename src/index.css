@@ -89,12 +89,13 @@ body {
   to   { opacity: 1; }
 }
 
-/* ─── App theme: Claude-style dark (scoped to /dashboard) ──
-   Warm charcoal, cream text, quiet serif headings in sentence case,
-   one terracotta accent that always means "act". No texture, no caps. */
+/* ─── App theme: Harbor dark (scoped to /dashboard) ──
+   Claude-style restraint in the landing page's palette: deep navy,
+   cream text, quiet serif headings in sentence case, one brass-gold
+   accent that always means "act". No texture, no caps. */
 .hb-app {
   font-family: 'Inter', system-ui, sans-serif;
-  background-color: #262624;
+  background-color: #0a1628;
   color: #F5F4EF;
 }
 
@@ -108,8 +109,8 @@ body {
 }
 .hb-press:active { transform: scale(0.97); }
 
-.hb-cta { background-color: #D97757; }
-.hb-cta:active { background-color: #C4674A; transform: scale(0.98); }
+.hb-cta { background-color: #D3A95C; }
+.hb-cta:active { background-color: #C29245; transform: scale(0.98); }
 
 /* Swipe deck: one reason per screen, native scroll-snap (no JS animation). */
 .hb-deck {

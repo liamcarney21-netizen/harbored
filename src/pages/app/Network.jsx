@@ -5,9 +5,9 @@ import WarmAvatar from '../../components/WarmAvatar'
 import { useDataStore, healthFromLastTouch, daysUntilBirthday } from '../../store/dataStore'
 
 const INK = '#F5F4EF'
-const MUTED = '#A8A49C'
-const ACCENT = '#D97757'
-const CARD = '#30302E'
+const MUTED = '#8C9AAD'
+const ACCENT = '#D3A95C'
+const CARD = '#0f2040'
 
 // Plain-language status — one line, coral only when it needs attention.
 function statusFor(contact) {
@@ -54,11 +54,11 @@ export default function Network({ onAddContact, onImportContacts }) {
           marginTop: '22px',
         }}
       >
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#0a1628" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <rect x="3" y="5" width="18" height="14" rx="2" /><circle cx="9" cy="11" r="2" />
           <path d="M6.5 15.5c.5-1.3 1.4-2 2.5-2s2 .7 2.5 2" /><path d="M14.5 9.5h4M14.5 13h3" />
         </svg>
-        <span style={{ fontSize: '15px', fontWeight: 600, color: '#FFFFFF' }}>
+        <span style={{ fontSize: '15px', fontWeight: 600, color: '#0a1628' }}>
           Import from Contacts
         </span>
       </button>
@@ -126,7 +126,7 @@ export default function Network({ onAddContact, onImportContacts }) {
                   </span>
                 </span>
               </div>
-              <ChevronRight style={{ width: 15, height: 15, color: '#7D7A73', flexShrink: 0 }} />
+              <ChevronRight style={{ width: 15, height: 15, color: '#6E7C92', flexShrink: 0 }} />
             </button>
           )
         })}
