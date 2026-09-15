@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import AnchorMark from '../components/AnchorMark';
 import { useAuthStore } from '../store/authStore';
+import { useDemoStore } from '../store/demoStore';
 import { supabase } from '../lib/supabase';
 
 const inputStyle = {
@@ -38,6 +39,11 @@ export default function Login() {
   const [mode, setMode] = useState('signin');
   const navigate = useNavigate();
   const signIn = useAuthStore(s => s.signIn);
+  const enterDemo = useDemoStore(s => s.enter);
+
+  // App Store reviewer access (and curious humans): a full sample network,
+  // no account needed. Same demo the landing page offers.
+  const startDemo = () => { enterDemo(); navigate('/dashboard'); };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -214,6 +220,26 @@ export default function Login() {
         )}
 
         {mode === 'signin' && (
+        <>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '20px 0' }}>
+          <span style={{ flex: 1, height: 1, background: '#E6E2D8' }} />
+          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: '#5C6B73', opacity: 0.7 }}>or</span>
+          <span style={{ flex: 1, height: 1, background: '#E6E2D8' }} />
+        </div>
+        <button
+          type="button"
+          onClick={startDemo}
+          style={{
+            width: '100%', padding: '13px', background: 'none',
+            border: '1px solid #CCC6B9', borderRadius: 24,
+            fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: 14,
+            color: '#3E4B52', cursor: 'pointer', transition: 'border-color 0.2s, color 0.2s',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = '#A97E2F'; e.currentTarget.style.color = '#A97E2F'; }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = '#CCC6B9'; e.currentTarget.style.color = '#3E4B52'; }}
+        >
+          Try a live demo — no account needed
+        </button>
         <p style={{
           fontFamily: 'Inter, sans-serif', fontSize: 13,
           color: '#5C6B73',
@@ -224,6 +250,7 @@ export default function Login() {
             Create an account
           </Link>
         </p>
+        </>
         )}
       </motion.div>
     </div>
