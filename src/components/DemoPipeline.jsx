@@ -9,7 +9,7 @@ const STEPS = [
     n: 1,
     Icon: Smartphone,
     title: 'Bring in your people',
-    body: 'Import straight from Apple Contacts — a .vcf export or your phone’s picker.',
+    body: 'Import straight from your phone's contacts or Google Contacts — one tap, no files.',
     action: true,
   },
   {

@@ -1,32 +1,42 @@
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Upload, Smartphone, Check, Users, Sparkles } from 'lucide-react'
+import { X, Smartphone, Check, Users, Sparkles } from 'lucide-react'
 import { useDataStore } from '../store/dataStore'
 import { useDemoStore } from '../store/demoStore'
 import { parseVCard } from '../services/vcard'
 import { SAMPLE_VCARD } from '../data/sampleContacts'
 import { isNativeContactsAvailable, pickNativeContacts } from '../services/contacts'
+import { fetchGoogleContacts } from '../services/googleContacts'
 
 const hasContactPicker = typeof navigator !== 'undefined' && 'contacts' in navigator && 'ContactsManager' in window
+
+// The standard Google "G", drawn in currentColor so it sits quietly on either
+// button style.
+function GoogleG({ size = 15 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M21.6 12.23c0-.68-.06-1.36-.19-2.02H12v3.83h5.4a4.6 4.6 0 0 1-2 3.02v2.5h3.23c1.9-1.74 2.97-4.3 2.97-7.33z" />
+      <path d="M12 21.5c2.7 0 4.96-.89 6.62-2.4l-3.23-2.5c-.9.6-2.05.95-3.39.95-2.61 0-4.82-1.76-5.6-4.12H3.05v2.58A10 10 0 0 0 12 21.5z" />
+      <path d="M6.4 13.43a5.99 5.99 0 0 1 0-3.85V7A10 10 0 0 0 3.05 12c0 1.61.39 3.14 1.07 4.5l2.28-3.07z" />
+      <path d="M12 6.46c1.47 0 2.79.5 3.83 1.5l2.86-2.86A10 10 0 0 0 3.05 7l3.35 2.58C7.18 8.22 9.39 6.46 12 6.46z" />
+    </svg>
+  )
+}
 
 export default function ImportContactsModal({ open, onClose, onImported }) {
   const contacts = useDataStore(s => s.contacts)
   const addContact = useDataStore(s => s.addContact)
   const demoActive = useDemoStore(s => s.active)
-  const fileInputRef = useRef(null)
 
-  const [candidates, setCandidates] = useState(null) // null = no file picked yet
+  const [candidates, setCandidates] = useState(null) // null = nothing picked yet
   const [selected, setSelected] = useState(new Set())
   const [skippedCount, setSkippedCount] = useState(0)
   const [error, setError] = useState('')
   const [importing, setImporting] = useState(false)
   const [loadingNative, setLoadingNative] = useState(false)
+  const [loadingGoogle, setLoadingGoogle] = useState(false)
 
   const nativeContacts = isNativeContactsAvailable()
-  // Whether a one-tap picker sits above the .vcf upload (so it renders as secondary).
-  // In demo mode the sample import is the primary action, so the .vcf upload
-  // renders as secondary there too — one gold button per screen.
-  const hasPrimaryPicker = nativeContacts || hasContactPicker || demoActive
 
   function reset() {
     setCandidates(null)
@@ -35,7 +45,7 @@ export default function ImportContactsModal({ open, onClose, onImported }) {
     setError('')
     setImporting(false)
     setLoadingNative(false)
-    if (fileInputRef.current) fileInputRef.current.value = ''
+    setLoadingGoogle(false)
   }
 
   function handleClose() {
@@ -55,7 +65,7 @@ export default function ImportContactsModal({ open, onClose, onImported }) {
       fresh.push(c)
     }
     if (!fresh.length && !skipped) {
-      setError('No contacts with a name were found in that file.')
+      setError('No contacts with a name were found.')
       return
     }
     setCandidates(fresh)
@@ -64,26 +74,29 @@ export default function ImportContactsModal({ open, onClose, onImported }) {
     setError('')
   }
 
-  // Demo convenience: run a realistic iOS vCard export through the real parser
-  // so the Apple import is completable without an actual .vcf on hand.
+  // Demo convenience: run a realistic sample export through the real parser
+  // so the import flow is completable without a real address book on hand.
   function handleSample() {
     setError('')
     ingest(parseVCard(SAMPLE_VCARD))
   }
 
-  function handleFile(e) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    const reader = new FileReader()
-    reader.onload = () => {
-      try {
-        ingest(parseVCard(String(reader.result)))
-      } catch {
-        setError('Could not read that file — make sure it\'s a .vcf export from Contacts.')
+  // Web path: Google's own consent popup, then the People API — no files.
+  async function handleGoogle() {
+    setError('')
+    setLoadingGoogle(true)
+    try {
+      const parsed = await fetchGoogleContacts()
+      if (!parsed.length) {
+        setError('No contacts with a name were found in that Google account.')
+        return
       }
+      ingest(parsed)
+    } catch (err) {
+      setError(err?.message || 'Could not read your Google contacts.')
+    } finally {
+      setLoadingGoogle(false)
     }
-    reader.onerror = () => setError('Could not read that file.')
-    reader.readAsText(file)
   }
 
   // Native iOS path: the system contacts permission prompt + address book,
@@ -188,27 +201,27 @@ export default function ImportContactsModal({ open, onClose, onImported }) {
                 <>
                   {demoActive && (
                     <>
-                      <button onClick={handleSample} style={{
+                      <button className="hb-press" onClick={handleSample} style={{
                         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-                        width: '100%', padding: '14px', borderRadius: '10px', fontSize: '13px', fontWeight: 600,
+                        width: '100%', padding: '14px', borderRadius: '12px', fontSize: '14px', fontWeight: 600,
                         background: '#D3A95C', color: '#0a1628', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
                       }}>
-                        <Sparkles style={{ width: '15px', height: '15px' }} /> Load a sample Apple Contacts export
+                        <Sparkles style={{ width: '15px', height: '15px' }} /> Load a sample crew
                       </button>
                       <p style={{ fontSize: '12px', color: '#8C9AAD', marginTop: '-6px', lineHeight: 1.5 }}>
-                        No iPhone handy? This runs a real iOS vCard through Harbored's parser so you can try the import now.
+                        Try the import with realistic example contacts — nothing is saved in the demo.
                       </p>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '4px 0' }}>
-                        <span style={{ flex: 1, height: '1px', background: '#EEEBE3' }} />
+                        <span style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.08)' }} />
                         <span style={{ fontSize: '11px', color: '#8C9AAD', opacity: 0.7 }}>or use your own</span>
-                        <span style={{ flex: 1, height: '1px', background: '#EEEBE3' }} />
+                        <span style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.08)' }} />
                       </div>
                     </>
                   )}
                   {nativeContacts && (
-                    <button onClick={handleNativeContacts} disabled={loadingNative} style={{
+                    <button className="hb-press" onClick={handleNativeContacts} disabled={loadingNative} style={{
                       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-                      width: '100%', padding: '14px', borderRadius: '10px', fontSize: '13px', fontWeight: 600,
+                      width: '100%', padding: '14px', borderRadius: '12px', fontSize: '14px', fontWeight: 600,
                       background: '#D3A95C', color: '#0a1628', border: 'none',
                       cursor: loadingNative ? 'default' : 'pointer', opacity: loadingNative ? 0.7 : 1, fontFamily: 'Inter, sans-serif',
                     }}>
@@ -217,31 +230,33 @@ export default function ImportContactsModal({ open, onClose, onImported }) {
                     </button>
                   )}
                   {!nativeContacts && hasContactPicker && (
-                    <button onClick={handlePickContacts} style={{
+                    <button className="hb-press" onClick={handlePickContacts} style={{
                       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-                      width: '100%', padding: '14px', borderRadius: '10px', fontSize: '13px', fontWeight: 600,
-                      background: '#D3A95C', color: '#0a1628', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+                      width: '100%', padding: '14px', borderRadius: '12px', fontSize: '14px', fontWeight: 600,
+                      background: demoActive ? 'none' : '#D3A95C', color: demoActive ? '#D3A95C' : '#0a1628',
+                      border: demoActive ? '1px solid rgba(211,169,92,0.4)' : 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
                     }}>
                       <Smartphone style={{ width: '15px', height: '15px' }} /> Pick from your phone's contacts
                     </button>
                   )}
-
-                  <div>
-                    <input ref={fileInputRef} type="file" accept=".vcf,text/vcard,text/x-vcard" onChange={handleFile} style={{ display: 'none' }} />
-                    <button onClick={() => fileInputRef.current?.click()} style={{
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-                      width: '100%', padding: '14px', borderRadius: '10px', fontSize: '13px', fontWeight: 600,
-                      background: hasPrimaryPicker ? 'none' : '#D3A95C', color: hasPrimaryPicker ? '#D3A95C' : '#FFFFFF',
-                      border: hasPrimaryPicker ? '1px solid #D3A95C' : 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
-                    }}>
-                      <Upload style={{ width: '15px', height: '15px' }} /> Upload a .vcf file
-                    </button>
-                    {!nativeContacts && (
+                  {!nativeContacts && (
+                    <div>
+                      <button className="hb-press" onClick={handleGoogle} disabled={loadingGoogle} style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                        width: '100%', padding: '14px', borderRadius: '12px', fontSize: '14px', fontWeight: 600,
+                        background: (demoActive || hasContactPicker) ? 'none' : '#D3A95C',
+                        color: (demoActive || hasContactPicker) ? '#D3A95C' : '#0a1628',
+                        border: (demoActive || hasContactPicker) ? '1px solid rgba(211,169,92,0.4)' : 'none',
+                        cursor: loadingGoogle ? 'default' : 'pointer', opacity: loadingGoogle ? 0.7 : 1, fontFamily: 'Inter, sans-serif',
+                      }}>
+                        <GoogleG />
+                        {loadingGoogle ? 'Connecting to Google…' : 'Import from Google Contacts'}
+                      </button>
                       <p style={{ fontSize: '12px', color: '#8C9AAD', marginTop: '10px', lineHeight: 1.5 }}>
-                        On iPhone: open Contacts → select the people you want → Share Contact → Export vCard, then upload the file here.
+                        Approve read-only access in Google's own popup. Harbored never sees your password and never changes your contacts.
                       </p>
-                    )}
-                  </div>
+                    </div>
+                  )}
 
                   {error && <p style={{ fontSize: '12px', color: '#E8867A' }}>{error}</p>}
                 </>
@@ -251,11 +266,11 @@ export default function ImportContactsModal({ open, onClose, onImported }) {
                 <>
                   {skippedCount > 0 && (
                     <p style={{ fontSize: '12px', color: '#8C9AAD' }}>
-                      Skipped {skippedCount} already in your network.
+                      Skipped {skippedCount} already in your crew.
                     </p>
                   )}
                   {candidates.length === 0 ? (
-                    <p style={{ fontSize: '13px', color: '#8C9AAD' }}>Everyone in that file is already in your network.</p>
+                    <p style={{ fontSize: '13px', color: '#8C9AAD' }}>Everyone there is already in your crew.</p>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '320px', overflowY: 'auto' }}>
                       {candidates.map((c, i) => (

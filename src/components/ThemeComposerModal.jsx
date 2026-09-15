@@ -3,20 +3,32 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { X, Plus, Check, ArrowRight } from 'lucide-react'
 import { useDataStore } from '../store/dataStore'
 import { apiUrl } from '../lib/apiBase'
-import Avatar from './Avatar'
+import WarmAvatar from './WarmAvatar'
 import ThemeSpecificityHint from './ThemeSpecificityHint'
 
-// Dedicated, multi-add theme picker shown right after a contact is added or
-// imported — so people start monitored instead of empty. Steps through one or
-// many new contacts. Category colors mirror CommonGround's categoryConfig.
-const CATEGORIES = [
-  { key: 'sports',   label: 'Sports',   color: '#8FC7A2', bg: 'rgba(143,199,162,0.08)' },
-  { key: 'place',    label: 'Place',    color: '#D3A95C', bg: 'rgba(211,169,92,0.08)' },
-  { key: 'market',   label: 'Market',   color: '#D3A95C', bg: 'rgba(169,126,47,0.08)' },
-  { key: 'hobby',    label: 'Hobby',    color: '#6E5A8E', bg: 'rgba(110,90,142,0.08)' },
-  { key: 'industry', label: 'Industry', color: '#A65B33', bg: 'rgba(166,91,51,0.08)' },
+const INK = '#F5F4EF'
+const MUTED = '#8C9AAD'
+const ACCENT = '#D3A95C'
+const CARD = '#0f2040'
+const HAIRLINE = 'rgba(255,255,255,0.08)'
+
+// Quiz-style theme composer, shown right after contacts are added or imported.
+// One person per screen; the prompts do the thinking for you — tap one, name
+// the specific thing, watch the answers stack up.
+const QUESTIONS = [
+  (first) => `What do you share with ${first}?`,
+  (first) => `What do you and ${first} always end up talking about?`,
+  (first) => `What would make you text ${first} first?`,
 ]
-const catOf = key => CATEGORIES.find(c => c.key === key) || CATEGORIES[0]
+
+const PROMPTS = [
+  { text: 'A team you both follow',      category: 'sports',   ph: 'e.g. Villanova Basketball' },
+  { text: 'A place you both love',       category: 'place',    ph: 'e.g. Charleston, SC' },
+  { text: 'A market they care about',    category: 'market',   ph: 'e.g. Minneapolis real estate' },
+  { text: 'A hobby you share',           category: 'hobby',    ph: 'e.g. Marathon running' },
+  { text: 'The industry they live in',   category: 'industry', ph: 'e.g. Fintech payments' },
+  { text: 'Something only you two get',  category: 'hobby',    ph: 'e.g. Summer league 2019' },
+]
 
 export default function ThemeComposerModal({ open, contacts = [], onClose }) {
   const addTheme = useDataStore(s => s.addTheme)
@@ -25,15 +37,22 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
   const [index, setIndex] = useState(0)
   const [themes, setThemes] = useState([]) // {label, category} for the current contact
   const [label, setLabel] = useState('')
-  const [category, setCategory] = useState('sports')
+  const [promptIdx, setPromptIdx] = useState(null)
 
   const current = contacts[index]
   const total = contacts.length
   const isLast = index >= total - 1
+  const category = promptIdx !== null ? PROMPTS[promptIdx].category : 'sports'
+  const placeholder = promptIdx !== null ? PROMPTS[promptIdx].ph : 'Name the specific thing…'
 
   // State starts fresh per batch because AppLayout keys this modal by the batch,
   // so a new import remounts it (no reset-in-effect needed).
-  function resetForContact() { setThemes([]); setLabel(''); setCategory('sports') }
+  function resetForContact() { setThemes([]); setLabel(''); setPromptIdx(null) }
+
+  function pickPrompt(i) {
+    setPromptIdx(i)
+    inputRef.current?.focus()
+  }
 
   // Add the theme immediately, then refine it in the background: one call turns
   // the raw label into a precise, entity-grounded news query + a plain-English
@@ -45,6 +64,7 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
     const cat = category
     setThemes(t => [...t, { cid, label: l, category: cat, refining: true }])
     setLabel('')
+    setPromptIdx(null)
     inputRef.current?.focus()
     try {
       const resp = await fetch(apiUrl('/api/refine-theme'), {
@@ -81,152 +101,197 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
 
   if (!open || !current) return null
 
-  const primaryLabel = isLast ? 'Save & finish' : 'Save & next'
+  const first = current.name.split(' ')[0]
+  const question = QUESTIONS[index % QUESTIONS.length](first)
+  const nextFirst = !isLast ? contacts[index + 1]?.name.split(' ')[0] : null
 
   return (
     <AnimatePresence>
       {open && current && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            style={{ position: 'fixed', inset: 0, zIndex: 70, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(3px)' }}
-          />
+        <motion.div
+          className="hb-app"
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 24 }}
+          transition={{ duration: 0.22, ease: 'easeOut' }}
+          style={{ position: 'fixed', inset: 0, zIndex: 71, display: 'flex', flexDirection: 'column' }}
+        >
           <div style={{
-            position: 'fixed', inset: 0, zIndex: 71, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            padding: '24px 16px', pointerEvents: 'none',
+            width: '100%', maxWidth: '520px', margin: '0 auto', flex: 1, minHeight: 0,
+            display: 'flex', flexDirection: 'column',
+            padding: 'calc(env(safe-area-inset-top) + 12px) 24px calc(env(safe-area-inset-bottom) + 16px)',
           }}>
-            <motion.div
-              key={current.id}
-              initial={{ opacity: 0, y: 20, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 12 }}
-              transition={{ duration: 0.26, ease: 'easeOut' }}
-              style={{
-                pointerEvents: 'auto',
-                width: 'min(480px, 100%)', maxHeight: '100%', overflowY: 'auto',
-                background: '#0f2040', borderRadius: '16px',
-                boxShadow: '0 14px 44px -8px rgba(28,43,51,0.24), 0 3px 10px rgba(28,43,51,0.10)',
-                fontFamily: 'Inter, sans-serif',
-              }}
-            >
-              {/* Header */}
-              <div style={{ padding: '22px 24px 18px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                  {total > 1
-                    ? <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#8C9AAD' }}>Contact {index + 1} of {total}</span>
-                    : <span />}
-                  <button onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8C9AAD', padding: 4 }}>
-                    <X style={{ width: 16, height: 16 }} />
-                  </button>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <Avatar initials={current.initials} color={current.color} size="md" />
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontFamily: '"Lora", Georgia, serif', fontSize: 19, fontWeight: 600, color: '#F5F4EF', lineHeight: 1.15 }}>
-                      What do you share with {current.name.split(' ')[0]}?
+
+            {/* Top: progress + close */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexShrink: 0 }}>
+              {total > 1 ? (
+                <>
+                  <div style={{ display: 'flex', gap: '6px', flex: 1 }}>
+                    {contacts.map((c, i) => (
+                      <span key={c.id} style={{
+                        height: '5px', borderRadius: '3px',
+                        flex: i === index ? 2.2 : 1,
+                        background: i < index ? 'rgba(211,169,92,0.6)' : i === index ? ACCENT : 'rgba(211,169,92,0.22)',
+                        transition: 'flex 0.25s ease, background 0.2s ease',
+                      }} />
+                    ))}
+                  </div>
+                  <span style={{ fontSize: '12px', color: MUTED, flexShrink: 0 }}>{index + 1} of {total}</span>
+                </>
+              ) : <span style={{ flex: 1 }} />}
+              <button
+                className="hb-press"
+                onClick={onClose}
+                aria-label="Close"
+                style={{
+                  width: '44px', height: '44px', marginRight: '-12px', flexShrink: 0,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: 'none', border: 'none', cursor: 'pointer', color: MUTED,
+                }}
+              >
+                <X style={{ width: 18, height: 18 }} />
+              </button>
+            </div>
+
+            {/* Scrollable quiz body */}
+            <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginTop: '10px' }}>
+                <WarmAvatar initials={current.initials} size="lg" />
+                <div style={{ minWidth: 0 }}>
+                  <h1 className="hb-display" style={{ fontSize: '25px', fontWeight: 500, color: INK, lineHeight: 1.2 }}>
+                    {question}
+                  </h1>
+                  {(current.role || current.company) && (
+                    <div style={{ fontSize: '12px', color: MUTED, marginTop: '4px' }}>
+                      {[current.role, current.company].filter(Boolean).join(' · ')}
                     </div>
-                    {(current.role || current.company) && (
-                      <div style={{ fontSize: 12.5, color: '#8C9AAD', marginTop: 2 }}>
-                        {[current.role, current.company].filter(Boolean).join(' · ')}
-                      </div>
-                    )}
-                  </div>
+                  )}
                 </div>
               </div>
 
-              {/* Body */}
-              <div style={{ padding: '18px 24px 22px' }}>
-                <p style={{ fontSize: 13, color: '#8C9AAD', lineHeight: 1.55, margin: '0 0 16px' }}>
-                  Teams, cities, markets, hobbies. Harbored watches these and tells you the moment
-                  there's a real reason to reach out — so name the <em>specific</em> thing: the
-                  company, the team, the place.
-                </p>
-
-                {/* Added themes — each shows what Harbored will actually watch, so
-                    the user can confirm we resolved the right thing before saving. */}
-                {themes.length > 0 && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }}>
-                    {themes.map((t) => {
-                      const c = catOf(t.category)
-                      return (
-                        <div key={t.cid} style={{ padding: '10px 12px', borderRadius: 10, background: c.bg, border: `1px solid ${c.color}33` }}>
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                            <span style={{ fontSize: 13.5, fontWeight: 600, color: c.color }}>{t.label}</span>
-                            <button onClick={() => setThemes(ts => ts.filter(x => x.cid !== t.cid))} aria-label={`Remove ${t.label}`}
-                              style={{ background: 'none', border: 'none', cursor: 'pointer', color: c.color, padding: 0, display: 'flex', flexShrink: 0 }}>
-                              <X style={{ width: 13, height: 13 }} />
-                            </button>
-                          </div>
-                          <div style={{ fontSize: 12, color: '#8C9AAD', marginTop: 3, lineHeight: 1.45, fontStyle: t.refining ? 'italic' : 'normal' }}>
-                            {t.refining ? 'Working out what to watch…' : (t.display || "We'll watch this for significant news.")}
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
-
-                {/* Input row */}
-                <div style={{ display: 'flex', gap: 8, alignItems: 'stretch' }}>
-                  <input
-                    ref={inputRef}
-                    autoFocus
-                    value={label}
-                    onChange={e => setLabel(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addChip() } }}
-                    placeholder="e.g. Villanova Basketball"
-                    aria-label="Shared theme"
-                    style={{
-                      flex: 1, minWidth: 0, fontSize: 16, color: '#F5F4EF', fontFamily: 'Inter, sans-serif',
-                      padding: '10px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.2)', outline: 'none', background: '#0f2040',
-                    }}
-                  />
-                  <button onClick={addChip} aria-label="Add theme" style={{
-                    flexShrink: 0, padding: '0 14px', borderRadius: 8, border: 'none', cursor: 'pointer',
-                    background: 'rgba(211,169,92,0.1)', color: '#D3A95C', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    <Plus style={{ width: 16, height: 16 }} />
-                  </button>
-                </div>
-
-                <ThemeSpecificityHint label={label} style={{ marginTop: 10 }} />
-
-                {/* Category picker */}
-                <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', marginTop: 12 }}>
-                  {CATEGORIES.map(c => {
-                    const on = category === c.key
-                    return (
-                      <button key={c.key} onClick={() => setCategory(c.key)} style={{
-                        padding: '5px 12px', borderRadius: 20, fontSize: 12.5, fontWeight: 500, cursor: 'pointer',
-                        fontFamily: 'Inter, sans-serif',
-                        background: on ? c.bg : 'transparent', color: on ? c.color : '#8C9AAD',
-                        border: `1px solid ${on ? c.color + '55' : '#DEDACF'}`,
-                      }}>
-                        {c.label}
-                      </button>
-                    )
-                  })}
-                </div>
+              {/* Prompt cards — tap one to spark an answer */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '9px', marginTop: '20px' }}>
+                {PROMPTS.map((p, i) => {
+                  const on = promptIdx === i
+                  return (
+                    <button
+                      key={p.text}
+                      className="hb-press"
+                      onClick={() => pickPrompt(i)}
+                      style={{
+                        minHeight: '48px', padding: '11px 13px', borderRadius: '13px', textAlign: 'left',
+                        fontSize: '13px', fontWeight: 600, lineHeight: 1.35, cursor: 'pointer', fontFamily: 'inherit',
+                        background: on ? 'rgba(211,169,92,0.12)' : CARD,
+                        color: on ? ACCENT : '#C2CBD8',
+                        border: `1px solid ${on ? 'rgba(211,169,92,0.5)' : HAIRLINE}`,
+                      }}
+                    >
+                      {p.text}
+                    </button>
+                  )
+                })}
               </div>
 
-              {/* Footer */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '16px 24px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-                <button onClick={handleSkip}
-                  style={{ padding: '10px 8px', background: 'none', border: 'none', color: '#8C9AAD', fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
-                  {total > 1 ? 'Skip this contact' : 'Skip for now'}
-                </button>
-                <button onClick={handleSaveNext}
+              {/* Answer input */}
+              <div style={{ display: 'flex', gap: '9px', alignItems: 'stretch', marginTop: '14px' }}>
+                <input
+                  ref={inputRef}
+                  value={label}
+                  onChange={e => setLabel(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addChip() } }}
+                  placeholder={placeholder}
+                  aria-label="Shared theme"
                   style={{
-                    display: 'flex', alignItems: 'center', gap: 7, padding: '10px 20px', borderRadius: 8,
-                    fontSize: 13, fontWeight: 600, background: '#D3A95C', color: '#0a1628', border: 'none',
-                    cursor: 'pointer', fontFamily: 'Inter, sans-serif',
-                  }}>
-                  {isLast ? <Check style={{ width: 14, height: 14 }} /> : null}
-                  {primaryLabel}
-                  {!isLast ? <ArrowRight style={{ width: 14, height: 14 }} /> : null}
+                    flex: 1, minWidth: 0, fontSize: '16px', color: INK, fontFamily: 'inherit',
+                    padding: '13px 14px', borderRadius: '13px', border: '1px solid rgba(255,255,255,0.2)',
+                    outline: 'none', background: CARD, boxSizing: 'border-box',
+                  }}
+                />
+                <button
+                  className="hb-press"
+                  onClick={addChip}
+                  aria-label="Add theme"
+                  style={{
+                    flexShrink: 0, width: '50px', borderRadius: '13px', border: 'none', cursor: 'pointer',
+                    background: label.trim() ? ACCENT : 'rgba(211,169,92,0.12)',
+                    color: label.trim() ? '#0a1628' : ACCENT,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    transition: 'background 0.15s ease, color 0.15s ease',
+                  }}
+                >
+                  <Plus style={{ width: 18, height: 18 }} />
                 </button>
               </div>
-            </motion.div>
+
+              <ThemeSpecificityHint label={label} style={{ marginTop: 10 }} />
+
+              {/* Answers so far — each shows what Harbored will actually watch */}
+              {themes.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px' }}>
+                  {themes.map((t) => (
+                    <motion.div
+                      key={t.cid}
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      style={{ padding: '12px 14px', borderRadius: '13px', background: CARD, border: `1px solid ${HAIRLINE}` }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
+                        <Check style={{ width: 14, height: 14, color: ACCENT, flexShrink: 0 }} />
+                        <span style={{ fontSize: '14px', fontWeight: 600, color: INK, flex: 1, minWidth: 0 }}>{t.label}</span>
+                        <button
+                          className="hb-press"
+                          onClick={() => setThemes(ts => ts.filter(x => x.cid !== t.cid))}
+                          aria-label={`Remove ${t.label}`}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: MUTED, padding: '4px', display: 'flex', flexShrink: 0 }}
+                        >
+                          <X style={{ width: 13, height: 13 }} />
+                        </button>
+                      </div>
+                      <div style={{ fontSize: '12px', color: MUTED, marginTop: '4px', lineHeight: 1.45, fontStyle: t.refining ? 'italic' : 'normal' }}>
+                        {t.refining ? 'Working out what to watch…' : (t.display || "We'll watch this for significant news.")}
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+
+              <div style={{ flex: 1, minHeight: '16px' }} />
+            </div>
+
+            {/* Footer — stacked, never crams */}
+            <div style={{ flexShrink: 0, paddingTop: '10px' }}>
+              <button
+                className="hb-cta hb-press"
+                onClick={handleSaveNext}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '9px',
+                  width: '100%', height: '54px', borderRadius: '14px', border: 'none', cursor: 'pointer',
+                }}
+              >
+                <span style={{ fontSize: '15px', fontWeight: 600, color: '#0a1628' }}>
+                  {isLast ? 'Save & finish' : `Save & next: ${nextFirst}`}
+                </span>
+                {isLast
+                  ? <Check style={{ width: 16, height: 16, color: '#0a1628' }} />
+                  : <ArrowRight style={{ width: 16, height: 16, color: '#0a1628' }} />}
+              </button>
+              <button
+                className="hb-press"
+                onClick={handleSkip}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  width: '100%', minHeight: '44px', marginTop: '6px',
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  fontSize: '13px', color: MUTED, fontFamily: 'inherit',
+                }}
+              >
+                {total > 1 ? `Skip ${first} for now` : 'Skip for now'}
+              </button>
+            </div>
+
           </div>
-        </>
+        </motion.div>
       )}
     </AnimatePresence>
   )
