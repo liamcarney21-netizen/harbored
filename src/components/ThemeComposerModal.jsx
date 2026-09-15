@@ -117,13 +117,6 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
     recognizerRef.current.start()
   }
 
-  function cancelListening() {
-    recognizerRef.current?.stop()
-    recognizerRef.current = null
-    setVoiceMode('idle')
-    setTranscript('')
-  }
-
   async function finishListening(finalOverride) {
     const heard = (recognizerRef.current ? recognizerRef.current.stop() : finalOverride) || transcript
     recognizerRef.current = null
@@ -268,76 +261,56 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
                 })}
               </div>
 
-              {/* Voice — talk about them, Harbored maps it */}
-              {isSpeechSupported() && voiceMode === 'idle' && (
-                <button
-                  className="hb-press"
-                  onClick={startListening}
-                  style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '9px',
-                    width: '100%', minHeight: '48px', borderRadius: '13px', marginTop: '9px',
-                    background: 'none', border: '1px dashed rgba(211,169,92,0.5)', cursor: 'pointer',
-                    fontSize: '13px', fontWeight: 600, color: ACCENT, fontFamily: 'inherit',
-                  }}
-                >
-                  <Mic style={{ width: 15, height: 15 }} />
-                  Or just talk about {first} &mdash; Harbored maps it
-                </button>
-              )}
-              {voiceMode === 'listening' && (
-                <div style={{ background: CARD, border: '1px solid rgba(211,169,92,0.5)', borderRadius: '13px', padding: '16px', marginTop: '9px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
-                    <Mic style={{ width: 15, height: 15, color: ACCENT, animation: 'hbPulse 1.4s ease-in-out infinite' }} />
-                    <span style={{ fontSize: '12px', fontWeight: 600, color: ACCENT }}>Listening &mdash; tell me about {first}</span>
-                  </div>
-                  <p style={{ fontSize: '14px', lineHeight: 1.6, color: transcript ? INK : MUTED, marginTop: '10px', minHeight: '44px' }}>
-                    {transcript || `"We met at… they're big into… they just moved to…"`}
-                  </p>
-                  <div style={{ display: 'flex', gap: '9px', marginTop: '12px' }}>
-                    <button
-                      className="hb-cta hb-press"
-                      onClick={() => finishListening()}
-                      style={{ flex: 1, minHeight: '44px', borderRadius: '12px', border: 'none', cursor: 'pointer', fontSize: '14px', fontWeight: 600, color: '#0a1628', fontFamily: 'inherit' }}
-                    >
-                      Done &mdash; map it
-                    </button>
+              {/* Answer input — mic lives inside it, like dictation */}
+              <div style={{ display: 'flex', gap: '9px', alignItems: 'stretch', marginTop: '14px' }}>
+                <div style={{ position: 'relative', flex: 1, minWidth: 0 }}>
+                  <input
+                    ref={inputRef}
+                    value={voiceMode === 'idle' ? label : transcript}
+                    readOnly={voiceMode !== 'idle'}
+                    onChange={e => setLabel(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addChip() } }}
+                    placeholder={
+                      voiceMode === 'listening' ? `Listening — talk about ${first}…`
+                        : voiceMode === 'mapping' ? 'Mapping what you said…'
+                          : placeholder
+                    }
+                    aria-label="Shared theme"
+                    style={{
+                      width: '100%', fontSize: '16px', color: INK, fontFamily: 'inherit',
+                      padding: isSpeechSupported() ? '13px 46px 13px 14px' : '13px 14px',
+                      borderRadius: '13px', outline: 'none', background: CARD, boxSizing: 'border-box',
+                      border: `1px solid ${voiceMode === 'listening' ? 'rgba(211,169,92,0.55)' : 'rgba(255,255,255,0.2)'}`,
+                      transition: 'border-color 0.2s ease',
+                    }}
+                  />
+                  {isSpeechSupported() && (
                     <button
                       className="hb-press"
-                      onClick={cancelListening}
-                      style={{ minHeight: '44px', padding: '0 16px', borderRadius: '12px', background: 'none', border: '1px solid rgba(255,255,255,0.2)', cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: INK, fontFamily: 'inherit' }}
+                      onClick={() => {
+                        if (voiceMode === 'listening') finishListening()
+                        else if (voiceMode === 'idle') startListening()
+                      }}
+                      aria-label={voiceMode === 'listening' ? 'Stop and map what you said' : `Talk about ${first}`}
+                      style={{
+                        position: 'absolute', right: '4px', top: '50%', transform: 'translateY(-50%)',
+                        width: '40px', height: '40px', borderRadius: '11px',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        background: 'none', border: 'none',
+                        cursor: voiceMode === 'mapping' ? 'default' : 'pointer',
+                        color: voiceMode === 'idle' ? MUTED : ACCENT,
+                      }}
                     >
-                      Cancel
+                      {voiceMode === 'mapping' ? (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={ACCENT} strokeWidth="2.4" strokeLinecap="round" style={{ animation: 'hbSpin 1.6s linear infinite' }}>
+                          <path d="M12 3v18" /><path d="M3 12h18" /><path d="M5.6 5.6l12.8 12.8" /><path d="M18.4 5.6L5.6 18.4" />
+                        </svg>
+                      ) : (
+                        <Mic style={{ width: 17, height: 17, animation: voiceMode === 'listening' ? 'hbPulse 1.4s ease-in-out infinite' : 'none' }} />
+                      )}
                     </button>
-                  </div>
+                  )}
                 </div>
-              )}
-              {voiceMode === 'mapping' && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '14px 16px', background: CARD, border: `1px solid ${HAIRLINE}`, borderRadius: '13px', marginTop: '9px' }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={ACCENT} strokeWidth="2.4" strokeLinecap="round" style={{ animation: 'hbSpin 1.6s linear infinite', flexShrink: 0 }}>
-                    <path d="M12 3v18" /><path d="M3 12h18" /><path d="M5.6 5.6l12.8 12.8" /><path d="M18.4 5.6L5.6 18.4" />
-                  </svg>
-                  <span style={{ fontSize: '13px', color: '#C2CBD8' }}>Mapping what you said&hellip;</span>
-                </div>
-              )}
-              {voiceError && (
-                <p style={{ fontSize: '12px', color: '#E8867A', marginTop: '9px', lineHeight: 1.5 }}>{voiceError}</p>
-              )}
-
-              {/* Answer input */}
-              <div style={{ display: 'flex', gap: '9px', alignItems: 'stretch', marginTop: '14px' }}>
-                <input
-                  ref={inputRef}
-                  value={label}
-                  onChange={e => setLabel(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addChip() } }}
-                  placeholder={placeholder}
-                  aria-label="Shared theme"
-                  style={{
-                    flex: 1, minWidth: 0, fontSize: '16px', color: INK, fontFamily: 'inherit',
-                    padding: '13px 14px', borderRadius: '13px', border: '1px solid rgba(255,255,255,0.2)',
-                    outline: 'none', background: CARD, boxSizing: 'border-box',
-                  }}
-                />
                 <button
                   className="hb-press"
                   onClick={addChip}
@@ -353,6 +326,16 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
                   <Plus style={{ width: 18, height: 18 }} />
                 </button>
               </div>
+
+              {/* One quiet line, only before any answers exist */}
+              {isSpeechSupported() && voiceMode === 'idle' && themes.length === 0 && !voiceError && (
+                <p style={{ fontSize: '12px', color: MUTED, marginTop: '9px', lineHeight: 1.5 }}>
+                  Prefer to talk? Tap the mic and just describe {first} &mdash; Harbored maps it.
+                </p>
+              )}
+              {voiceError && (
+                <p style={{ fontSize: '12px', color: '#E8867A', marginTop: '9px', lineHeight: 1.5 }}>{voiceError}</p>
+              )}
 
               <ThemeSpecificityHint label={label} style={{ marginTop: 10 }} />
 
