@@ -187,6 +187,7 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
           <div style={{
             width: '100%', maxWidth: '520px', margin: '0 auto', flex: 1, minHeight: 0,
             display: 'flex', flexDirection: 'column',
+            justifyContent: isMobile ? 'flex-start' : 'center',
             padding: 'calc(env(safe-area-inset-top) + 12px) 24px calc(env(safe-area-inset-bottom) + 16px)',
           }}>
 
@@ -222,7 +223,7 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
             </div>
 
             {/* Scrollable quiz body */}
-            <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ flex: isMobile ? 1 : '0 1 auto', minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginTop: '10px' }}>
                 <WarmAvatar initials={current.initials} size="lg" />

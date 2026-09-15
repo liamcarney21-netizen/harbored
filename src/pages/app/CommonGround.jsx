@@ -380,6 +380,7 @@ export default function CommonGround({ onImportContacts }) {
     <div style={{
       flex: '1 1 0', minHeight: 0, width: '100%', maxWidth: '520px', alignSelf: 'center',
       display: 'flex', flexDirection: 'column', overflow: 'hidden',
+      justifyContent: isMobile ? 'flex-start' : 'center',
     }}>
 
       {/* Progress — segments up to 6 reasons, a single track beyond */}
@@ -420,7 +421,7 @@ export default function CommonGround({ onImportContacts }) {
 
       {/* The deck — swipe between reasons */}
       {queue.length > 0 ? (
-        <div ref={deckRef} className="hb-deck" onScroll={onDeckScroll} style={{ flex: 1, minHeight: 0 }}>
+        <div ref={deckRef} className="hb-deck" onScroll={onDeckScroll} style={{ flex: isMobile ? 1 : '0 1 auto', minHeight: 0 }}>
           {queue.map((r) => {
             const u = r.update
             const contact = r.kind === 'drift' ? r.nudge.contact : contacts.find(c => c.id === u.contactId)
@@ -594,6 +595,7 @@ export default function CommonGround({ onImportContacts }) {
             <div style={{
               width: '100%', maxWidth: '520px', margin: '0 auto', flex: 1, minHeight: 0,
               display: 'flex', flexDirection: 'column', overflowY: 'auto',
+              justifyContent: isMobile ? 'flex-start' : 'center',
               padding: 'calc(env(safe-area-inset-top) + 16px) 24px calc(env(safe-area-inset-bottom) + 16px)',
             }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
