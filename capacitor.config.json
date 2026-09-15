@@ -2,6 +2,11 @@
   "appId": "app.harbored",
   "appName": "Harbored",
   "webDir": "dist",
+  "backgroundColor": "#0a1628",
+  "ios": {
+    "contentInset": "always",
+    "backgroundColor": "#0a1628"
+  },
   "plugins": {
     "CapacitorHttp": {
       "enabled": true
