@@ -557,11 +557,9 @@ export default function Landing() {
               color: 'rgba(250,248,243,0.55)', maxWidth: 520, lineHeight: 1.7, marginBottom: 34,
               animation: 'fadeUp 0.85s 0.28s ease both',
             }}>
-              Staying genuinely in touch is hard — you can't always see what's happening in
-              someone's world, so you go quiet, or reach out sounding generic. Tell Harbored the
-              themes that connect you — the team you both follow, the market you want to break
-              into — and it watches them around the clock, flagging the moment there's a real
-              reason to reach out. Message drafted.
+              Tell Harbored what you share with the people who matter. It watches around
+              the clock and flags the moment there's a real reason to reach out &mdash;
+              message drafted.
             </p>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 18, animation: 'fadeUp 0.85s 0.4s ease both' }}>
               <button onClick={() => openModal()} style={{
