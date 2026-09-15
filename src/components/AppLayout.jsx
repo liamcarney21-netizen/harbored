@@ -62,7 +62,7 @@ export default function AppLayout() {
 
   return (
     <motion.div
-      className="alter-app"
+      className="hb-app"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.35 }}
@@ -73,25 +73,25 @@ export default function AppLayout() {
         overflow: 'hidden',
       }}
     >
-      {/* Mobile top bar — wordmark left, date right, on the blush paper itself
-          (no white chrome bar; the bottom tab bar owns navigation). */}
+      {/* Mobile top bar — wordmark left, date right, on the charcoal itself
+          (no chrome bar; the bottom tab bar owns navigation). */}
       {isMobile && (
         <header style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
           padding: 'calc(env(safe-area-inset-top) + 16px) 24px 4px',
         }}>
           <button
-            className="alter-press"
+            className="hb-press"
             onClick={() => navigate('/dashboard')}
-            style={{ display: 'flex', alignItems: 'center', gap: '7px', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
           >
-            <AnchorMark size={16} color="#DE4A2C" />
-            <span className="alter-display" style={{ fontSize: '17px', fontWeight: 600, letterSpacing: '0.04em', color: '#1B1613' }}>
+            <AnchorMark size={16} color="#D97757" />
+            <span className="hb-display" style={{ fontSize: '19px', fontWeight: 500, color: '#F5F4EF' }}>
               Harbored
             </span>
           </button>
-          <span style={{ fontSize: '11px', color: '#8A7A70' }}>
-            {new Date().toLocaleDateString([], { weekday: 'short', month: '2-digit', day: '2-digit' }).toLowerCase()}
+          <span style={{ fontSize: '12px', color: '#A8A49C' }}>
+            {new Date().toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}
           </span>
         </header>
       )}
@@ -105,24 +105,25 @@ export default function AppLayout() {
             position: 'sticky', top: 0, zIndex: 30,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             flexWrap: 'wrap', gap: '4px 12px',
-            padding: '8px 16px', background: '#1B1613', color: '#F4E3DA',
-            fontSize: '11px', textAlign: 'center',
+            padding: '8px 16px', background: '#30302E', color: '#C9C5BC',
+            borderBottom: '1px solid rgba(255,255,255,0.08)',
+            fontSize: '12px', textAlign: 'center',
           }}>
             <span>
-              <strong style={{ fontWeight: 700, color: '#F4A48E' }}>live demo</strong>
+              <strong style={{ fontWeight: 600, color: '#D97757' }}>Live demo</strong>
               {' — nothing here is saved'}
             </span>
             <button
-              className="alter-press"
+              className="hb-press"
               onClick={leaveDemo}
               style={{
-                background: 'none', color: '#F4E3DA',
-                border: '1px solid rgba(244,227,218,0.4)', borderRadius: '999px',
-                padding: '3px 12px', fontSize: '11px', fontWeight: 700,
+                background: 'none', color: '#F5F4EF',
+                border: '1px solid rgba(255,255,255,0.2)', borderRadius: '999px',
+                padding: '3px 12px', fontSize: '12px', fontWeight: 600,
                 cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap',
               }}
             >
-              exit
+              Exit
             </button>
           </div>
         )}

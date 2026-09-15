@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Oswald:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap');
 @import "tailwindcss";
 
 /* ─── Reset ─────────────────────────────────────────────── */
@@ -89,46 +89,40 @@ body {
   to   { opacity: 1; }
 }
 
-/* ─── App theme: "Alter × Claude" (scoped to /dashboard) ──
-   Blush paper + faint scanline, condensed caps display (Oswald),
-   monospace body (Space Mono), one accent — vermilion means "act". */
-.alter-app {
-  font-family: 'Space Mono', 'Courier New', monospace;
-  background-color: #F4E3DA;
-  background-image: repeating-linear-gradient(
-    180deg,
-    rgba(27,22,19,0.016) 0px, rgba(27,22,19,0.016) 1px,
-    transparent 1px, transparent 3px
-  );
-  color: #1B1613;
+/* ─── App theme: Claude-style dark (scoped to /dashboard) ──
+   Warm charcoal, cream text, quiet serif headings in sentence case,
+   one terracotta accent that always means "act". No texture, no caps. */
+.hb-app {
+  font-family: 'Inter', system-ui, sans-serif;
+  background-color: #262624;
+  color: #F5F4EF;
 }
 
-.alter-display {
-  font-family: 'Oswald', 'Arial Narrow', sans-serif;
-  text-transform: uppercase;
+.hb-display {
+  font-family: 'Lora', Georgia, serif;
 }
 
 /* Instant, subtle press feedback on every tap target — no lag, no bounce. */
-.alter-press {
+.hb-press {
   transition: transform 0.06s ease, opacity 0.06s ease, background-color 0.12s ease;
 }
-.alter-press:active { transform: scale(0.97); }
+.hb-press:active { transform: scale(0.97); }
 
-.alter-cta { background-color: #DE4A2C; }
-.alter-cta:active { background-color: #C23D22; transform: scale(0.98); }
+.hb-cta { background-color: #D97757; }
+.hb-cta:active { background-color: #C4674A; transform: scale(0.98); }
 
 /* Swipe deck: one reason per screen, native scroll-snap (no JS animation). */
-.alter-deck {
+.hb-deck {
   display: flex;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
 }
-.alter-deck::-webkit-scrollbar { display: none; }
-.alter-deck > * { scroll-snap-align: center; flex: 0 0 100%; min-width: 0; }
+.hb-deck::-webkit-scrollbar { display: none; }
+.hb-deck > * { scroll-snap-align: center; flex: 0 0 100%; min-width: 0; }
 
-@keyframes alterSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes hbSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
 /* ─── Scrollbar ─────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 5px; }

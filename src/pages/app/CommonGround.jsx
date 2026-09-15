@@ -12,11 +12,11 @@ import { fetchStoredUpdates } from '../../services/scanResults'
 import { openSend, sendChannelFor } from '../../services/outreach'
 import ThemeSpecificityHint from '../../components/ThemeSpecificityHint'
 
-const INK = '#1B1613'
-const MUTED = '#8A7A70'
-const ACCENT = '#DE4A2C'
-const CARD = '#FFFFFF'
-const HAIRLINE = 'rgba(27,22,19,0.1)'
+const INK = '#F5F4EF'
+const MUTED = '#A8A49C'
+const ACCENT = '#D97757'
+const CARD = '#30302E'
+const HAIRLINE = 'rgba(255,255,255,0.08)'
 
 const categoryConfig = {
   sports:   { label: 'Sports' },
@@ -32,7 +32,7 @@ function AsteriskMark({ size = 30, spinning = false }) {
     <svg
       width={size} height={size} viewBox="0 0 24 24" fill="none"
       stroke={ACCENT} strokeWidth="2.4" strokeLinecap="round"
-      style={spinning ? { animation: 'alterSpin 1.6s linear infinite' } : undefined}
+      style={spinning ? { animation: 'hbSpin 1.6s linear infinite' } : undefined}
     >
       <path d="M12 3v18" /><path d="M3 12h18" />
       <path d="M5.6 5.6l12.8 12.8" /><path d="M18.4 5.6L5.6 18.4" />
@@ -43,11 +43,11 @@ function AsteriskMark({ size = 30, spinning = false }) {
 function Pill({ children }) {
   return (
     <span style={{
-      display: 'inline-flex', alignItems: 'center', gap: '9px', alignSelf: 'flex-start',
-      background: CARD, borderRadius: '22px', padding: '9px 16px',
+      display: 'inline-flex', alignItems: 'center', gap: '8px', alignSelf: 'flex-start',
+      background: CARD, border: `1px solid ${HAIRLINE}`, borderRadius: '22px', padding: '8px 14px',
     }}>
-      <span style={{ width: 8, height: 8, borderRadius: '50%', background: ACCENT }} />
-      <span style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.08em', color: ACCENT }}>
+      <span style={{ width: 7, height: 7, borderRadius: '50%', background: ACCENT }} />
+      <span style={{ fontSize: '12px', fontWeight: 600, color: '#C9C5BC' }}>
         {children}
       </span>
     </span>
@@ -203,7 +203,7 @@ export default function CommonGround({ onImportContacts }) {
 
   const selContact = draftContact()
   const selChannel = selContact ? sendChannelFor(selContact) : null
-  const sendLabel = selChannel === 'sms' ? 'OPEN IN MESSAGES' : selChannel === 'email' ? 'OPEN IN MAIL' : 'SEND IT'
+  const sendLabel = selChannel === 'sms' ? 'Open in Messages' : selChannel === 'email' ? 'Open in Mail' : 'Send it'
   const queuePos = selected ? queue.findIndex(r => r.id === selected.id) : -1
 
   // ── Themes management ──────────────────────────────────────────────
@@ -213,7 +213,7 @@ export default function CommonGround({ onImportContacts }) {
     return (
       <div style={{ maxWidth: '520px', margin: '0 auto', padding: '18px 24px 32px' }}>
         <button
-          className="alter-press"
+          className="hb-press"
           onClick={() => setView('today')}
           style={{
             display: 'flex', alignItems: 'center', gap: '4px', minHeight: '44px',
@@ -221,23 +221,23 @@ export default function CommonGround({ onImportContacts }) {
             fontSize: '12px', color: MUTED, fontFamily: 'inherit',
           }}
         >
-          <ChevronLeft style={{ width: 16, height: 16 }} /> today
+          <ChevronLeft style={{ width: 16, height: 16 }} /> Today
         </button>
-        <h1 className="alter-display" style={{ fontSize: '38px', fontWeight: 500, color: INK, lineHeight: 1, margin: '10px 0 6px' }}>
-          Themes.
+        <h1 className="hb-display" style={{ fontSize: '30px', fontWeight: 500, color: INK, lineHeight: 1.1, margin: '10px 0 6px' }}>
+          Themes
         </h1>
-        <p style={{ fontSize: '12px', color: MUTED, marginBottom: '22px' }}>
-          {themeCount} watched &middot; you only hear when one clears the bar
+        <p style={{ fontSize: '13px', color: MUTED, marginBottom: '22px' }}>
+          {themeCount} watched &middot; You only hear when one clears the bar
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {monitored.map(c => {
             const themes = themesByContact[c.id] || []
             return (
-              <div key={c.id} style={{ background: CARD, borderRadius: '20px', padding: '18px' }}>
+              <div key={c.id} style={{ background: CARD, border: `1px solid ${HAIRLINE}`, borderRadius: '16px', padding: '18px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '13px', marginBottom: '14px' }}>
                   <WarmAvatar initials={c.initials} size="md" />
-                  <div className="alter-display" style={{ fontSize: '15px', fontWeight: 500, letterSpacing: '0.03em', color: INK }}>
+                  <div style={{ fontSize: '15px', fontWeight: 600, color: INK }}>
                     {c.name}
                   </div>
                 </div>
@@ -246,11 +246,11 @@ export default function CommonGround({ onImportContacts }) {
                     <span key={t.id} style={{
                       display: 'inline-flex', alignItems: 'center', gap: '7px',
                       padding: '7px 13px', borderRadius: '20px', fontSize: '11px',
-                      background: '#F4EDE6', color: INK,
+                      background: '#3A3936', color: '#C9C5BC',
                     }}>
                       {t.label}
                       <button
-                        className="alter-press"
+                        className="hb-press"
                         onClick={() => removeTheme(c.id, t.id)}
                         aria-label={`Stop watching ${t.label}`}
                         style={{ display: 'flex', background: 'none', border: 'none', cursor: 'pointer', padding: '2px', color: MUTED }}
@@ -263,7 +263,7 @@ export default function CommonGround({ onImportContacts }) {
                     <span style={{
                       display: 'inline-flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', maxWidth: '100%',
                       padding: '5px 6px 5px 13px', borderRadius: '20px',
-                      background: '#F4EDE6', border: `1px solid ${ACCENT}`,
+                      background: '#3A3936', border: `1px solid ${ACCENT}`,
                     }}>
                       <input
                         autoFocus
@@ -293,19 +293,19 @@ export default function CommonGround({ onImportContacts }) {
                         ))}
                       </select>
                       <button
-                        className="alter-press"
+                        className="hb-press"
                         onClick={() => confirmAddTheme(c.id)}
                         aria-label="Confirm new theme"
                         style={{
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                           width: '26px', height: '26px', borderRadius: '50%',
-                          background: ACCENT, color: '#FFF6F0', border: 'none', cursor: 'pointer',
+                          background: ACCENT, color: '#FFFFFF', border: 'none', cursor: 'pointer',
                         }}
                       >
                         <Check style={{ width: 13, height: 13 }} />
                       </button>
                       <button
-                        className="alter-press"
+                        className="hb-press"
                         onClick={() => setAddingFor(null)}
                         aria-label="Cancel adding theme"
                         style={{
@@ -320,7 +320,7 @@ export default function CommonGround({ onImportContacts }) {
                     </span>
                   ) : (
                     <button
-                      className="alter-press"
+                      className="hb-press"
                       onClick={() => { setAddingFor(c.id); setNewThemeLabel(''); setNewThemeCategory('sports') }}
                       style={{
                         display: 'inline-flex', alignItems: 'center', gap: '5px',
@@ -329,7 +329,7 @@ export default function CommonGround({ onImportContacts }) {
                         border: `1px dashed ${MUTED}`, cursor: 'pointer',
                       }}
                     >
-                      <Plus style={{ width: 11, height: 11 }} /> add theme
+                      <Plus style={{ width: 11, height: 11 }} /> Add theme
                     </button>
                   )}
                 </div>
@@ -340,7 +340,7 @@ export default function CommonGround({ onImportContacts }) {
 
         {unmonitored.length > 0 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '18px', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '11px', color: MUTED }}>start watching:</span>
+            <span style={{ fontSize: '12px', color: MUTED }}>Start watching:</span>
             <select
               value=""
               onChange={e => { if (e.target.value) { setAddingFor(Number(e.target.value)); setNewThemeLabel(''); } }}
@@ -351,7 +351,7 @@ export default function CommonGround({ onImportContacts }) {
                 fontFamily: 'inherit',
               }}
             >
-              <option value="">choose a person&hellip;</option>
+              <option value="">Choose a person&hellip;</option>
               {unmonitored.map(c => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
@@ -375,13 +375,13 @@ export default function CommonGround({ onImportContacts }) {
           {queue.map((r, i) => (
             <button
               key={r.id}
-              className="alter-press"
+              className="hb-press"
               onClick={() => jumpTo(i)}
               aria-label={`Reason ${i + 1}`}
               style={{
                 height: '7px', border: 'none', borderRadius: '4px', cursor: 'pointer', padding: 0,
                 flex: i === activeIdx ? 2.2 : 1,
-                background: i === activeIdx ? ACCENT : 'rgba(222,74,44,0.18)',
+                background: i === activeIdx ? ACCENT : 'rgba(217,119,87,0.25)',
                 transition: 'flex 0.25s ease, background 0.2s ease',
               }}
             />
@@ -391,7 +391,7 @@ export default function CommonGround({ onImportContacts }) {
 
       {/* The deck — swipe between reasons */}
       {queue.length > 0 ? (
-        <div ref={deckRef} className="alter-deck" onScroll={onDeckScroll} style={{ flex: 1, minHeight: 0 }}>
+        <div ref={deckRef} className="hb-deck" onScroll={onDeckScroll} style={{ flex: 1, minHeight: 0 }}>
           {queue.map((r, i) => {
             const u = r.update
             const contact = r.kind === 'drift' ? r.nudge.contact : contacts.find(c => c.id === u.contactId)
@@ -402,40 +402,40 @@ export default function CommonGround({ onImportContacts }) {
               <div key={r.id} style={{ display: 'flex', flexDirection: 'column', padding: '0 24px', overflowY: 'auto' }}>
                 <div style={{ marginTop: '20px' }}>
                   <Pill>
-                    {r.kind === 'news' && `REASON ${String(i + 1).padStart(2, '0')} / ${String(queue.length).padStart(2, '0')}`}
-                    {r.kind === 'favor' && 'A FAVOR TO SEND'}
-                    {r.kind === 'drift' && 'DRIFTING'}
+                    {r.kind === 'news' && `Reason ${i + 1} of ${queue.length}`}
+                    {r.kind === 'favor' && 'A favor to send'}
+                    {r.kind === 'drift' && 'Drifting'}
                   </Pill>
                 </div>
-                <h1 className="alter-display" style={{
-                  fontSize: headline.length > 70 ? '30px' : '38px',
-                  fontWeight: 500, color: INK, lineHeight: 1.08, margin: '16px 0 0',
+                <h1 className="hb-display" style={{
+                  fontSize: headline.length > 70 ? '24px' : '29px',
+                  fontWeight: 500, color: INK, lineHeight: 1.25, margin: '16px 0 0',
                 }}>
                   {headline}
                 </h1>
-                <p style={{ fontSize: '13px', lineHeight: 1.65, color: '#4A403A', marginTop: '16px' }}>
+                <p style={{ fontSize: '14px', lineHeight: 1.6, color: '#C9C5BC', marginTop: '14px' }}>
                   {r.kind === 'news' && `Big news on the theme you share with ${firstName(u.contactName)}. ${u.source ? `${u.source}, ${u.time}.` : ''}`}
                   {r.kind === 'favor' && `Below the bar, but useful to ${firstName(u.contactName)} — a no-ask favor.`}
                   {r.kind === 'drift' && 'No news needed — a two-line check-in keeps it warm.'}
                 </p>
                 <button
-                  className="alter-press"
+                  className="hb-press"
                   onClick={() => contact && navigate(`/dashboard/contact/${contact.id}`)}
                   style={{
                     display: 'flex', alignItems: 'center', gap: '12px', width: '100%', textAlign: 'left',
-                    background: CARD, border: 'none', borderRadius: '18px', padding: '13px 16px',
+                    background: CARD, border: `1px solid ${HAIRLINE}`, borderRadius: '16px', padding: '13px 16px',
                     marginTop: '22px', cursor: 'pointer', fontFamily: 'inherit',
                   }}
                 >
                   <WarmAvatar initials={r.kind === 'drift' ? r.nudge.contact.initials : u.contactInitials} size="md" />
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0 }}>
-                    <span className="alter-display" style={{ fontSize: '16px', fontWeight: 500, letterSpacing: '0.03em', color: INK }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', minWidth: 0 }}>
+                    <span style={{ fontSize: '15px', fontWeight: 600, color: INK }}>
                       {contact ? contact.name : (u ? u.contactName : '')}
                     </span>
-                    <span style={{ fontSize: '11px', color: MUTED, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <span style={{ fontSize: '12px', color: MUTED, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {r.kind === 'drift'
-                        ? `last touch ${r.nudge.health.days} days ago`
-                        : `${(u.themeLabel || '').toLowerCase()} · shared theme`}
+                        ? `Last touch ${r.nudge.health.days} days ago`
+                        : `${u.themeLabel} · shared theme`}
                     </span>
                   </div>
                 </button>
@@ -443,21 +443,21 @@ export default function CommonGround({ onImportContacts }) {
                 <div style={{ flex: 1, minHeight: '18px' }} />
 
                 <button
-                  className="alter-cta alter-press"
+                  className="hb-cta hb-press"
                   onClick={() => openReason(r)}
                   style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
-                    height: '56px', borderRadius: '28px', border: 'none', cursor: 'pointer',
+                    height: '54px', borderRadius: '14px', border: 'none', cursor: 'pointer',
                     flexShrink: 0,
                   }}
                 >
-                  <span className="alter-display" style={{ fontSize: '16px', fontWeight: 500, letterSpacing: '0.08em', color: '#FFF6F0' }}>
-                    {r.kind === 'favor' ? 'SEND THE FAVOR' : 'REVIEW THE DRAFT'}
+                  <span style={{ fontSize: '15px', fontWeight: 600, color: '#FFFFFF' }}>
+                    {r.kind === 'favor' ? 'Send the favor' : 'Review the draft'}
                   </span>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFF6F0" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="M13 6l6 6-6 6" /></svg>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="M13 6l6 6-6 6" /></svg>
                 </button>
-                <div style={{ fontSize: '11px', color: MUTED, textAlign: 'center', margin: '10px 0 14px', flexShrink: 0 }}>
-                  drafted for you &mdash; nothing sends itself
+                <div style={{ fontSize: '12px', color: MUTED, textAlign: 'center', margin: '10px 0 14px', flexShrink: 0 }}>
+                  Drafted for you &mdash; nothing sends itself
                 </div>
               </div>
             )
@@ -469,32 +469,32 @@ export default function CommonGround({ onImportContacts }) {
           <AsteriskMark size={34} spinning={scanning} />
           {contacts.length === 0 ? (
             <>
-              <h1 className="alter-display" style={{ fontSize: '36px', fontWeight: 500, color: INK, lineHeight: 1.08 }}>
-                Bring in your people.
+              <h1 className="hb-display" style={{ fontSize: '30px', fontWeight: 500, color: INK, lineHeight: 1.2 }}>
+                Bring in your people
               </h1>
-              <p style={{ fontSize: '13px', lineHeight: 1.65, color: '#4A403A' }}>
+              <p style={{ fontSize: '14px', lineHeight: 1.6, color: '#C9C5BC' }}>
                 Import your contacts, tell Harbored what you share, and it watches for real reasons to reach out.
               </p>
               <button
-                className="alter-cta alter-press"
+                className="hb-cta hb-press"
                 onClick={onImportContacts}
                 style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  height: '56px', borderRadius: '28px', border: 'none', cursor: 'pointer',
+                  height: '54px', borderRadius: '14px', border: 'none', cursor: 'pointer',
                   padding: '0 32px', marginTop: '8px',
                 }}
               >
-                <span className="alter-display" style={{ fontSize: '16px', fontWeight: 500, letterSpacing: '0.08em', color: '#FFF6F0' }}>
-                  IMPORT FROM CONTACTS
+                <span style={{ fontSize: '15px', fontWeight: 600, color: '#FFFFFF' }}>
+                  Import from Contacts
                 </span>
               </button>
             </>
           ) : (
             <>
-              <h1 className="alter-display" style={{ fontSize: '36px', fontWeight: 500, color: INK, lineHeight: 1.08 }}>
-                {scanning ? 'Scanning your themes.' : 'All quiet.'}
+              <h1 className="hb-display" style={{ fontSize: '30px', fontWeight: 500, color: INK, lineHeight: 1.2 }}>
+                {scanning ? 'Scanning your themes' : 'All quiet'}
               </h1>
-              <p style={{ fontSize: '13px', lineHeight: 1.65, color: '#4A403A' }}>
+              <p style={{ fontSize: '14px', lineHeight: 1.6, color: '#C9C5BC' }}>
                 {scanning
                   ? 'Checking the news on everything you share.'
                   : `Harbored is watching ${themeCount} theme${themeCount === 1 ? '' : 's'} across ${contacts.length} people. You'll hear when something clears the bar.`}
@@ -510,20 +510,20 @@ export default function CommonGround({ onImportContacts }) {
         padding: '0 24px 12px', flexShrink: 0, fontSize: '11px', color: MUTED,
       }}>
         <button
-          className="alter-press"
+          className="hb-press"
           onClick={() => setView('themes')}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', color: MUTED, fontFamily: 'inherit', fontSize: '11px', textDecoration: 'underline', minHeight: '32px' }}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: MUTED, fontFamily: 'inherit', fontSize: '12px', textDecoration: 'underline', minHeight: '32px' }}
         >
-          manage themes
+          Manage themes
         </button>
         <span style={{ opacity: 0.5 }}>&middot;</span>
         <button
-          className="alter-press"
+          className="hb-press"
           onClick={scan}
           disabled={scanning}
-          style={{ background: 'none', border: 'none', cursor: scanning ? 'default' : 'pointer', color: MUTED, fontFamily: 'inherit', fontSize: '11px', textDecoration: 'underline', minHeight: '32px' }}
+          style={{ background: 'none', border: 'none', cursor: scanning ? 'default' : 'pointer', color: MUTED, fontFamily: 'inherit', fontSize: '12px', textDecoration: 'underline', minHeight: '32px' }}
         >
-          {scanning ? 'scanning…' : (scannedAt ? `updated ${scannedAt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }).toLowerCase()}` : 'scan now')}
+          {scanning ? 'Scanning…' : (scannedAt ? `Updated ${scannedAt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` : 'Scan now')}
         </button>
       </div>
 
@@ -531,7 +531,7 @@ export default function CommonGround({ onImportContacts }) {
       <AnimatePresence>
         {selected && (
           <motion.div
-            className="alter-app"
+            className="hb-app"
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 24 }}
@@ -548,7 +548,7 @@ export default function CommonGround({ onImportContacts }) {
             }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
                 <button
-                  className="alter-press"
+                  className="hb-press"
                   onClick={() => setSelected(null)}
                   aria-label="Back"
                   style={{
@@ -560,24 +560,24 @@ export default function CommonGround({ onImportContacts }) {
                   <ChevronLeft style={{ width: 22, height: 22 }} />
                 </button>
                 {queuePos >= 0 && (
-                  <span style={{ fontSize: '11px', color: MUTED }}>
-                    reason {String(queuePos + 1).padStart(2, '0')} / {String(queue.length).padStart(2, '0')}
+                  <span style={{ fontSize: '12px', color: MUTED }}>
+                    Reason {queuePos + 1} of {queue.length}
                   </span>
                 )}
               </div>
 
-              <div style={{ marginTop: '14px' }}><AsteriskMark /></div>
+              <div style={{ marginTop: '14px' }}><AsteriskMark size={26} /></div>
 
-              <h1 className="alter-display" style={{ fontSize: '38px', fontWeight: 500, color: INK, lineHeight: 1.05, margin: '14px 0 0' }}>
-                To {selContact ? firstName(selContact.name) : 'them'}.
+              <h1 className="hb-display" style={{ fontSize: '32px', fontWeight: 500, color: INK, lineHeight: 1.15, margin: '14px 0 0' }}>
+                To {selContact ? firstName(selContact.name) : 'them'}
               </h1>
-              <p style={{ fontSize: '12px', color: MUTED, marginTop: '10px', lineHeight: 1.6 }}>
+              <p style={{ fontSize: '13px', color: MUTED, marginTop: '10px', lineHeight: 1.6 }}>
                 {selected.kind === 'drift'
-                  ? 'no news — just a check-in'
-                  : `re: ${selected.update.headline}`}
+                  ? 'No news — just a check-in'
+                  : `Re: ${selected.update.headline}`}
               </p>
 
-              <div style={{ background: CARD, borderRadius: '20px', padding: '20px', marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ background: CARD, border: `1px solid ${HAIRLINE}`, borderRadius: '16px', padding: '18px', marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <textarea
                   value={msgText}
                   onChange={e => setMsgText(e.target.value)}
@@ -585,46 +585,46 @@ export default function CommonGround({ onImportContacts }) {
                   aria-label="Your draft message"
                   style={{
                     width: '100%', background: 'transparent', border: 'none', outline: 'none',
-                    resize: 'none', fontSize: '14px', lineHeight: 1.7, color: INK,
+                    resize: 'none', fontSize: '15px', lineHeight: 1.65, color: INK,
                     fontFamily: 'inherit', boxSizing: 'border-box',
                   }}
                 />
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: MUTED }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: MUTED }}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 20l1-4L16.5 4.5a2.1 2.1 0 0 1 3 3L8 19l-4 1z" /></svg>
-                  tap the text to edit
+                  Tap the text to edit
                 </div>
               </div>
 
               <div style={{ flex: 1, minHeight: '18px' }} />
 
               <button
-                className="alter-cta alter-press"
+                className="hb-cta hb-press"
                 onClick={handleSend}
                 style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
-                  height: '56px', borderRadius: '28px', border: 'none', cursor: 'pointer', flexShrink: 0,
+                  height: '54px', borderRadius: '14px', border: 'none', cursor: 'pointer', flexShrink: 0,
                 }}
               >
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#FFF6F0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 4L11 14" /><path d="M21 4l-6.5 17-3.5-7-7-3.5z" /></svg>
-                <span className="alter-display" style={{ fontSize: '16px', fontWeight: 500, letterSpacing: '0.08em', color: '#FFF6F0' }}>
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 4L11 14" /><path d="M21 4l-6.5 17-3.5-7-7-3.5z" /></svg>
+                <span style={{ fontSize: '15px', fontWeight: 600, color: '#FFFFFF' }}>
                   {sendLabel}
                 </span>
               </button>
               <button
-                className="alter-press"
+                className="hb-press"
                 onClick={handleSkip}
                 style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  height: '50px', borderRadius: '25px', marginTop: '10px', flexShrink: 0,
-                  background: 'none', border: `1.5px solid rgba(27,22,19,0.25)`, cursor: 'pointer',
+                  height: '50px', borderRadius: '14px', marginTop: '10px', flexShrink: 0,
+                  background: 'none', border: `1px solid rgba(255,255,255,0.2)`, cursor: 'pointer',
                 }}
               >
-                <span className="alter-display" style={{ fontSize: '14px', fontWeight: 500, letterSpacing: '0.08em', color: INK }}>
-                  SKIP THIS ONE
+                <span style={{ fontSize: '14px', fontWeight: 600, color: INK }}>
+                  Skip this one
                 </span>
               </button>
-              <div style={{ fontSize: '11px', color: MUTED, textAlign: 'center', marginTop: '12px', flexShrink: 0 }}>
-                harbored drafts &mdash; it never sends
+              <div style={{ fontSize: '12px', color: MUTED, textAlign: 'center', marginTop: '12px', flexShrink: 0 }}>
+                Harbored drafts &mdash; it never sends
               </div>
             </div>
           </motion.div>

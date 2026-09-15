@@ -1,7 +1,7 @@
-// "Alter × Claude" avatar: warm paper tones with ink initials, monospace.
+// Claude-dark avatar: muted warm tones on charcoal, cream initials.
 // Tone is picked deterministically from the initials so a contact keeps
 // their color everywhere without storing anything new.
-const TONES = ['#E8CFC0', '#DCD4C8', '#E3D1D6', '#D9DCCE', '#D5D9DC', '#E6D8C4']
+const TONES = ['#4D4238', '#3F4542', '#4A3E4C', '#37424D', '#4D4A38', '#463A3C']
 
 const SIZES = {
   sm: { box: 34, font: 12 },
@@ -21,9 +21,9 @@ export default function WarmAvatar({ initials, size = 'md' }) {
   return (
     <div style={{
       width: s.box, height: s.box, borderRadius: '50%', flexShrink: 0,
-      background: toneFor(initials), color: '#1B1613',
+      background: toneFor(initials), color: '#F5F4EF',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontSize: s.font, fontWeight: 700,
+      fontSize: s.font, fontWeight: 600, letterSpacing: '0.02em',
     }}>
       {initials}
     </div>
