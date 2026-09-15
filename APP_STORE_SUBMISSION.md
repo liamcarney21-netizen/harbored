@@ -141,16 +141,12 @@ Optional captions (benefit, not feature):
 - [ ] App Privacy answered (section 5)
 - [ ] Export compliance: the app uses only standard HTTPS → answer "No" to the
       encryption question (ITSAppUsesNonExemptEncryption=false is already in Info.plist)
-- [ ] REVIEWER ACCESS — the native app opens on the LOGIN screen (no marketing page,
-      no demo button there yet). Apple review WILL fail without a way in. Pick one:
-          UX + no credentials to hand Apple). Small code change; ask Claude.
-      (B) Provide a working demo account in App Store Connect → "Sign-In Information."
-- [ ] Export compliance: standard HTTPS only → the encryption question is auto-answered
-      by ITSAppUsesNonExemptEncryption=false already in Info.plist.
+- [x] REVIEWER ACCESS — DONE: the sign-in screen has "Try a live demo — no account
+      needed", which opens the full sample network. Nothing to hand Apple.
 
-Review notes (use if you went with option A — the demo button) → paste:
+Review notes → paste:
 ```
-Tap "Try a live demo — no account needed" on the sign-in screen to explore Harbored with a full sample
-network, no account needed. Outreach opens the user's own Mail/Messages with a
-prefilled draft — nothing is ever sent automatically.
+Tap "Try a live demo — no account needed" on the sign-in screen to explore
+Harbored with a full sample network. Outreach opens the user's own Mail/Messages
+with a prefilled draft — nothing is ever sent automatically.
 ```
