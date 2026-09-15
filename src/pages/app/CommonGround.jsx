@@ -11,6 +11,7 @@ import { fetchLiveUpdates } from '../../services/monitoring'
 import { fetchStoredUpdates } from '../../services/scanResults'
 import { openSend, sendChannelFor } from '../../services/outreach'
 import ThemeSpecificityHint from '../../components/ThemeSpecificityHint'
+import { useIsMobile } from '../../hooks/useIsMobile'
 
 const INK = '#F5F4EF'
 const MUTED = '#8C9AAD'
@@ -61,6 +62,9 @@ function clip(text = '', n = 130) {
 
 export default function CommonGround({ onImportContacts }) {
   const navigate = useNavigate()
+  // Phone: the CTA pins to the thumb zone at the bottom of the card.
+  // Desktop: content flows naturally — no stretched dead zone.
+  const isMobile = useIsMobile()
   const demoActive = useDemoStore(s => s.active)
   const user = useAuthStore(s => s.user)
   // Signed-in real users read what the scheduled server scan already found;
@@ -486,7 +490,7 @@ export default function CommonGround({ onImportContacts }) {
                   </div>
                 )}
 
-                <div style={{ flex: 1, minHeight: '18px' }} />
+                <div style={{ flex: isMobile ? 1 : '0 0 auto', minHeight: isMobile ? '18px' : '36px' }} />
 
                 <button
                   className="hb-cta hb-press"
@@ -641,7 +645,7 @@ export default function CommonGround({ onImportContacts }) {
                 </div>
               </div>
 
-              <div style={{ flex: 1, minHeight: '18px' }} />
+              <div style={{ flex: isMobile ? 1 : '0 0 auto', minHeight: isMobile ? '18px' : '36px' }} />
 
               <button
                 className="hb-cta hb-press"

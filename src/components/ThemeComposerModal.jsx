@@ -1,10 +1,13 @@
 import { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Plus, Check, ArrowRight } from 'lucide-react'
+import { X, Plus, Check, ArrowRight, Mic } from 'lucide-react'
 import { useDataStore } from '../store/dataStore'
 import { apiUrl } from '../lib/apiBase'
+import { discoverThemes } from '../services/discovery'
+import { isSpeechSupported, createRecognizer } from '../services/speech'
 import WarmAvatar from './WarmAvatar'
 import ThemeSpecificityHint from './ThemeSpecificityHint'
+import { useIsMobile } from '../hooks/useIsMobile'
 
 const INK = '#F5F4EF'
 const MUTED = '#8C9AAD'
@@ -35,12 +38,17 @@ const PROMPTS = [
 
 export default function ThemeComposerModal({ open, contacts = [], onClose }) {
   const addTheme = useDataStore(s => s.addTheme)
+  const isMobile = useIsMobile()
   const inputRef = useRef(null)
 
   const [index, setIndex] = useState(0)
   const [themes, setThemes] = useState([]) // {label, category} for the current contact
   const [label, setLabel] = useState('')
   const [promptIdx, setPromptIdx] = useState(null)
+  const [voiceMode, setVoiceMode] = useState('idle') // 'idle' | 'listening' | 'mapping'
+  const [transcript, setTranscript] = useState('')
+  const [voiceError, setVoiceError] = useState('')
+  const recognizerRef = useRef(null)
 
   const current = contacts[index]
   const total = contacts.length
@@ -50,7 +58,12 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
 
   // State starts fresh per batch because AppLayout keys this modal by the batch,
   // so a new import remounts it (no reset-in-effect needed).
-  function resetForContact() { setThemes([]); setLabel(''); setPromptIdx(null) }
+  function resetForContact() {
+    recognizerRef.current?.stop()
+    recognizerRef.current = null
+    setThemes([]); setLabel(''); setPromptIdx(null)
+    setVoiceMode('idle'); setTranscript(''); setVoiceError('')
+  }
 
   function pickPrompt(i) {
     setPromptIdx(i)
@@ -59,18 +72,12 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
     inputRef.current?.focus()
   }
 
-  // Add the theme immediately, then refine it in the background: one call turns
+  // Add a theme immediately, then refine it in the background: one call turns
   // the raw label into a precise, entity-grounded news query + a plain-English
   // "here's what we'll watch" the user can eyeball before committing.
-  async function addChip() {
-    const l = label.trim()
-    if (!l) return
-    const cid = `c${Date.now()}`
-    const cat = category
+  async function addThemeWithRefine(l, cat) {
+    const cid = `c${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
     setThemes(t => [...t, { cid, label: l, category: cat, refining: true }])
-    setLabel('')
-    setPromptIdx(null)
-    inputRef.current?.focus()
     try {
       const resp = await fetch(apiUrl('/api/refine-theme'), {
         method: 'POST',
@@ -88,6 +95,63 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
     }
   }
 
+  function addChip() {
+    const l = label.trim()
+    if (!l) return
+    addThemeWithRefine(l, category)
+    setLabel('')
+    setPromptIdx(null)
+    inputRef.current?.focus()
+  }
+
+  // ── "Just talk about them" — voice → transcript → theme extraction ──
+  function startListening() {
+    setVoiceError('')
+    setTranscript('')
+    setVoiceMode('listening')
+    recognizerRef.current = createRecognizer({
+      onText: setTranscript,
+      onEnd: (finalText) => finishListening(finalText),
+      onError: (msg) => { setVoiceError(msg); setVoiceMode('idle'); recognizerRef.current = null },
+    })
+    recognizerRef.current.start()
+  }
+
+  function cancelListening() {
+    recognizerRef.current?.stop()
+    recognizerRef.current = null
+    setVoiceMode('idle')
+    setTranscript('')
+  }
+
+  async function finishListening(finalOverride) {
+    const heard = (recognizerRef.current ? recognizerRef.current.stop() : finalOverride) || transcript
+    recognizerRef.current = null
+    const text = (heard || '').trim()
+    if (text.length < 12) {
+      setVoiceError(text ? "That was too short to map — say a bit more, or type it." : '')
+      setVoiceMode('idle')
+      return
+    }
+    setVoiceMode('mapping')
+    try {
+      const existing = new Set(themes.map(t => t.label.toLowerCase()))
+      const found = ((await discoverThemes(text, current?.name)).themes || [])
+        .filter(t => t.label && !existing.has(t.label.toLowerCase()))
+        .slice(0, 5)
+      if (found.length === 0) {
+        setVoiceError("Nothing watchable in that yet — try naming the specific team, place, or market.")
+      } else {
+        found.forEach(t => addThemeWithRefine(t.label, t.category || 'hobby'))
+      }
+    } catch {
+      setVoiceError("Couldn't map that just now — try again or type it.")
+    } finally {
+      setVoiceMode('idle')
+      setTranscript('')
+    }
+  }
+
   // Persist the current contact's themes (plus any text left un-added in the field).
   function commitCurrent() {
     if (!current) return
@@ -98,11 +162,17 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
 
   function advance() {
     if (!isLast) { setIndex(i => i + 1); resetForContact() }
-    else { onClose() }
+    else { closeAll() }
   }
 
   function handleSaveNext() { commitCurrent(); advance() }
   function handleSkip() { advance() }
+
+  function closeAll() {
+    recognizerRef.current?.stop()
+    recognizerRef.current = null
+    onClose()
+  }
 
   if (!open || !current) return null
 
@@ -146,7 +216,7 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
               ) : <span style={{ flex: 1 }} />}
               <button
                 className="hb-press"
-                onClick={onClose}
+                onClick={closeAll}
                 aria-label="Close"
                 style={{
                   width: '44px', height: '44px', marginRight: '-12px', flexShrink: 0,
@@ -197,6 +267,61 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
                   )
                 })}
               </div>
+
+              {/* Voice — talk about them, Harbored maps it */}
+              {isSpeechSupported() && voiceMode === 'idle' && (
+                <button
+                  className="hb-press"
+                  onClick={startListening}
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '9px',
+                    width: '100%', minHeight: '48px', borderRadius: '13px', marginTop: '9px',
+                    background: 'none', border: '1px dashed rgba(211,169,92,0.5)', cursor: 'pointer',
+                    fontSize: '13px', fontWeight: 600, color: ACCENT, fontFamily: 'inherit',
+                  }}
+                >
+                  <Mic style={{ width: 15, height: 15 }} />
+                  Or just talk about {first} &mdash; Harbored maps it
+                </button>
+              )}
+              {voiceMode === 'listening' && (
+                <div style={{ background: CARD, border: '1px solid rgba(211,169,92,0.5)', borderRadius: '13px', padding: '16px', marginTop: '9px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
+                    <Mic style={{ width: 15, height: 15, color: ACCENT, animation: 'hbPulse 1.4s ease-in-out infinite' }} />
+                    <span style={{ fontSize: '12px', fontWeight: 600, color: ACCENT }}>Listening &mdash; tell me about {first}</span>
+                  </div>
+                  <p style={{ fontSize: '14px', lineHeight: 1.6, color: transcript ? INK : MUTED, marginTop: '10px', minHeight: '44px' }}>
+                    {transcript || `"We met at… they're big into… they just moved to…"`}
+                  </p>
+                  <div style={{ display: 'flex', gap: '9px', marginTop: '12px' }}>
+                    <button
+                      className="hb-cta hb-press"
+                      onClick={() => finishListening()}
+                      style={{ flex: 1, minHeight: '44px', borderRadius: '12px', border: 'none', cursor: 'pointer', fontSize: '14px', fontWeight: 600, color: '#0a1628', fontFamily: 'inherit' }}
+                    >
+                      Done &mdash; map it
+                    </button>
+                    <button
+                      className="hb-press"
+                      onClick={cancelListening}
+                      style={{ minHeight: '44px', padding: '0 16px', borderRadius: '12px', background: 'none', border: '1px solid rgba(255,255,255,0.2)', cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: INK, fontFamily: 'inherit' }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+              {voiceMode === 'mapping' && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '14px 16px', background: CARD, border: `1px solid ${HAIRLINE}`, borderRadius: '13px', marginTop: '9px' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={ACCENT} strokeWidth="2.4" strokeLinecap="round" style={{ animation: 'hbSpin 1.6s linear infinite', flexShrink: 0 }}>
+                    <path d="M12 3v18" /><path d="M3 12h18" /><path d="M5.6 5.6l12.8 12.8" /><path d="M18.4 5.6L5.6 18.4" />
+                  </svg>
+                  <span style={{ fontSize: '13px', color: '#C2CBD8' }}>Mapping what you said&hellip;</span>
+                </div>
+              )}
+              {voiceError && (
+                <p style={{ fontSize: '12px', color: '#E8867A', marginTop: '9px', lineHeight: 1.5 }}>{voiceError}</p>
+              )}
 
               {/* Answer input */}
               <div style={{ display: 'flex', gap: '9px', alignItems: 'stretch', marginTop: '14px' }}>
@@ -261,7 +386,7 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
                 </div>
               )}
 
-              <div style={{ flex: 1, minHeight: '16px' }} />
+              <div style={{ flex: isMobile ? 1 : '0 0 auto', minHeight: isMobile ? '16px' : '32px' }} />
             </div>
 
             {/* Footer — stacked, never crams */}
