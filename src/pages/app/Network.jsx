@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { ChevronRight, Search } from 'lucide-react'
 import WarmAvatar from '../../components/WarmAvatar'
 import { useDataStore, healthFromLastTouch, daysUntilBirthday } from '../../store/dataStore'
+import { useIsMobile } from '../../hooks/useIsMobile'
 
 const INK = '#F5F4EF'
 const MUTED = '#8C9AAD'
@@ -23,6 +24,7 @@ function statusFor(contact) {
 
 export default function Network({ onAddContact, onImportContacts }) {
   const navigate = useNavigate()
+  const isMobile = useIsMobile()
   const contacts = useDataStore(s => s.contacts)
   const themesByContact = useDataStore(s => s.themesByContact)
   const [search, setSearch] = useState('')
@@ -36,8 +38,16 @@ export default function Network({ onAddContact, onImportContacts }) {
   const withNews = contacts.filter(c => statusFor(c).hot).length
 
   return (
-    <div style={{ width: '100%', maxWidth: '620px', alignSelf: 'center', padding: '18px 24px 32px' }}>
+    // Phone: one column. Desktop: title + actions as a left rail, list wide
+    // on the right — the same asymmetry as Today's front page.
+    <div style={isMobile
+      ? { width: '100%', maxWidth: '620px', alignSelf: 'center', padding: '18px 24px 32px' }
+      : {
+        display: 'grid', gridTemplateColumns: '300px minmax(0, 1fr)', gap: '64px', alignItems: 'start',
+        width: '100%', maxWidth: '1120px', alignSelf: 'center', padding: '40px 48px 48px',
+      }}>
 
+      <div>
       <h1 className="hb-display" style={{ fontSize: '30px', fontWeight: 500, color: INK, lineHeight: 1.1 }}>
         Your crew
       </h1>
@@ -72,10 +82,12 @@ export default function Network({ onAddContact, onImportContacts }) {
           add someone by hand
         </button>
       </div>
+      </div>
 
+      <div>
       <div style={{
         display: 'flex', alignItems: 'center', gap: '10px', height: '46px', padding: '0 14px',
-        borderRadius: '13px', background: CARD, border: '1px solid rgba(255,255,255,0.08)', marginTop: '18px',
+        borderRadius: '13px', background: CARD, border: '1px solid rgba(255,255,255,0.08)', marginTop: isMobile ? '18px' : 0,
       }}>
         <Search style={{ width: 15, height: 15, color: MUTED, flexShrink: 0 }} />
         <input
@@ -130,6 +142,7 @@ export default function Network({ onAddContact, onImportContacts }) {
             </button>
           )
         })}
+      </div>
       </div>
 
     </div>

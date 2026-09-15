@@ -224,7 +224,14 @@ export default function CommonGround({ onImportContacts }) {
     const monitored = contacts.filter(c => (themesByContact[c.id] || []).length > 0 || addingFor === c.id)
     const unmonitored = contacts.filter(c => (themesByContact[c.id] || []).length === 0 && addingFor !== c.id)
     return (
-      <div style={{ maxWidth: '620px', margin: '0 auto', padding: '18px 24px 32px' }}>
+      // Phone: one column. Desktop: title + controls left, theme cards right.
+      <div style={isMobile
+        ? { maxWidth: '620px', margin: '0 auto', padding: '18px 24px 32px' }
+        : {
+          display: 'grid', gridTemplateColumns: '300px minmax(0, 1fr)', gap: '64px', alignItems: 'start',
+          width: '100%', maxWidth: '1120px', margin: '0 auto', padding: '40px 48px 48px',
+        }}>
+        <div>
         <button
           className="hb-press"
           onClick={() => setView('today')}
@@ -242,7 +249,9 @@ export default function CommonGround({ onImportContacts }) {
         <p style={{ fontSize: '13px', color: MUTED, marginBottom: '22px' }}>
           {themeCount} watched &middot; You only hear when one clears the bar
         </p>
+        </div>
 
+        <div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {monitored.map(c => {
             const themes = themesByContact[c.id] || []
@@ -371,6 +380,7 @@ export default function CommonGround({ onImportContacts }) {
             </select>
           </div>
         )}
+        </div>
       </div>
     )
   }

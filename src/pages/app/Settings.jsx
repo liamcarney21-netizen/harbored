@@ -4,6 +4,7 @@ import { useDataStore } from '../../store/dataStore'
 import { useAuthStore } from '../../store/authStore'
 import { useDemoStore } from '../../store/demoStore'
 import WarmAvatar from '../../components/WarmAvatar'
+import { useIsMobile } from '../../hooks/useIsMobile'
 
 const INK = '#F5F4EF'
 const MUTED = '#8C9AAD'
@@ -69,6 +70,7 @@ function GhostButton({ children, onClick, tone = 'default' }) {
 
 export default function Settings() {
   const navigate = useNavigate()
+  const isMobile = useIsMobile()
   const contacts = useDataStore(s => s.contacts)
   const clearSampleData = useDataStore(s => s.clearSampleData)
   const restoreSampleData = useDataStore(s => s.restoreSampleData)
@@ -89,8 +91,15 @@ export default function Settings() {
   }
 
   return (
-    <div style={{ width: '100%', maxWidth: '620px', alignSelf: 'center', padding: '18px 24px 32px' }}>
+    // Phone: one column. Desktop: identity on the left, settings wide right.
+    <div style={isMobile
+      ? { width: '100%', maxWidth: '620px', alignSelf: 'center', padding: '18px 24px 32px' }
+      : {
+        display: 'grid', gridTemplateColumns: '300px minmax(0, 1fr)', gap: '64px', alignItems: 'start',
+        width: '100%', maxWidth: '1120px', alignSelf: 'center', padding: '40px 48px 48px',
+      }}>
 
+      <div>
       <h1 className="hb-display" style={{ fontSize: '30px', fontWeight: 500, color: INK, lineHeight: 1.1 }}>
         You
       </h1>
@@ -115,9 +124,11 @@ export default function Settings() {
           <GhostButton onClick={handleSignOut}>{demoActive ? 'Leave the demo' : 'Sign out'}</GhostButton>
         </div>
       </div>
+      </div>
 
+      <div>
       {/* Notifications */}
-      <div style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: MUTED, margin: '24px 0 10px', paddingLeft: '4px' }}>
+      <div style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: MUTED, margin: isMobile ? '24px 0 10px' : '0 0 10px', paddingLeft: '4px' }}>
         Notifications
       </div>
       <div style={{ background: CARD, border: `1px solid ${HAIRLINE}`, borderRadius: '16px', overflow: 'hidden' }}>
@@ -168,6 +179,7 @@ export default function Settings() {
           control={<GhostButton tone="danger">Delete</GhostButton>}
           last
         />
+      </div>
       </div>
 
     </div>
