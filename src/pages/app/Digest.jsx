@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { Mail, Compass, Waves, Send, TrendingUp } from 'lucide-react'
-import Avatar from '../../components/Avatar'
+import WarmAvatar from '../../components/WarmAvatar'
 import { themeUpdates, SIGNIFICANCE_THRESHOLD } from '../../data/commonGround'
 import { useDataStore, selectNudges, daysSince } from '../../store/dataStore'
 
@@ -45,8 +45,8 @@ export default function Digest() {
     window.location.href = `mailto:harboredsupport@gmail.com?${params.toString().replace(/\+/g, '%20')}`
   }
 
-  const card = { borderRadius: '12px', background: '#FFFFFF', border: '1px solid #E6E2D8' }
-  const sectionLabel = { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600, color: '#5C6B73', marginBottom: '12px' }
+  const card = { borderRadius: '12px', background: '#0f2040', border: '1px solid rgba(255,255,255,0.08)' }
+  const sectionLabel = { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600, color: '#8C9AAD', marginBottom: '12px' }
 
   return (
     <motion.div
@@ -56,15 +56,15 @@ export default function Digest() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap', marginBottom: '28px' }}>
         <div>
-          <h1 style={{ fontFamily: '"Fraunces", Georgia, serif', fontSize: '27px', fontWeight: 600, color: '#1C2B33', marginBottom: '4px' }}>Weekly Digest</h1>
-          <p style={{ fontSize: '13px', color: '#5C6B73' }}>Your week in relationships · {weekRange()}</p>
+          <h1 style={{ fontFamily: '"Lora", Georgia, serif', fontSize: '27px', fontWeight: 600, color: '#F5F4EF', marginBottom: '4px' }}>Weekly Digest</h1>
+          <p style={{ fontSize: '13px', color: '#8C9AAD' }}>Your week in relationships · {weekRange()}</p>
         </div>
         <button
           onClick={emailDigest}
           style={{
             display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0,
             padding: '10px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
-            background: '#0D5C63', color: '#FFFFFF', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+            background: '#D3A95C', color: '#0a1628', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
           }}
         >
           <Mail style={{ width: '13px', height: '13px' }} /> Email me this digest
@@ -81,17 +81,17 @@ export default function Digest() {
         ].map(({ label, value, icon: Icon }) => (
           <div key={label} style={{ ...card, padding: '18px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-              <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 500, color: '#5C6B73' }}>{label}</span>
-              <Icon style={{ width: '13px', height: '13px', color: '#0D5C63', flexShrink: 0 }} />
+              <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 500, color: '#8C9AAD' }}>{label}</span>
+              <Icon style={{ width: '13px', height: '13px', color: '#D3A95C', flexShrink: 0 }} />
             </div>
-            <div style={{ fontFamily: '"Fraunces", Georgia, serif', fontSize: '30px', fontWeight: 600, color: '#1C2B33', lineHeight: 1 }}>{value}</div>
+            <div style={{ fontFamily: '"Lora", Georgia, serif', fontSize: '30px', fontWeight: 600, color: '#F5F4EF', lineHeight: 1 }}>{value}</div>
           </div>
         ))}
       </div>
 
       {/* Reasons to reach out */}
       <div style={sectionLabel}>
-        <Compass style={{ width: '13px', height: '13px', color: '#0D5C63' }} />
+        <Compass style={{ width: '13px', height: '13px', color: '#D3A95C' }} />
         Reasons to reach out this week
       </div>
       <div style={{ ...card, overflow: 'hidden', marginBottom: '28px' }}>
@@ -101,15 +101,15 @@ export default function Digest() {
             onClick={() => navigate('/dashboard')}
             style={{
               display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 18px', cursor: 'pointer',
-              borderBottom: i < Math.min(opportunities.length, 5) - 1 ? '1px solid #EEEBE3' : 'none',
+              borderBottom: i < Math.min(opportunities.length, 5) - 1 ? '1px solid rgba(255,255,255,0.07)' : 'none',
             }}
           >
-            <Avatar initials={u.contactInitials} color={u.contactColor} size="sm" />
+            <WarmAvatar initials={u.contactInitials} size="sm" />
             <div style={{ flex: 1, minWidth: 0 }}>
-              <span style={{ fontSize: '13px', fontWeight: 600, color: '#1C2B33' }}>{u.contactName}</span>
-              <p style={{ fontSize: '12px', color: '#5C6B73', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.headline}</p>
+              <span style={{ fontSize: '13px', fontWeight: 600, color: '#F5F4EF' }}>{u.contactName}</span>
+              <p style={{ fontSize: '12px', color: '#8C9AAD', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.headline}</p>
             </div>
-            <span style={{ fontSize: '12px', fontWeight: 600, color: '#0D5C63', flexShrink: 0 }}>{u.score}</span>
+            <span style={{ fontSize: '12px', fontWeight: 600, color: '#D3A95C', flexShrink: 0 }}>{u.score}</span>
           </div>
         ))}
       </div>
@@ -118,7 +118,7 @@ export default function Digest() {
       {nudges.length > 0 && (
         <>
           <div style={sectionLabel}>
-            <Waves style={{ width: '13px', height: '13px', color: '#A97E2F' }} />
+            <Waves style={{ width: '13px', height: '13px', color: '#D3A95C' }} />
             Drifting quietly
           </div>
           <div style={{ ...card, overflow: 'hidden', marginBottom: '28px' }}>
@@ -128,22 +128,22 @@ export default function Digest() {
                 onClick={() => navigate(`/dashboard/contact/${n.contact.id}`)}
                 style={{
                   display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 18px', cursor: 'pointer',
-                  borderBottom: i < Math.min(nudges.length, 4) - 1 ? '1px solid #EEEBE3' : 'none',
+                  borderBottom: i < Math.min(nudges.length, 4) - 1 ? '1px solid rgba(255,255,255,0.07)' : 'none',
                 }}
               >
-                <Avatar initials={n.contact.initials} color={n.contact.color} size="sm" />
+                <WarmAvatar initials={n.contact.initials} size="sm" />
                 <div style={{ flex: 1 }}>
-                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#1C2B33' }}>{n.contact.name}</span>
-                  <p style={{ fontSize: '12px', color: '#5C6B73' }}>{n.contact.role} · {n.contact.company}</p>
+                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#F5F4EF' }}>{n.contact.name}</span>
+                  <p style={{ fontSize: '12px', color: '#8C9AAD' }}>{n.contact.role} · {n.contact.company}</p>
                 </div>
-                <span style={{ fontSize: '12px', fontWeight: 500, color: n.health.color, flexShrink: 0 }}>{n.health.days} days</span>
+                <span style={{ fontSize: '12px', fontWeight: 500, color: '#D3A95C', flexShrink: 0 }}>{n.health.days} days</span>
               </div>
             ))}
           </div>
         </>
       )}
 
-      <p style={{ fontSize: '12px', color: '#5C6B73', opacity: 0.75, lineHeight: 1.6 }}>
+      <p style={{ fontSize: '12px', color: '#8C9AAD', opacity: 0.75, lineHeight: 1.6 }}>
         "Email me this digest" opens a prefilled email you can send to yourself. Automatic Monday-morning
         delivery arrives with Harbored's email integration.
       </p>

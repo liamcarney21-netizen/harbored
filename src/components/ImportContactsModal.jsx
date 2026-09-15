@@ -24,7 +24,9 @@ export default function ImportContactsModal({ open, onClose, onImported }) {
 
   const nativeContacts = isNativeContactsAvailable()
   // Whether a one-tap picker sits above the .vcf upload (so it renders as secondary).
-  const hasPrimaryPicker = nativeContacts || hasContactPicker
+  // In demo mode the sample import is the primary action, so the .vcf upload
+  // renders as secondary there too — one gold button per screen.
+  const hasPrimaryPicker = nativeContacts || hasContactPicker || demoActive
 
   function reset() {
     setCandidates(null)
@@ -148,7 +150,7 @@ export default function ImportContactsModal({ open, onClose, onImported }) {
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={handleClose}
-            style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(29,34,38,0.5)', backdropFilter: 'blur(3px)' }}
+            style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(3px)' }}
           />
           <div style={{
             position: 'fixed', inset: 0, zIndex: 61, display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -160,22 +162,22 @@ export default function ImportContactsModal({ open, onClose, onImported }) {
             style={{
               pointerEvents: 'auto',
               width: 'min(520px, 100%)', maxHeight: '100%', overflowY: 'auto',
-              background: '#FFFFFF', borderRadius: '16px', boxShadow: '0 14px 44px -8px rgba(28,43,51,0.24), 0 3px 10px rgba(28,43,51,0.10)',
+              background: '#0f2040', borderRadius: '16px', boxShadow: '0 14px 44px -8px rgba(28,43,51,0.24), 0 3px 10px rgba(28,43,51,0.10)',
               fontFamily: 'Inter, sans-serif',
             }}
           >
             {/* Header */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid #EEEBE3' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div style={{ width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(13,92,99,0.08)' }}>
-                  <Users style={{ width: '15px', height: '15px', color: '#0D5C63' }} />
+                <div style={{ width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(211,169,92,0.08)' }}>
+                  <Users style={{ width: '15px', height: '15px', color: '#D3A95C' }} />
                 </div>
                 <div>
-                  <div style={{ fontSize: '15px', fontWeight: 700, color: '#1C2B33' }}>Import contacts</div>
-                  <div style={{ fontSize: '12px', color: '#5C6B73' }}>Skip the typing — bring your people in at once.</div>
+                  <div style={{ fontSize: '15px', fontWeight: 700, color: '#F5F4EF' }}>Import contacts</div>
+                  <div style={{ fontSize: '12px', color: '#8C9AAD' }}>Skip the typing — bring your people in at once.</div>
                 </div>
               </div>
-              <button onClick={handleClose} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#5C6B73', padding: '4px' }}>
+              <button onClick={handleClose} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8C9AAD', padding: '4px' }}>
                 <X style={{ width: '16px', height: '16px' }} />
               </button>
             </div>
@@ -189,16 +191,16 @@ export default function ImportContactsModal({ open, onClose, onImported }) {
                       <button onClick={handleSample} style={{
                         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                         width: '100%', padding: '14px', borderRadius: '10px', fontSize: '13px', fontWeight: 600,
-                        background: '#0D5C63', color: '#FFFFFF', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+                        background: '#D3A95C', color: '#0a1628', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
                       }}>
                         <Sparkles style={{ width: '15px', height: '15px' }} /> Load a sample Apple Contacts export
                       </button>
-                      <p style={{ fontSize: '12px', color: '#5C6B73', marginTop: '-6px', lineHeight: 1.5 }}>
+                      <p style={{ fontSize: '12px', color: '#8C9AAD', marginTop: '-6px', lineHeight: 1.5 }}>
                         No iPhone handy? This runs a real iOS vCard through Harbored's parser so you can try the import now.
                       </p>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '4px 0' }}>
                         <span style={{ flex: 1, height: '1px', background: '#EEEBE3' }} />
-                        <span style={{ fontSize: '11px', color: '#5C6B73', opacity: 0.7 }}>or use your own</span>
+                        <span style={{ fontSize: '11px', color: '#8C9AAD', opacity: 0.7 }}>or use your own</span>
                         <span style={{ flex: 1, height: '1px', background: '#EEEBE3' }} />
                       </div>
                     </>
@@ -207,7 +209,7 @@ export default function ImportContactsModal({ open, onClose, onImported }) {
                     <button onClick={handleNativeContacts} disabled={loadingNative} style={{
                       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                       width: '100%', padding: '14px', borderRadius: '10px', fontSize: '13px', fontWeight: 600,
-                      background: '#0D5C63', color: '#FFFFFF', border: 'none',
+                      background: '#D3A95C', color: '#0a1628', border: 'none',
                       cursor: loadingNative ? 'default' : 'pointer', opacity: loadingNative ? 0.7 : 1, fontFamily: 'Inter, sans-serif',
                     }}>
                       <Smartphone style={{ width: '15px', height: '15px' }} />
@@ -218,7 +220,7 @@ export default function ImportContactsModal({ open, onClose, onImported }) {
                     <button onClick={handlePickContacts} style={{
                       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                       width: '100%', padding: '14px', borderRadius: '10px', fontSize: '13px', fontWeight: 600,
-                      background: '#0D5C63', color: '#FFFFFF', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+                      background: '#D3A95C', color: '#0a1628', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
                     }}>
                       <Smartphone style={{ width: '15px', height: '15px' }} /> Pick from your phone's contacts
                     </button>
@@ -229,43 +231,43 @@ export default function ImportContactsModal({ open, onClose, onImported }) {
                     <button onClick={() => fileInputRef.current?.click()} style={{
                       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                       width: '100%', padding: '14px', borderRadius: '10px', fontSize: '13px', fontWeight: 600,
-                      background: hasPrimaryPicker ? 'none' : '#0D5C63', color: hasPrimaryPicker ? '#0D5C63' : '#FFFFFF',
-                      border: hasPrimaryPicker ? '1px solid #0D5C63' : 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+                      background: hasPrimaryPicker ? 'none' : '#D3A95C', color: hasPrimaryPicker ? '#D3A95C' : '#FFFFFF',
+                      border: hasPrimaryPicker ? '1px solid #D3A95C' : 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
                     }}>
                       <Upload style={{ width: '15px', height: '15px' }} /> Upload a .vcf file
                     </button>
                     {!nativeContacts && (
-                      <p style={{ fontSize: '12px', color: '#5C6B73', marginTop: '10px', lineHeight: 1.5 }}>
+                      <p style={{ fontSize: '12px', color: '#8C9AAD', marginTop: '10px', lineHeight: 1.5 }}>
                         On iPhone: open Contacts → select the people you want → Share Contact → Export vCard, then upload the file here.
                       </p>
                     )}
                   </div>
 
-                  {error && <p style={{ fontSize: '12px', color: '#B4423A' }}>{error}</p>}
+                  {error && <p style={{ fontSize: '12px', color: '#E8867A' }}>{error}</p>}
                 </>
               )}
 
               {candidates && (
                 <>
                   {skippedCount > 0 && (
-                    <p style={{ fontSize: '12px', color: '#5C6B73' }}>
+                    <p style={{ fontSize: '12px', color: '#8C9AAD' }}>
                       Skipped {skippedCount} already in your network.
                     </p>
                   )}
                   {candidates.length === 0 ? (
-                    <p style={{ fontSize: '13px', color: '#5C6B73' }}>Everyone in that file is already in your network.</p>
+                    <p style={{ fontSize: '13px', color: '#8C9AAD' }}>Everyone in that file is already in your network.</p>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '320px', overflowY: 'auto' }}>
                       {candidates.map((c, i) => (
                         <label key={i} style={{
                           display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px',
-                          borderRadius: '8px', border: '1px solid #EEEBE3', cursor: 'pointer',
-                          background: selected.has(i) ? 'rgba(13,92,99,0.04)' : 'transparent',
+                          borderRadius: '8px', border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer',
+                          background: selected.has(i) ? 'rgba(211,169,92,0.04)' : 'transparent',
                         }}>
-                          <input type="checkbox" checked={selected.has(i)} onChange={() => toggle(i)} style={{ accentColor: '#0D5C63' }} />
+                          <input type="checkbox" checked={selected.has(i)} onChange={() => toggle(i)} style={{ accentColor: '#D3A95C' }} />
                           <div style={{ minWidth: 0, flex: 1 }}>
-                            <div style={{ fontSize: '13px', fontWeight: 600, color: '#1C2B33' }}>{c.name}</div>
-                            <div style={{ fontSize: '12px', color: '#5C6B73', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            <div style={{ fontSize: '13px', fontWeight: 600, color: '#F5F4EF' }}>{c.name}</div>
+                            <div style={{ fontSize: '12px', color: '#8C9AAD', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                               {[c.company, c.email].filter(Boolean).join(' · ') || 'No extra details'}
                             </div>
                           </div>
@@ -279,16 +281,16 @@ export default function ImportContactsModal({ open, onClose, onImported }) {
 
             {/* Footer */}
             {candidates && (
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', padding: '16px 24px', borderTop: '1px solid #EEEBE3' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', padding: '16px 24px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
                 <button onClick={reset}
-                  style={{ padding: '10px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 500, background: 'none', border: '1px solid #DEDACF', color: '#3E4B52', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
+                  style={{ padding: '10px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 500, background: 'none', border: '1px solid rgba(255,255,255,0.15)', color: '#C2CBD8', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
                   Back
                 </button>
                 <button onClick={handleImport} disabled={selected.size === 0 || importing}
                   style={{
                     display: 'flex', alignItems: 'center', gap: '6px',
                     padding: '10px 20px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
-                    background: selected.size > 0 ? '#0D5C63' : '#C6C0B3', color: '#FFFFFF', border: 'none',
+                    background: selected.size > 0 ? '#D3A95C' : '#C6C0B3', color: '#0a1628', border: 'none',
                     cursor: selected.size > 0 ? 'pointer' : 'default', fontFamily: 'Inter, sans-serif',
                   }}>
                   <Check style={{ width: '13px', height: '13px' }} />

@@ -3,10 +3,10 @@ import { Users, Settings, Settings2, Compass, Mail, UserPlus, Upload } from 'luc
 import AnchorMark from './AnchorMark'
 
 const navItems = [
-  { path: '/dashboard',           label: 'Common Ground', icon: Compass, end: true, badge: 4 },
-  { path: '/dashboard/network',   label: 'My Network', icon: Users },
-  { path: '/dashboard/digest',    label: 'Weekly Digest', icon: Mail },
-  { path: '/dashboard/settings',  label: 'Settings',   icon: Settings },
+  { path: '/dashboard',           label: 'Today', icon: Compass, end: true },
+  { path: '/dashboard/network',   label: 'Crew', icon: Users },
+  { path: '/dashboard/digest',    label: 'Digest', icon: Mail },
+  { path: '/dashboard/settings',  label: 'You',   icon: Settings },
 ]
 
 export default function AppSidebar({ onAddContact, onImportContacts, onNavigate }) {
@@ -20,8 +20,8 @@ export default function AppSidebar({ onAddContact, onImportContacts, onNavigate 
         display: 'flex',
         flexDirection: 'column',
         height: '100vh',
-        background: '#FCFBF6',
-        borderRight: '1px solid #E6E2D8',
+        background: 'transparent',
+        borderRight: '1px solid rgba(255,255,255,0.08)',
       }}
     >
       {/* Logo */}
@@ -31,18 +31,18 @@ export default function AppSidebar({ onAddContact, onImportContacts, onNavigate 
           alignItems: 'center',
           gap: '10px',
           padding: '20px',
-          borderBottom: '1px solid #E6E2D8',
+          borderBottom: '1px solid rgba(255,255,255,0.08)',
           cursor: 'pointer',
         }}
         onClick={() => navigate('/dashboard')}
       >
-        <AnchorMark size={16} color="#A97E2F" style={{ flexShrink: 0 }} />
+        <AnchorMark size={16} color="#D3A95C" style={{ flexShrink: 0 }} />
         <span style={{
-          fontFamily: '"Fraunces", Georgia, serif',
+          fontFamily: '"Lora", Georgia, serif',
           fontSize: '20px',
           fontWeight: 600,
           letterSpacing: '0.01em',
-          color: '#1C2B33',
+          color: '#F5F4EF',
         }}>
           Harbored
         </span>
@@ -67,14 +67,14 @@ export default function AppSidebar({ onAddContact, onImportContacts, onNavigate 
               fontFamily: 'Inter, system-ui, sans-serif',
               textDecoration: 'none',
               transition: 'all 0.15s ease',
-              color: isActive ? '#0D5C63' : '#5C6B73',
-              background: isActive ? 'rgba(13,92,99,0.08)' : 'transparent',
-              borderLeft: isActive ? '2px solid #0D5C63' : '2px solid transparent',
+              color: isActive ? '#D3A95C' : '#8C9AAD',
+              background: isActive ? 'rgba(211,169,92,0.08)' : 'transparent',
+              borderLeft: isActive ? '2px solid #D3A95C' : '2px solid transparent',
             })}
           >
             {({ isActive }) => (
               <>
-                <Icon style={{ width: '15px', height: '15px', flexShrink: 0, color: isActive ? '#0D5C63' : '#5C6B73' }} />
+                <Icon style={{ width: '15px', height: '15px', flexShrink: 0, color: isActive ? '#D3A95C' : '#8C9AAD' }} />
                 <span style={{ flex: 1 }}>{label}</span>
                 {badge && !isActive && (
                   <span style={{
@@ -82,8 +82,8 @@ export default function AppSidebar({ onAddContact, onImportContacts, onNavigate 
                     fontWeight: 600,
                     padding: '2px 6px',
                     borderRadius: '20px',
-                    background: 'rgba(13,92,99,0.15)',
-                    color: '#0D5C63',
+                    background: 'rgba(211,169,92,0.15)',
+                    color: '#D3A95C',
                   }}>
                     {badge}
                   </span>
@@ -101,11 +101,11 @@ export default function AppSidebar({ onAddContact, onImportContacts, onNavigate 
           style={{
             width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
             padding: '9px 12px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
-            background: '#0D5C63', color: '#FFFFFF', border: 'none', cursor: 'pointer',
+            background: '#D3A95C', color: '#0a1628', border: 'none', cursor: 'pointer',
             fontFamily: 'Inter, sans-serif', transition: 'background 0.15s',
           }}
-          onMouseEnter={e => e.currentTarget.style.background = '#09454B'}
-          onMouseLeave={e => e.currentTarget.style.background = '#0D5C63'}
+          onMouseEnter={e => e.currentTarget.style.background = '#C29245'}
+          onMouseLeave={e => e.currentTarget.style.background = '#D3A95C'}
         >
           <Upload style={{ width: '14px', height: '14px' }} /> Import Contacts
         </button>
@@ -114,7 +114,7 @@ export default function AppSidebar({ onAddContact, onImportContacts, onNavigate 
           style={{
             width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
             padding: '9px 12px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
-            background: 'none', color: '#0D5C63', border: '1px solid rgba(13,92,99,0.25)', cursor: 'pointer',
+            background: 'none', color: '#D3A95C', border: '1px solid rgba(211,169,92,0.25)', cursor: 'pointer',
             fontFamily: 'Inter, sans-serif',
           }}
         >
@@ -123,26 +123,26 @@ export default function AppSidebar({ onAddContact, onImportContacts, onNavigate 
       </div>
 
       {/* User */}
-      <div style={{ padding: '16px', borderTop: '1px solid #E6E2D8' }}>
+      <div style={{ padding: '16px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
             <div style={{
               width: '32px', height: '32px', borderRadius: '50%',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: '11px', fontWeight: 600, flexShrink: 0,
-              background: 'rgba(13,92,99,0.15)', color: '#0D5C63',
+              background: 'rgba(211,169,92,0.15)', color: '#D3A95C',
             }}>LC</div>
             <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: '13px', fontWeight: 500, color: '#1C2B33', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <div style={{ fontSize: '13px', fontWeight: 500, color: '#F5F4EF', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 Liam Carney
               </div>
-              <div style={{ fontSize: '11px', color: '#5C6B73', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <div style={{ fontSize: '11px', color: '#8C9AAD', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 harboredsupport@gmail.com
               </div>
             </div>
           </div>
           <Settings2
-            style={{ width: '14px', height: '14px', color: '#5C6B73', cursor: 'pointer', flexShrink: 0, marginLeft: '8px' }}
+            style={{ width: '14px', height: '14px', color: '#8C9AAD', cursor: 'pointer', flexShrink: 0, marginLeft: '8px' }}
             onClick={() => navigate('/dashboard/settings')}
           />
         </div>

@@ -39,7 +39,7 @@ export default function Network({ onAddContact, onImportContacts }) {
     <div style={{ width: '100%', maxWidth: '520px', alignSelf: 'center', padding: '18px 24px 32px' }}>
 
       <h1 className="hb-display" style={{ fontSize: '30px', fontWeight: 500, color: INK, lineHeight: 1.1 }}>
-        People
+        Your crew
       </h1>
       <p style={{ fontSize: '13px', color: MUTED, marginTop: '8px' }}>
         {contacts.length} watched{withNews > 0 ? ` · ${withNews} need${withNews === 1 ? 's' : ''} attention` : ''}

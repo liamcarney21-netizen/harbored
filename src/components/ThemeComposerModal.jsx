@@ -10,9 +10,9 @@ import ThemeSpecificityHint from './ThemeSpecificityHint'
 // imported — so people start monitored instead of empty. Steps through one or
 // many new contacts. Category colors mirror CommonGround's categoryConfig.
 const CATEGORIES = [
-  { key: 'sports',   label: 'Sports',   color: '#2E7D5B', bg: 'rgba(46,125,91,0.08)' },
-  { key: 'place',    label: 'Place',    color: '#0D5C63', bg: 'rgba(13,92,99,0.08)' },
-  { key: 'market',   label: 'Market',   color: '#A97E2F', bg: 'rgba(169,126,47,0.08)' },
+  { key: 'sports',   label: 'Sports',   color: '#8FC7A2', bg: 'rgba(143,199,162,0.08)' },
+  { key: 'place',    label: 'Place',    color: '#D3A95C', bg: 'rgba(211,169,92,0.08)' },
+  { key: 'market',   label: 'Market',   color: '#D3A95C', bg: 'rgba(169,126,47,0.08)' },
   { key: 'hobby',    label: 'Hobby',    color: '#6E5A8E', bg: 'rgba(110,90,142,0.08)' },
   { key: 'industry', label: 'Industry', color: '#A65B33', bg: 'rgba(166,91,51,0.08)' },
 ]
@@ -89,7 +89,7 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
         <>
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            style={{ position: 'fixed', inset: 0, zIndex: 70, background: 'rgba(29,34,38,0.5)', backdropFilter: 'blur(3px)' }}
+            style={{ position: 'fixed', inset: 0, zIndex: 70, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(3px)' }}
           />
           <div style={{
             position: 'fixed', inset: 0, zIndex: 71, display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -102,29 +102,29 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
               style={{
                 pointerEvents: 'auto',
                 width: 'min(480px, 100%)', maxHeight: '100%', overflowY: 'auto',
-                background: '#FFFFFF', borderRadius: '16px',
+                background: '#0f2040', borderRadius: '16px',
                 boxShadow: '0 14px 44px -8px rgba(28,43,51,0.24), 0 3px 10px rgba(28,43,51,0.10)',
                 fontFamily: 'Inter, sans-serif',
               }}
             >
               {/* Header */}
-              <div style={{ padding: '22px 24px 18px', borderBottom: '1px solid #EEEBE3' }}>
+              <div style={{ padding: '22px 24px 18px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
                   {total > 1
-                    ? <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#5C6B73' }}>Contact {index + 1} of {total}</span>
+                    ? <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#8C9AAD' }}>Contact {index + 1} of {total}</span>
                     : <span />}
-                  <button onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#5C6B73', padding: 4 }}>
+                  <button onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8C9AAD', padding: 4 }}>
                     <X style={{ width: 16, height: 16 }} />
                   </button>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   <Avatar initials={current.initials} color={current.color} size="md" />
                   <div style={{ minWidth: 0 }}>
-                    <div style={{ fontFamily: '"Fraunces", Georgia, serif', fontSize: 19, fontWeight: 600, color: '#1C2B33', lineHeight: 1.15 }}>
+                    <div style={{ fontFamily: '"Lora", Georgia, serif', fontSize: 19, fontWeight: 600, color: '#F5F4EF', lineHeight: 1.15 }}>
                       What do you share with {current.name.split(' ')[0]}?
                     </div>
                     {(current.role || current.company) && (
-                      <div style={{ fontSize: 12.5, color: '#5C6B73', marginTop: 2 }}>
+                      <div style={{ fontSize: 12.5, color: '#8C9AAD', marginTop: 2 }}>
                         {[current.role, current.company].filter(Boolean).join(' · ')}
                       </div>
                     )}
@@ -134,7 +134,7 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
 
               {/* Body */}
               <div style={{ padding: '18px 24px 22px' }}>
-                <p style={{ fontSize: 13, color: '#5C6B73', lineHeight: 1.55, margin: '0 0 16px' }}>
+                <p style={{ fontSize: 13, color: '#8C9AAD', lineHeight: 1.55, margin: '0 0 16px' }}>
                   Teams, cities, markets, hobbies. Harbored watches these and tells you the moment
                   there's a real reason to reach out — so name the <em>specific</em> thing: the
                   company, the team, the place.
@@ -155,7 +155,7 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
                               <X style={{ width: 13, height: 13 }} />
                             </button>
                           </div>
-                          <div style={{ fontSize: 12, color: '#5C6B73', marginTop: 3, lineHeight: 1.45, fontStyle: t.refining ? 'italic' : 'normal' }}>
+                          <div style={{ fontSize: 12, color: '#8C9AAD', marginTop: 3, lineHeight: 1.45, fontStyle: t.refining ? 'italic' : 'normal' }}>
                             {t.refining ? 'Working out what to watch…' : (t.display || "We'll watch this for significant news.")}
                           </div>
                         </div>
@@ -175,13 +175,13 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
                     placeholder="e.g. Villanova Basketball"
                     aria-label="Shared theme"
                     style={{
-                      flex: 1, minWidth: 0, fontSize: 16, color: '#1C2B33', fontFamily: 'Inter, sans-serif',
-                      padding: '10px 12px', borderRadius: 8, border: '1px solid #D6D1C5', outline: 'none', background: '#FFFFFF',
+                      flex: 1, minWidth: 0, fontSize: 16, color: '#F5F4EF', fontFamily: 'Inter, sans-serif',
+                      padding: '10px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.2)', outline: 'none', background: '#0f2040',
                     }}
                   />
                   <button onClick={addChip} aria-label="Add theme" style={{
                     flexShrink: 0, padding: '0 14px', borderRadius: 8, border: 'none', cursor: 'pointer',
-                    background: 'rgba(13,92,99,0.1)', color: '#0D5C63', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: 'rgba(211,169,92,0.1)', color: '#D3A95C', display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}>
                     <Plus style={{ width: 16, height: 16 }} />
                   </button>
@@ -197,7 +197,7 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
                       <button key={c.key} onClick={() => setCategory(c.key)} style={{
                         padding: '5px 12px', borderRadius: 20, fontSize: 12.5, fontWeight: 500, cursor: 'pointer',
                         fontFamily: 'Inter, sans-serif',
-                        background: on ? c.bg : 'transparent', color: on ? c.color : '#5C6B73',
+                        background: on ? c.bg : 'transparent', color: on ? c.color : '#8C9AAD',
                         border: `1px solid ${on ? c.color + '55' : '#DEDACF'}`,
                       }}>
                         {c.label}
@@ -208,15 +208,15 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
               </div>
 
               {/* Footer */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '16px 24px', borderTop: '1px solid #EEEBE3' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '16px 24px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
                 <button onClick={handleSkip}
-                  style={{ padding: '10px 8px', background: 'none', border: 'none', color: '#5C6B73', fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
+                  style={{ padding: '10px 8px', background: 'none', border: 'none', color: '#8C9AAD', fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
                   {total > 1 ? 'Skip this contact' : 'Skip for now'}
                 </button>
                 <button onClick={handleSaveNext}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 7, padding: '10px 20px', borderRadius: 8,
-                    fontSize: 13, fontWeight: 600, background: '#0D5C63', color: '#FFFFFF', border: 'none',
+                    fontSize: 13, fontWeight: 600, background: '#D3A95C', color: '#0a1628', border: 'none',
                     cursor: 'pointer', fontFamily: 'Inter, sans-serif',
                   }}>
                   {isLast ? <Check style={{ width: 14, height: 14 }} /> : null}

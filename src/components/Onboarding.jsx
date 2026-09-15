@@ -46,8 +46,8 @@ function ThemesVisual() {
           transition={{ delay: 0.3 + i * 0.15, duration: 0.3 }}
           style={{
             padding: '6px 14px', borderRadius: '20px', fontSize: '12px', fontWeight: 600,
-            background: 'rgba(13,92,99,0.08)', color: '#0D5C63',
-            border: '1px solid rgba(13,92,99,0.2)', fontFamily: 'Inter, sans-serif',
+            background: 'rgba(211,169,92,0.08)', color: '#D3A95C',
+            border: '1px solid rgba(211,169,92,0.2)', fontFamily: 'Inter, sans-serif',
           }}
         >
           {c}
@@ -61,26 +61,26 @@ function GaugeVisual() {
   return (
     <div style={{ maxWidth: '300px', margin: '0 auto', width: '100%' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-        <span style={{ fontSize: '11px', color: '#5C6B73', fontFamily: 'Inter, sans-serif' }}>Significance</span>
+        <span style={{ fontSize: '11px', color: '#8C9AAD', fontFamily: 'Inter, sans-serif' }}>Significance</span>
         <motion.span
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.1 }}
-          style={{ fontSize: '13px', fontWeight: 700, color: '#0D5C63', fontFamily: 'Inter, sans-serif' }}
+          style={{ fontSize: '13px', fontWeight: 700, color: '#D3A95C', fontFamily: 'Inter, sans-serif' }}
         >
           92 — worth reaching out
         </motion.span>
       </div>
-      <div style={{ position: 'relative', height: '6px', borderRadius: '3px', background: '#E5E1D7' }}>
+      <div style={{ position: 'relative', height: '6px', borderRadius: '3px', background: 'rgba(255,255,255,0.12)' }}>
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: '92%' }}
           transition={{ delay: 0.4, duration: 0.8, ease: 'easeOut' }}
-          style={{ height: '100%', borderRadius: '3px', background: 'linear-gradient(90deg, #0D5C63 55%, #A97E2F)' }}
+          style={{ height: '100%', borderRadius: '3px', background: 'linear-gradient(90deg, #D3A95C 55%, #D3A95C)' }}
         />
         <div style={{ position: 'absolute', left: '70%', top: '-4px', width: '2px', height: '14px', background: 'rgba(29,34,38,0.4)', borderRadius: '1px' }} />
       </div>
-      <div style={{ fontSize: '11px', color: '#5C6B73', marginTop: '6px', textAlign: 'left', fontFamily: 'Inter, sans-serif' }}>
+      <div style={{ fontSize: '11px', color: '#8C9AAD', marginTop: '6px', textAlign: 'left', fontFamily: 'Inter, sans-serif' }}>
         Reach-out threshold: 70
       </div>
     </div>
@@ -110,20 +110,20 @@ export default function Onboarding({ onFinish }) {
         transition={{ duration: 0.35, ease: 'easeOut' }}
         style={{
           width: '100%', maxWidth: '560px', borderRadius: '16px',
-          background: '#FFFFFF', boxShadow: '0 14px 44px -8px rgba(28,43,51,0.24), 0 3px 10px rgba(28,43,51,0.10)',
+          background: '#0f2040', boxShadow: '0 14px 44px -8px rgba(28,43,51,0.24), 0 3px 10px rgba(28,43,51,0.10)',
           display: 'flex', flexDirection: 'column', overflow: 'hidden',
           fontFamily: 'Inter, sans-serif',
         }}
       >
         {/* Top bar */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderBottom: '1px solid #EEEBE3' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <AnchorMark size={14} color="#0D5C63" />
-            <span style={{ fontFamily: '"Fraunces", Georgia, serif', fontSize: '16px', fontWeight: 600, color: '#1C2B33' }}>Harbored</span>
+            <AnchorMark size={14} color="#D3A95C" />
+            <span style={{ fontFamily: '"Lora", Georgia, serif', fontSize: '16px', fontWeight: 600, color: '#F5F4EF' }}>Harbored</span>
           </div>
           <button
             onClick={onFinish}
-            style={{ fontSize: '12px', fontWeight: 500, color: '#5C6B73', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}
+            style={{ fontSize: '12px', fontWeight: 500, color: '#8C9AAD', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}
           >
             Skip tour
           </button>
@@ -143,17 +143,17 @@ export default function Onboarding({ onFinish }) {
               <div style={{
                 width: '56px', height: '56px', borderRadius: '50%',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: 'rgba(13,92,99,0.08)', marginBottom: '20px',
+                background: 'rgba(211,169,92,0.08)', marginBottom: '20px',
               }}>
-                <Icon style={{ width: '26px', height: '26px', color: '#0D5C63' }} />
+                <Icon style={{ width: '26px', height: '26px', color: '#D3A95C' }} />
               </div>
-              <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 600, color: '#0D5C63', marginBottom: '10px' }}>
+              <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 600, color: '#D3A95C', marginBottom: '10px' }}>
                 {current.kicker}
               </div>
-              <h2 style={{ fontFamily: '"Fraunces", Georgia, serif', fontSize: '24px', fontWeight: 600, color: '#1C2B33', marginBottom: '14px', lineHeight: 1.3 }}>
+              <h2 style={{ fontFamily: '"Lora", Georgia, serif', fontSize: '24px', fontWeight: 600, color: '#F5F4EF', marginBottom: '14px', lineHeight: 1.3 }}>
                 {current.title}
               </h2>
-              <p style={{ fontSize: '14px', lineHeight: 1.65, color: '#5C6B73', maxWidth: '440px', marginBottom: current.visual ? '24px' : 0 }}>
+              <p style={{ fontSize: '14px', lineHeight: 1.65, color: '#8C9AAD', maxWidth: '440px', marginBottom: current.visual ? '24px' : 0 }}>
                 {current.body}
               </p>
               {current.visual === 'themes' && <ThemesVisual />}
@@ -163,7 +163,7 @@ export default function Onboarding({ onFinish }) {
         </div>
 
         {/* Footer */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderTop: '1px solid #EEEBE3' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
           <button
             onClick={() => setStep(s => Math.max(0, s - 1))}
             disabled={step === 0}
@@ -171,8 +171,8 @@ export default function Onboarding({ onFinish }) {
             style={{
               display: 'flex', alignItems: 'center', gap: '6px',
               padding: '9px 16px', borderRadius: '8px', fontSize: '13px', fontWeight: 500,
-              background: 'none', border: '1px solid #DEDACF', cursor: step === 0 ? 'default' : 'pointer',
-              color: step === 0 ? '#C6C0B3' : '#3E4B52', fontFamily: 'Inter, sans-serif',
+              background: 'none', border: '1px solid rgba(255,255,255,0.15)', cursor: step === 0 ? 'default' : 'pointer',
+              color: step === 0 ? '#C6C0B3' : '#C2CBD8', fontFamily: 'Inter, sans-serif',
               opacity: step === 0 ? 0.6 : 1, transition: 'all 0.15s',
             }}
           >
@@ -188,7 +188,7 @@ export default function Onboarding({ onFinish }) {
                 aria-label={`Go to step ${i + 1}`}
                 style={{
                   width: i === step ? '20px' : '7px', height: '7px', borderRadius: '4px',
-                  background: i === step ? '#0D5C63' : i < step ? 'rgba(13,92,99,0.4)' : '#DEDACF',
+                  background: i === step ? '#D3A95C' : i < step ? 'rgba(211,169,92,0.4)' : '#DEDACF',
                   border: 'none', cursor: 'pointer', padding: 0, transition: 'all 0.25s ease',
                 }}
               />
@@ -200,11 +200,11 @@ export default function Onboarding({ onFinish }) {
             style={{
               display: 'flex', alignItems: 'center', gap: '6px',
               padding: '9px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
-              background: '#0D5C63', color: '#FFFFFF', border: 'none', cursor: 'pointer',
+              background: '#D3A95C', color: '#0a1628', border: 'none', cursor: 'pointer',
               fontFamily: 'Inter, sans-serif', transition: 'background 0.15s',
             }}
-            onMouseEnter={e => e.currentTarget.style.background = '#09454B'}
-            onMouseLeave={e => e.currentTarget.style.background = '#0D5C63'}
+            onMouseEnter={e => e.currentTarget.style.background = '#C29245'}
+            onMouseLeave={e => e.currentTarget.style.background = '#D3A95C'}
           >
             {isLast ? (
               <>Bring in your people <Check style={{ width: '13px', height: '13px' }} /></>

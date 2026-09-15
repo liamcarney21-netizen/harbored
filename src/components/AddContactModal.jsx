@@ -5,12 +5,12 @@ import { useDataStore } from '../store/dataStore'
 
 const inputStyle = {
   width: '100%', padding: '10px 14px', borderRadius: '8px', fontSize: '13px', outline: 'none',
-  background: '#FFFFFF', border: '1px solid #CCC6B9', color: '#1C2B33',
+  background: '#0f2040', border: '1px solid rgba(255,255,255,0.2)', color: '#F5F4EF',
   fontFamily: 'Inter, sans-serif', boxSizing: 'border-box', transition: 'border-color 0.15s',
 }
 const labelStyle = {
   display: 'block', fontSize: '12px', fontWeight: 600, marginBottom: '6px',
-  color: '#3E4B52', fontFamily: 'Inter, sans-serif',
+  color: '#C2CBD8', fontFamily: 'Inter, sans-serif',
 }
 
 export default function AddContactModal({ open, onClose, onCreated, firstRun = false }) {
@@ -39,7 +39,7 @@ export default function AddContactModal({ open, onClose, onCreated, firstRun = f
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={() => onClose(false)}
-            style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(29,34,38,0.5)', backdropFilter: 'blur(3px)' }}
+            style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(3px)' }}
           />
           <div style={{
             position: 'fixed', inset: 0, zIndex: 61, display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -51,26 +51,26 @@ export default function AddContactModal({ open, onClose, onCreated, firstRun = f
             style={{
               pointerEvents: 'auto',
               width: 'min(520px, 100%)', maxHeight: '100%', overflowY: 'auto',
-              background: '#FFFFFF', borderRadius: '16px', boxShadow: '0 14px 44px -8px rgba(28,43,51,0.24), 0 3px 10px rgba(28,43,51,0.10)',
+              background: '#0f2040', borderRadius: '16px', boxShadow: '0 14px 44px -8px rgba(28,43,51,0.24), 0 3px 10px rgba(28,43,51,0.10)',
               fontFamily: 'Inter, sans-serif',
             }}
           >
             {/* Header */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid #EEEBE3' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div style={{ width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(13,92,99,0.08)' }}>
-                  <UserPlus style={{ width: '15px', height: '15px', color: '#0D5C63' }} />
+                <div style={{ width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(211,169,92,0.08)' }}>
+                  <UserPlus style={{ width: '15px', height: '15px', color: '#D3A95C' }} />
                 </div>
                 <div>
-                  <div style={{ fontSize: '15px', fontWeight: 700, color: '#1C2B33' }}>
+                  <div style={{ fontSize: '15px', fontWeight: 700, color: '#F5F4EF' }}>
                     {firstRun ? 'Add your first contact' : 'Add someone new'}
                   </div>
-                  <div style={{ fontSize: '12px', color: '#5C6B73' }}>
+                  <div style={{ fontSize: '12px', color: '#8C9AAD' }}>
                     {firstRun ? 'Pick someone worth staying close to — then add what you have in common.' : 'Harbored watches their world so you don\'t have to.'}
                   </div>
                 </div>
               </div>
-              <button onClick={() => onClose(false)} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#5C6B73', padding: '4px' }}>
+              <button onClick={() => onClose(false)} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8C9AAD', padding: '4px' }}>
                 <X style={{ width: '16px', height: '16px' }} />
               </button>
             </div>
@@ -91,27 +91,27 @@ export default function AddContactModal({ open, onClose, onCreated, firstRun = f
                   <input id="ac-company" style={inputStyle} placeholder="Morgan Stanley" value={form.company} onChange={e => update('company', e.target.value)} />
                 </div>
                 <div>
-                  <label htmlFor="ac-email" style={labelStyle}>Email <span style={{ fontWeight: 400, color: '#5C6B73' }}>(so you can reach out in one click)</span></label>
+                  <label htmlFor="ac-email" style={labelStyle}>Email <span style={{ fontWeight: 400, color: '#8C9AAD' }}>(so you can reach out in one click)</span></label>
                   <input id="ac-email" type="email" style={inputStyle} placeholder="john@example.com" value={form.email} onChange={e => update('email', e.target.value)} />
                 </div>
                 <div>
-                  <label htmlFor="ac-birthday" style={labelStyle}>Birthday <span style={{ fontWeight: 400, color: '#5C6B73' }}>(optional)</span></label>
+                  <label htmlFor="ac-birthday" style={labelStyle}>Birthday <span style={{ fontWeight: 400, color: '#8C9AAD' }}>(optional)</span></label>
                   <input id="ac-birthday" type="date" style={inputStyle} value={form.birthday} onChange={e => update('birthday', e.target.value)} />
                 </div>
               </div>
             </div>
 
             {/* Footer */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', padding: '16px 24px', borderTop: '1px solid #EEEBE3' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', padding: '16px 24px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
               <button onClick={() => onClose(false)}
-                style={{ padding: '10px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 500, background: 'none', border: '1px solid #DEDACF', color: '#3E4B52', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
+                style={{ padding: '10px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 500, background: 'none', border: '1px solid rgba(255,255,255,0.15)', color: '#C2CBD8', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
                 Cancel
               </button>
               <button onClick={handleSave} disabled={!canSave}
                 style={{
                   display: 'flex', alignItems: 'center', gap: '6px',
                   padding: '10px 20px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
-                  background: canSave ? '#0D5C63' : '#C6C0B3', color: '#FFFFFF', border: 'none',
+                  background: canSave ? '#D3A95C' : '#C6C0B3', color: '#0a1628', border: 'none',
                   cursor: canSave ? 'pointer' : 'default', fontFamily: 'Inter, sans-serif', transition: 'background 0.15s',
                 }}>
                 <Check style={{ width: '13px', height: '13px' }} />

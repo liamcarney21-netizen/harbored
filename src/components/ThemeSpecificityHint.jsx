@@ -16,7 +16,7 @@ export function looksGeneric(label) {
 export default function ThemeSpecificityHint({ label, style }) {
   if (!looksGeneric(label)) return null
   return (
-    <p style={{ fontSize: 12, color: '#A97E2F', lineHeight: 1.5, margin: '8px 0 0', ...style }}>
+    <p style={{ fontSize: 12, color: '#D3A95C', lineHeight: 1.5, margin: '8px 0 0', ...style }}>
       Sounds broad — Harbored watches specifics best. Try naming it:
       "Sunny Benefits" instead of "fintech startup", "Pickleball in Charleston" instead of "pickleball".
     </p>

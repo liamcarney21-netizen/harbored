@@ -1,281 +1,175 @@
 import { useState } from 'react'
-import { motion } from 'framer-motion'
-import { User, Bell, Link2, Zap, Trash2, Check, Compass, Database } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { useDataStore } from '../../store/dataStore'
+import { useAuthStore } from '../../store/authStore'
+import { useDemoStore } from '../../store/demoStore'
+import WarmAvatar from '../../components/WarmAvatar'
 
-const fadeUp = { initial: { opacity: 0, y: 10 }, animate: { opacity: 1, y: 0 } }
-const stagger = { animate: { transition: { staggerChildren: 0.06 } } }
+const INK = '#F5F4EF'
+const MUTED = '#8C9AAD'
+const ACCENT = '#D3A95C'
+const CARD = '#0f2040'
+const HAIRLINE = 'rgba(255,255,255,0.08)'
 
-function SectionHeader({ icon: Icon, title }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px', borderBottom: '1px solid #E6E2D8', paddingBottom: '12px' }}>
-      <div style={{ width: '28px', height: '28px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(13,92,99,0.1)' }}>
-        <Icon style={{ width: '14px', height: '14px', color: '#0D5C63' }} />
-      </div>
-      <h2 style={{ fontSize: '14px', fontWeight: 600, color: '#1C2B33', fontFamily: 'Inter, sans-serif' }}>{title}</h2>
-    </div>
-  )
-}
-
-function Toggle({ checked, onChange }) {
+function Toggle({ checked, onChange, label }) {
   return (
     <button
+      className="hb-press"
       onClick={() => onChange(!checked)}
+      aria-label={label}
+      aria-pressed={checked}
       style={{
-        position: 'relative', width: '40px', height: '22px', borderRadius: '11px',
+        position: 'relative', width: '44px', height: '26px', borderRadius: '13px',
         border: 'none', cursor: 'pointer', flexShrink: 0, transition: 'background 0.2s',
-        background: checked ? '#0D5C63' : '#C6C0B3',
+        background: checked ? ACCENT : 'rgba(255,255,255,0.15)',
       }}
     >
       <span style={{
-        position: 'absolute', width: '18px', height: '18px', borderRadius: '50%',
-        background: '#fff', top: '2px', transition: 'left 0.2s',
-        left: checked ? '20px' : '2px',
+        position: 'absolute', width: '20px', height: '20px', borderRadius: '50%',
+        background: '#0a1628', top: '3px', transition: 'left 0.2s',
+        left: checked ? '21px' : '3px',
       }} />
     </button>
   )
 }
 
-function InputField({ label, value, onChange, type = 'text', placeholder }) {
+// A row that never crams: label + optional sub stacked on the left (free to
+// wrap), one fixed-width control on the right.
+function Row({ title, sub, control, last = false }) {
   return (
-    <div>
-      <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, marginBottom: '6px', color: '#5C6B73', fontFamily: 'Inter, sans-serif' }}>{label}</label>
-      <input
-        type={type}
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        placeholder={placeholder}
-        style={{
-          width: '100%', padding: '10px 14px', borderRadius: '10px', fontSize: '13px', outline: 'none',
-          background: '#F2F0EA', border: '1px solid #DEDACF',
-          color: '#1C2B33', fontFamily: 'Inter, sans-serif', boxSizing: 'border-box', transition: 'border-color 0.15s',
-        }}
-        onFocus={e => e.target.style.borderColor = 'rgba(13,92,99,0.4)'}
-        onBlur={e => e.target.style.borderColor = '#DEDACF'}
-      />
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: '16px', padding: '16px 18px',
+      minHeight: '44px', borderBottom: last ? 'none' : `1px solid ${HAIRLINE}`,
+    }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: '15px', fontWeight: 500, color: INK }}>{title}</div>
+        {sub && <div style={{ fontSize: '12px', color: MUTED, marginTop: '3px', lineHeight: 1.5 }}>{sub}</div>}
+      </div>
+      <div style={{ flexShrink: 0 }}>{control}</div>
     </div>
   )
 }
 
-const NOTIFICATIONS = [
-  { key: 'email',    label: 'Email',           placeholder: 'your@email.com',    field: 'Email address' },
-  { key: 'sms',      label: 'SMS',             placeholder: '+1 (555) 000-0000', field: 'Phone number' },
-  { key: 'slack',    label: 'Slack',           placeholder: '@yourhandle',        field: 'Slack handle' },
-  { key: 'whatsapp', label: 'WhatsApp',        placeholder: '+1 (555) 000-0000', field: 'Phone number' },
-  { key: 'teams',    label: 'Microsoft Teams', placeholder: 'teams@email.com',   field: 'Teams email' },
-]
-
-const PLATFORMS = [
-  { key: 'linkedin',  label: 'LinkedIn',  connected: true  },
-  { key: 'instagram', label: 'Instagram', connected: true  },
-  { key: 'x',         label: 'X',         connected: false },
-  { key: 'tiktok',    label: 'TikTok',    connected: false },
-  { key: 'gmail',     label: 'Gmail',     connected: true  },
-  { key: 'outlook',   label: 'Outlook',   connected: false },
-]
+function GhostButton({ children, onClick, tone = 'default' }) {
+  const color = tone === 'danger' ? '#E8867A' : INK
+  return (
+    <button
+      className="hb-press"
+      onClick={onClick}
+      style={{
+        padding: '9px 16px', borderRadius: '12px', fontSize: '13px', fontWeight: 600,
+        background: 'none', color, border: `1px solid ${tone === 'danger' ? 'rgba(232,134,122,0.35)' : 'rgba(255,255,255,0.2)'}`,
+        cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap',
+      }}
+    >
+      {children}
+    </button>
+  )
+}
 
 export default function Settings() {
+  const navigate = useNavigate()
   const contacts = useDataStore(s => s.contacts)
   const clearSampleData = useDataStore(s => s.clearSampleData)
   const restoreSampleData = useDataStore(s => s.restoreSampleData)
+  const user = useAuthStore(s => s.user)
+  const logout = useAuthStore(s => s.logout)
+  const demoActive = useDemoStore(s => s.active)
   const sampleCount = contacts.filter(c => c.seed).length
-  const [profile, setProfile] = useState({ name: 'Liam Carney', email: 'harboredsupport@gmail.com', timezone: 'America/Chicago' })
-  const [notifToggles, setNotifToggles] = useState({ email: true, sms: true, slack: false, whatsapp: false, teams: false })
-  const [notifValues, setNotifValues] = useState({ email: 'harboredsupport@gmail.com', sms: '', slack: '', whatsapp: '', teams: '' })
-  const [connectedPlatforms, setConnectedPlatforms] = useState(Object.fromEntries(PLATFORMS.map(p => [p.key, p.connected])))
-  const [saved, setSaved] = useState(false)
+  const [pushOn, setPushOn] = useState(true)
+  const [digestOn, setDigestOn] = useState(true)
 
-  function handleSave() {
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
+  const email = user?.email || (demoActive ? 'demo@harbored.app' : '')
+  const initials = (email[0] || 'H').toUpperCase()
+
+  async function handleSignOut() {
+    if (demoActive) { navigate('/'); return }
+    await logout()
+    navigate('/login')
   }
 
   return (
-    <motion.div
-      style={{ minHeight: '100%', padding: 'clamp(20px, 4vw, 40px)', fontFamily: 'Inter, sans-serif' }}
-      initial="initial"
-      animate="animate"
-      variants={stagger}
-    >
-      {/* Header */}
-      <motion.div variants={fadeUp} style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '32px' }}>
-        <div>
-          <h1 style={{ fontFamily: '"Fraunces", Georgia, serif', fontSize: '27px', fontWeight: 600, color: '#1C2B33', marginBottom: '4px' }}>
-            Settings
-          </h1>
-          <p style={{ fontSize: '13px', color: '#5C6B73' }}>Manage your account and preferences</p>
+    <div style={{ width: '100%', maxWidth: '520px', alignSelf: 'center', padding: '18px 24px 32px' }}>
+
+      <h1 className="hb-display" style={{ fontSize: '30px', fontWeight: 500, color: INK, lineHeight: 1.1 }}>
+        You
+      </h1>
+      <p style={{ fontSize: '13px', color: MUTED, marginTop: '8px' }}>
+        Account, notifications, and your data
+      </p>
+
+      {/* Account */}
+      <div style={{ background: CARD, border: `1px solid ${HAIRLINE}`, borderRadius: '16px', marginTop: '22px', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '18px' }}>
+          <WarmAvatar initials={initials} size="lg" />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: '15px', fontWeight: 600, color: INK, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {demoActive ? 'Demo account' : (email || 'Signed in')}
+            </div>
+            <div style={{ fontSize: '12px', color: MUTED, marginTop: '3px' }}>
+              {contacts.length} people &middot; watched quietly
+            </div>
+          </div>
         </div>
-        <button
-          onClick={handleSave}
-          style={{
-            display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 18px',
-            borderRadius: '8px', fontSize: '13px', fontWeight: 600, border: 'none', cursor: 'pointer', transition: 'all 0.2s',
-            background: saved ? 'rgba(46,125,91,0.15)' : '#0D5C63',
-            color: saved ? '#2E7D5B' : '#FFFFFF',
-          }}
-        >
-          {saved ? <><Check style={{ width: '14px', height: '14px' }} /> Saved</> : 'Save Changes'}
-        </button>
-      </motion.div>
-
-      <div style={{ maxWidth: '640px', display: 'flex', flexDirection: 'column', gap: '32px' }}>
-
-        {/* Profile */}
-        <motion.section variants={fadeUp} style={{ borderRadius: '16px', padding: '24px', background: '#FFFFFF', border: '1px solid #E6E2D8' }}>
-          <SectionHeader icon={User} title="Profile" />
-          <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '24px' }}>
-            <div style={{ width: '64px', height: '64px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', fontWeight: 600, background: 'rgba(13,92,99,0.15)', color: '#0D5C63' }}>
-              LC
-            </div>
-            <button style={{ fontSize: '13px', padding: '6px 14px', borderRadius: '8px', border: '1px solid #D6D1C5', color: '#1C2B33', background: 'none', cursor: 'pointer' }}>
-              Change photo
-            </button>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px' }}>
-            <InputField label="Full name" value={profile.name} onChange={v => setProfile(p => ({ ...p, name: v }))} placeholder="Your name" />
-            <InputField label="Email" type="email" value={profile.email} onChange={v => setProfile(p => ({ ...p, email: v }))} placeholder="you@email.com" />
-            <div style={{ gridColumn: '1 / -1' }}>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, marginBottom: '6px', color: '#5C6B73' }}>Timezone</label>
-              <select
-                value={profile.timezone}
-                onChange={e => setProfile(p => ({ ...p, timezone: e.target.value }))}
-                style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', fontSize: '13px', outline: 'none', background: '#F2F0EA', border: '1px solid #DEDACF', color: '#1C2B33', fontFamily: 'Inter, sans-serif' }}
-              >
-                <option value="America/Chicago">America/Chicago (CT)</option>
-                <option value="America/New_York">America/New_York (ET)</option>
-                <option value="America/Los_Angeles">America/Los_Angeles (PT)</option>
-                <option value="America/Denver">America/Denver (MT)</option>
-                <option value="Europe/London">Europe/London (GMT)</option>
-              </select>
-            </div>
-          </div>
-        </motion.section>
-
-        {/* Notification Preferences */}
-        <motion.section variants={fadeUp} style={{ borderRadius: '16px', padding: '24px', background: '#FFFFFF', border: '1px solid #E6E2D8' }}>
-          <SectionHeader icon={Bell} title="Notification Preferences" />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {NOTIFICATIONS.map(n => (
-              <div key={n.key}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-                  <span style={{ fontSize: '13px', fontWeight: 500, color: '#1C2B33' }}>{n.label}</span>
-                  <Toggle checked={notifToggles[n.key]} onChange={v => setNotifToggles(t => ({ ...t, [n.key]: v }))} />
-                </div>
-                {notifToggles[n.key] && (
-                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}>
-                    <InputField
-                      label={n.field}
-                      value={notifValues[n.key]}
-                      onChange={v => setNotifValues(vals => ({ ...vals, [n.key]: v }))}
-                      placeholder={n.placeholder}
-                    />
-                  </motion.div>
-                )}
-                <div style={{ borderBottom: '1px solid #EEEBE3', marginTop: '12px' }} />
-              </div>
-            ))}
-          </div>
-        </motion.section>
-
-        {/* Connected Platforms */}
-        <motion.section variants={fadeUp} style={{ borderRadius: '16px', padding: '24px', background: '#FFFFFF', border: '1px solid #E6E2D8' }}>
-          <SectionHeader icon={Link2} title="Connected Platforms" />
-          <div>
-            {PLATFORMS.map((p, i) => {
-              const connected = connectedPlatforms[p.key]
-              return (
-                <div
-                  key={p.key}
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: i < PLATFORMS.length - 1 ? '1px solid #EEEBE3' : 'none' }}
-                >
-                  <span style={{ fontSize: '13px', fontWeight: 500, color: '#1C2B33' }}>{p.label}</span>
-                  {connected ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontSize: '12px', padding: '4px 10px', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(46,125,91,0.1)', color: '#2E7D5B' }}>
-                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#2E7D5B', display: 'inline-block' }} />
-                        Connected
-                      </span>
-                      <button
-                        onClick={() => setConnectedPlatforms(cp => ({ ...cp, [p.key]: false }))}
-                        style={{ fontSize: '12px', color: '#5C6B73', background: 'none', border: 'none', cursor: 'pointer' }}
-                      >
-                        Disconnect
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => setConnectedPlatforms(cp => ({ ...cp, [p.key]: true }))}
-                      style={{ fontSize: '12px', padding: '6px 14px', borderRadius: '8px', fontWeight: 500, cursor: 'pointer', background: 'rgba(13,92,99,0.12)', color: '#0D5C63', border: '1px solid rgba(13,92,99,0.2)', fontFamily: 'Inter, sans-serif' }}
-                    >
-                      Connect
-                    </button>
-                  )}
-                </div>
-              )
-            })}
-          </div>
-        </motion.section>
-
-        {/* Product Tour */}
-        <motion.section variants={fadeUp} style={{ borderRadius: '16px', padding: '24px', background: '#FFFFFF', border: '1px solid #E6E2D8' }}>
-          <SectionHeader icon={Compass} title="Product Tour" />
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '24px' }}>
-            <p style={{ fontSize: '13px', lineHeight: 1.6, color: '#5C6B73' }}>
-              Replay the welcome walkthrough covering Common Ground and everything else Harbored does for your network.
-            </p>
-            <button
-              onClick={() => { localStorage.removeItem('harbored_onboarded'); window.location.href = '/dashboard' }}
-              style={{ fontSize: '12px', padding: '8px 16px', borderRadius: '8px', fontWeight: 500, cursor: 'pointer', flexShrink: 0, background: 'rgba(13,92,99,0.1)', color: '#0D5C63', border: '1px solid rgba(13,92,99,0.25)', fontFamily: 'Inter, sans-serif' }}
-            >
-              Replay walkthrough
-            </button>
-          </div>
-        </motion.section>
-
-        {/* Sample Data */}
-        <motion.section variants={fadeUp} style={{ borderRadius: '16px', padding: '24px', background: '#FFFFFF', border: '1px solid #E6E2D8' }}>
-          <SectionHeader icon={Database} title="Sample Data" />
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '24px', flexWrap: 'wrap' }}>
-            <p style={{ fontSize: '13px', lineHeight: 1.6, color: '#5C6B73', flex: 1, minWidth: '220px' }}>
-              {sampleCount > 0
-                ? `${sampleCount} sample contacts (and their themes, messages, and meetings) are loaded so you can explore. Clearing them never touches anything you added yourself.`
-                : 'Sample data is cleared. Restore it any time to explore with example contacts.'}
-            </p>
-            {sampleCount > 0 ? (
-              <button
-                onClick={clearSampleData}
-                style={{ fontSize: '12px', padding: '8px 16px', borderRadius: '8px', fontWeight: 500, cursor: 'pointer', flexShrink: 0, background: 'none', color: '#3E4B52', border: '1px solid #CCC6B9', fontFamily: 'Inter, sans-serif' }}
-              >
-                Clear sample data
-              </button>
-            ) : (
-              <button
-                onClick={restoreSampleData}
-                style={{ fontSize: '12px', padding: '8px 16px', borderRadius: '8px', fontWeight: 500, cursor: 'pointer', flexShrink: 0, background: 'rgba(13,92,99,0.1)', color: '#0D5C63', border: '1px solid rgba(13,92,99,0.25)', fontFamily: 'Inter, sans-serif' }}
-              >
-                Restore sample data
-              </button>
-            )}
-          </div>
-        </motion.section>
-
-        {/* Danger Zone */}
-        <motion.section variants={fadeUp} style={{ borderRadius: '16px', padding: '24px', background: 'rgba(180,66,58,0.03)', border: '1px solid rgba(180,66,58,0.1)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px', borderBottom: '1px solid rgba(180,66,58,0.1)', paddingBottom: '12px' }}>
-            <Trash2 style={{ width: '16px', height: '16px', color: '#B4423A' }} />
-            <h2 style={{ fontSize: '14px', fontWeight: 600, color: '#B4423A', fontFamily: 'Inter, sans-serif' }}>Danger Zone</h2>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div>
-              <p style={{ fontSize: '13px', fontWeight: 500, color: '#1C2B33', marginBottom: '4px' }}>Delete Account</p>
-              <p style={{ fontSize: '12px', color: '#5C6B73' }}>Permanently delete your account and all data. This cannot be undone.</p>
-            </div>
-            <button style={{ padding: '8px 16px', borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', marginLeft: '16px', flexShrink: 0, background: 'none', border: '1px solid rgba(180,66,58,0.3)', color: '#B4423A', fontFamily: 'Inter, sans-serif' }}>
-              Delete Account
-            </button>
-          </div>
-        </motion.section>
+        <div style={{ padding: '0 18px 16px' }}>
+          <GhostButton onClick={handleSignOut}>{demoActive ? 'Leave the demo' : 'Sign out'}</GhostButton>
+        </div>
       </div>
-    </motion.div>
+
+      {/* Notifications */}
+      <div style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: MUTED, margin: '24px 0 10px', paddingLeft: '4px' }}>
+        Notifications
+      </div>
+      <div style={{ background: CARD, border: `1px solid ${HAIRLINE}`, borderRadius: '16px', overflow: 'hidden' }}>
+        <Row
+          title="Push notifications"
+          sub="Only when a reason clears the bar — never noise"
+          control={<Toggle checked={pushOn} onChange={setPushOn} label="Push notifications" />}
+        />
+        <Row
+          title="Weekly digest"
+          sub={email ? `Sunday mornings to ${email}` : 'A Sunday-morning summary by email'}
+          control={<Toggle checked={digestOn} onChange={setDigestOn} label="Weekly digest" />}
+          last
+        />
+      </div>
+
+      {/* Your data */}
+      <div style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: MUTED, margin: '24px 0 10px', paddingLeft: '4px' }}>
+        Your data
+      </div>
+      <div style={{ background: CARD, border: `1px solid ${HAIRLINE}`, borderRadius: '16px', overflow: 'hidden' }}>
+        <Row
+          title="Replay the walkthrough"
+          sub="The first-run tour of how Harbored works"
+          control={
+            <GhostButton onClick={() => { localStorage.removeItem('harbored_onboarded'); window.location.href = '/dashboard' }}>
+              Replay
+            </GhostButton>
+          }
+        />
+        <Row
+          title="Sample contacts"
+          sub={sampleCount > 0
+            ? `${sampleCount} examples loaded — clearing them never touches your own people`
+            : 'Cleared — restore any time to explore'}
+          control={sampleCount > 0
+            ? <GhostButton onClick={clearSampleData}>Clear</GhostButton>
+            : <GhostButton onClick={restoreSampleData}>Restore</GhostButton>}
+          last
+        />
+      </div>
+
+      {/* Danger */}
+      <div style={{ background: 'rgba(232,134,122,0.05)', border: '1px solid rgba(232,134,122,0.2)', borderRadius: '16px', marginTop: '24px', overflow: 'hidden' }}>
+        <Row
+          title="Delete account"
+          sub="Removes your account and every piece of data, permanently"
+          control={<GhostButton tone="danger">Delete</GhostButton>}
+          last
+        />
+      </div>
+
+    </div>
   )
 }

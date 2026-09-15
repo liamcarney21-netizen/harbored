@@ -40,22 +40,23 @@ function AsteriskMark({ size = 30, spinning = false }) {
   )
 }
 
-function Pill({ children }) {
-  return (
-    <span style={{
-      display: 'inline-flex', alignItems: 'center', gap: '8px', alignSelf: 'flex-start',
-      background: CARD, border: `1px solid ${HAIRLINE}`, borderRadius: '22px', padding: '8px 14px',
-    }}>
-      <span style={{ width: 7, height: 7, borderRadius: '50%', background: ACCENT }} />
-      <span style={{ fontSize: '12px', fontWeight: 600, color: '#C2CBD8' }}>
-        {children}
-      </span>
-    </span>
-  )
-}
-
 function firstName(name = '') {
   return name.split(' ')[0]
+}
+
+// Newspaper-style headline: keep the tight first clause up top; the clause
+// after an em-dash/colon becomes the deck line under it.
+function splitHeadline(h = '') {
+  const m = h.match(/\s+(?:—|–|\|)\s+|:\s+/)
+  if (m && m.index >= 24) {
+    const rest = h.slice(m.index + m[0].length)
+    return { head: h.slice(0, m.index), rest: rest.charAt(0).toUpperCase() + rest.slice(1) }
+  }
+  return { head: h, rest: '' }
+}
+
+function clip(text = '', n = 130) {
+  return text.length > n ? text.slice(0, n).replace(/\s+\S*$/, '') + '…' : text
 }
 
 export default function CommonGround({ onImportContacts }) {
@@ -86,6 +87,10 @@ export default function CommonGround({ onImportContacts }) {
   const [scanning, setScanning] = useState(false)
   const [scannedAt, setScannedAt] = useState(null)
   const [activeIdx, setActiveIdx] = useState(0)
+  // One-time swipe affordance — gone forever after the first real swipe.
+  const [showSwipeHint, setShowSwipeHint] = useState(() => {
+    try { return localStorage.getItem('harbored_swiped') !== 'true' } catch { return false }
+  })
   const deckRef = useRef(null)
 
   async function scan() {
@@ -193,6 +198,10 @@ export default function CommonGround({ onImportContacts }) {
   function onDeckScroll() {
     const el = deckRef.current
     if (!el || !el.clientWidth) return
+    if (showSwipeHint && el.scrollLeft > 40) {
+      setShowSwipeHint(false)
+      try { localStorage.setItem('harbored_swiped', 'true') } catch { /* private mode */ }
+    }
     setActiveIdx(Math.min(queue.length - 1, Math.max(0, Math.round(el.scrollLeft / el.clientWidth))))
   }
 
@@ -369,52 +378,79 @@ export default function CommonGround({ onImportContacts }) {
       display: 'flex', flexDirection: 'column', overflow: 'hidden',
     }}>
 
-      {/* Segmented progress — one segment per reason */}
+      {/* Progress — segments up to 6 reasons, a single track beyond */}
       {queue.length > 1 && (
-        <div style={{ display: 'flex', gap: '8px', padding: '16px 24px 0', flexShrink: 0 }}>
-          {queue.map((r, i) => (
-            <button
-              key={r.id}
-              className="hb-press"
-              onClick={() => jumpTo(i)}
-              aria-label={`Reason ${i + 1}`}
-              style={{
-                height: '7px', border: 'none', borderRadius: '4px', cursor: 'pointer', padding: 0,
-                flex: i === activeIdx ? 2.2 : 1,
-                background: i === activeIdx ? ACCENT : 'rgba(217,119,87,0.25)',
-                transition: 'flex 0.25s ease, background 0.2s ease',
-              }}
-            />
-          ))}
+        <div style={{ flexShrink: 0, padding: '16px 24px 0' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            {queue.length <= 6 ? (
+              <div style={{ display: 'flex', gap: '8px', flex: 1 }}>
+                {queue.map((r, i) => (
+                  <button
+                    key={r.id}
+                    className="hb-press"
+                    onClick={() => jumpTo(i)}
+                    aria-label={`Reason ${i + 1}`}
+                    style={{
+                      height: '6px', border: 'none', borderRadius: '3px', cursor: 'pointer', padding: 0,
+                      flex: i === activeIdx ? 2.2 : 1,
+                      background: i === activeIdx ? ACCENT : 'rgba(211,169,92,0.25)',
+                      transition: 'flex 0.25s ease, background 0.2s ease',
+                    }}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div style={{ flex: 1, height: '6px', borderRadius: '3px', background: 'rgba(211,169,92,0.25)', overflow: 'hidden' }}>
+                <div style={{ width: `${((activeIdx + 1) / queue.length) * 100}%`, height: '100%', borderRadius: '3px', background: ACCENT, transition: 'width 0.25s ease' }} />
+              </div>
+            )}
+            <span style={{ fontSize: '12px', color: MUTED, flexShrink: 0 }}>{activeIdx + 1} of {queue.length}</span>
+          </div>
+          {showSwipeHint && (
+            <div style={{ fontSize: '12px', color: MUTED, textAlign: 'center', marginTop: '10px' }}>
+              Swipe for the next reason &rarr;
+            </div>
+          )}
         </div>
       )}
 
       {/* The deck — swipe between reasons */}
       {queue.length > 0 ? (
         <div ref={deckRef} className="hb-deck" onScroll={onDeckScroll} style={{ flex: 1, minHeight: 0 }}>
-          {queue.map((r, i) => {
+          {queue.map((r) => {
             const u = r.update
             const contact = r.kind === 'drift' ? r.nudge.contact : contacts.find(c => c.id === u.contactId)
-            const headline = r.kind === 'drift'
-              ? `It's been ${r.nudge.health.days} days quiet with ${firstName(r.nudge.contact.name)}.`
-              : u.headline
+            const { head, rest } = r.kind === 'drift'
+              ? { head: `It's been ${r.nudge.health.days} days quiet with ${firstName(r.nudge.contact.name)}.`, rest: '' }
+              : splitHeadline(u.headline)
+            const kicker = r.kind === 'news'
+              ? [u.themeLabel, u.source].filter(Boolean).join(' · ')
+              : r.kind === 'favor'
+                ? ['A favor to send', u.themeLabel].filter(Boolean).join(' · ')
+                : 'Drifting'
+            const draftPreview = r.kind === 'drift' ? r.nudge.opener : (r.kind === 'favor' ? u.giveMessage : u.draftMessage)
             return (
               <div key={r.id} style={{ display: 'flex', flexDirection: 'column', padding: '0 24px', overflowY: 'auto' }}>
-                <div style={{ marginTop: '20px' }}>
-                  <Pill>
-                    {r.kind === 'news' && `Reason ${i + 1} of ${queue.length}`}
-                    {r.kind === 'favor' && 'A favor to send'}
-                    {r.kind === 'drift' && 'Drifting'}
-                  </Pill>
+                {/* Kicker — newspaper section label */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '22px' }}>
+                  <span style={{ width: 7, height: 7, borderRadius: '50%', background: ACCENT, flexShrink: 0 }} />
+                  <span style={{
+                    fontSize: '11px', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase',
+                    color: MUTED, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  }}>
+                    {kicker}
+                  </span>
                 </div>
                 <h1 className="hb-display" style={{
-                  fontSize: headline.length > 70 ? '24px' : '29px',
-                  fontWeight: 500, color: INK, lineHeight: 1.25, margin: '16px 0 0',
+                  fontSize: head.length > 60 ? '25px' : '29px',
+                  fontWeight: 500, color: INK, lineHeight: 1.25, margin: '14px 0 0',
                 }}>
-                  {headline}
+                  {head}
                 </h1>
-                <p style={{ fontSize: '14px', lineHeight: 1.6, color: '#C2CBD8', marginTop: '14px' }}>
-                  {r.kind === 'news' && `Big news on the theme you share with ${firstName(u.contactName)}. ${u.source ? `${u.source}, ${u.time}.` : ''}`}
+                <p style={{ fontSize: '14px', lineHeight: 1.6, color: '#C2CBD8', marginTop: '12px' }}>
+                  {r.kind === 'news' && (rest
+                    ? `${rest}${/[.!?]$/.test(rest) ? '' : '.'}${u.time ? ` ${u.time.charAt(0).toUpperCase()}${u.time.slice(1)}.` : ''}`
+                    : `Big news on the theme you share with ${firstName(u.contactName)}.${u.time ? ` ${u.time.charAt(0).toUpperCase()}${u.time.slice(1)}.` : ''}`)}
                   {r.kind === 'favor' && `Below the bar, but useful to ${firstName(u.contactName)} — a no-ask favor.`}
                   {r.kind === 'drift' && 'No news needed — a two-line check-in keeps it warm.'}
                 </p>
@@ -435,10 +471,20 @@ export default function CommonGround({ onImportContacts }) {
                     <span style={{ fontSize: '12px', color: MUTED, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {r.kind === 'drift'
                         ? `Last touch ${r.nudge.health.days} days ago`
-                        : `${u.themeLabel} · shared theme`}
+                        : 'Shared theme'}
                     </span>
                   </div>
                 </button>
+
+                {/* Pull quote — the drafted message, newspaper-style */}
+                {draftPreview && (
+                  <div style={{ display: 'flex', gap: '12px', marginTop: '20px' }}>
+                    <div style={{ width: '2px', borderRadius: '1px', background: ACCENT, flexShrink: 0, alignSelf: 'stretch' }} />
+                    <p className="hb-display" style={{ fontStyle: 'italic', fontSize: '15px', lineHeight: 1.55, color: '#C2CBD8', minWidth: 0 }}>
+                      &ldquo;{clip(draftPreview)}&rdquo;
+                    </p>
+                  </div>
+                )}
 
                 <div style={{ flex: 1, minHeight: '18px' }} />
 

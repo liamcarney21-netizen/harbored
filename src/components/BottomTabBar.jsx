@@ -10,7 +10,7 @@ const TABS = [
         <circle cx="12" cy="12" r="8.5" /><path d="M12 8v4.5l3 2" />
       </svg>
     ) },
-  { path: '/dashboard/network',  label: 'People',
+  { path: '/dashboard/network',  label: 'Crew',
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
         <circle cx="9" cy="8" r="3.2" /><path d="M3.5 19c.6-3 2.8-4.8 5.5-4.8s4.9 1.8 5.5 4.8" />
