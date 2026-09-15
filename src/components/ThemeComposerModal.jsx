@@ -21,13 +21,16 @@ const QUESTIONS = [
   (first) => `What would make you text ${first} first?`,
 ]
 
+// Each prompt steers toward something Harbored can actually watch — named,
+// news-generating entities. `prefill` turns imported data into a one-tap
+// answer (their company is the highest-signal trigger we already know).
 const PROMPTS = [
-  { text: 'A team you both follow',      category: 'sports',   ph: 'e.g. Villanova Basketball' },
-  { text: 'A place you both love',       category: 'place',    ph: 'e.g. Charleston, SC' },
-  { text: 'A market they care about',    category: 'market',   ph: 'e.g. Minneapolis real estate' },
-  { text: 'A hobby you share',           category: 'hobby',    ph: 'e.g. Marathon running' },
-  { text: 'The industry they live in',   category: 'industry', ph: 'e.g. Fintech payments' },
-  { text: 'Something only you two get',  category: 'hobby',    ph: 'e.g. Summer league 2019' },
+  { text: 'Their company',                    category: 'industry', ph: 'e.g. Stripe', prefill: c => c?.company || '' },
+  { text: 'A team you both follow',           category: 'sports',   ph: 'e.g. Villanova Basketball' },
+  { text: 'A market they watch',              category: 'market',   ph: 'e.g. Minneapolis real estate' },
+  { text: 'A place that matters to you both', category: 'place',    ph: 'e.g. Charleston, SC' },
+  { text: 'A hobby with a scene',             category: 'hobby',    ph: 'e.g. Formula 1' },
+  { text: "What they're trying to break into", category: 'market',  ph: 'e.g. Venture capital' },
 ]
 
 export default function ThemeComposerModal({ open, contacts = [], onClose }) {
@@ -51,6 +54,8 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
 
   function pickPrompt(i) {
     setPromptIdx(i)
+    const prefill = PROMPTS[i].prefill?.(current)
+    if (prefill && !label.trim()) setLabel(prefill)
     inputRef.current?.focus()
   }
 
