@@ -67,8 +67,8 @@ function RevealGroup({ children, style = {} }) {
 const C = {
   navy:      '#0a1628',
   navyLight: '#1a3558',
-  teal:      '#0D5C63',
-  tealLight: '#177E8A',
+  teal:      '#0a1628',
+  tealLight: '#1a3558',
   brass:     '#A97E2F',
   brassPale: '#D3A95C',
   sand:      '#F1EBDD',
@@ -87,8 +87,8 @@ function Label({ children, light = false }) {
     <div style={{
       display: 'inline-flex', alignItems: 'center', gap: 6,
       padding: '5px 14px', borderRadius: 20,
-      background: light ? 'rgba(211,169,92,0.12)' : 'rgba(13,92,99,0.1)',
-      border: `1px solid ${light ? 'rgba(211,169,92,0.25)' : 'rgba(13,92,99,0.22)'}`,
+      background: light ? 'rgba(211,169,92,0.12)' : 'rgba(10,22,40,0.1)',
+      border: `1px solid ${light ? 'rgba(211,169,92,0.25)' : 'rgba(10,22,40,0.22)'}`,
       fontFamily: SANS, fontSize: 11, fontWeight: 600,
       letterSpacing: '0.22em', textTransform: 'uppercase',
       color: light ? C.brassPale : C.teal,
@@ -99,21 +99,27 @@ function Label({ children, light = false }) {
   );
 }
 
-/* ─── Product-window mockups ─────────────────────────────── */
+/* ─── Product-window mockups — miniatures of the real navy/gold app ── */
+const M = {
+  bg: '#0a1628', card: '#0f2040', hairline: 'rgba(255,255,255,0.08)',
+  cream: '#F5F4EF', muted: '#8C9AAD', body: '#C2CBD8', gold: '#D3A95C',
+};
+
 function BrowserWindow({ children, path = 'harbored.app/dashboard' }) {
   return (
     <div style={{
-      background: '#fff', borderRadius: 14, overflow: 'hidden', width: '100%',
-      boxShadow: '0 24px 64px rgba(10,22,40,0.16), 0 3px 14px rgba(10,22,40,0.07)',
+      background: M.bg, borderRadius: 14, overflow: 'hidden', width: '100%',
+      border: `1px solid ${M.hairline}`,
+      boxShadow: '0 24px 64px rgba(10,22,40,0.35), 0 3px 14px rgba(10,22,40,0.18)',
       fontFamily: SANS,
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: '#F7F5F0', borderBottom: '1px solid #EEEBE3' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: M.card, borderBottom: `1px solid ${M.hairline}` }}>
         <div style={{ display: 'flex', gap: 5 }}>
-          {['#E8B4AE', '#E6CE9E', '#B5CDB4'].map(c => (
+          {['rgba(255,255,255,0.22)', 'rgba(255,255,255,0.16)', 'rgba(255,255,255,0.10)'].map(c => (
             <span key={c} style={{ width: 9, height: 9, borderRadius: '50%', background: c, display: 'inline-block' }} />
           ))}
         </div>
-        <div style={{ flex: 1, textAlign: 'center', fontSize: 11, color: '#8B969C', background: '#fff', borderRadius: 6, padding: '3px 10px', border: '1px solid #EEEBE3', maxWidth: 240, margin: '0 auto' }}>
+        <div style={{ flex: 1, textAlign: 'center', fontSize: 11, color: M.muted, background: M.bg, borderRadius: 6, padding: '3px 10px', border: `1px solid ${M.hairline}`, maxWidth: 240, margin: '0 auto' }}>
           {path}
         </div>
         <div style={{ width: 40 }} />
@@ -123,97 +129,109 @@ function BrowserWindow({ children, path = 'harbored.app/dashboard' }) {
   );
 }
 
-function TideGauge({ score, width = 120 }) {
-  const above = score >= 70;
-  return (
-    <div style={{ width }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-        <span style={{ fontSize: 10, color: C.muted }}>Significance</span>
-        <span style={{ fontFamily: SERIF, fontSize: 13, fontWeight: 600, color: above ? C.brass : C.muted }}>{score}</span>
-      </div>
-      <div style={{ position: 'relative', height: 4, borderRadius: 2, background: '#E5E1D7' }}>
-        <div style={{ width: `${score}%`, height: '100%', borderRadius: 2, background: above ? `linear-gradient(90deg, ${C.teal} 55%, ${C.brass})` : '#9AA69F' }} />
-        <div style={{ position: 'absolute', left: '70%', top: -3, width: 1, height: 10, background: 'rgba(28,43,51,0.4)' }} />
-      </div>
-    </div>
-  );
-}
-
-function MockAvatar({ initials, size = 30 }) {
+const MOCK_TONES = ['#1E3252', '#324663', '#1C3A47', '#3A3A5E'];
+function MockAvatar({ initials, size = 30, tone = 0 }) {
   return (
     <div style={{
-      width: size, height: size, borderRadius: '50%', background: '#1e3a5f', color: '#fff',
+      width: size, height: size, borderRadius: '50%', background: MOCK_TONES[tone % MOCK_TONES.length], color: M.cream,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       fontSize: size * 0.36, fontWeight: 600, flexShrink: 0,
     }}>{initials}</div>
   );
 }
 
-function FeedMock() {
-  const rows = [
-    { init: 'JS', name: 'John Sullivan', chip: 'Villanova Basketball', chipColor: '#2E7D5B', head: 'Villanova lands five-star transfer guard Jalen Reyes', score: 92 },
-    { init: 'TW', name: 'Tom Whitfield', chip: 'Charleston Commercial Real Estate', chipColor: C.brass, head: 'Downtown retail vacancy hits decade low in Charleston', score: 88 },
-    { init: 'SC', name: 'Sarah Chen', chip: 'Formula 1', chipColor: '#2E7D5B', head: 'F1 confirms Chicago street race for 2027', score: 84 },
-  ];
+function MockKicker({ children }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+      <span style={{ width: 5, height: 5, borderRadius: '50%', background: M.gold, flexShrink: 0 }} />
+      <span style={{ fontSize: 9.5, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: M.muted }}>{children}</span>
+    </div>
+  );
+}
+
+// The Today front page, in miniature — the hero shot.
+function TodayMock() {
   return (
     <BrowserWindow>
-      <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600, color: C.muted, marginBottom: 10 }}>
-        Worth reaching out — 3
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+        <div style={{ flex: 1, height: 4, borderRadius: 2, background: 'rgba(211,169,92,0.22)', overflow: 'hidden' }}>
+          <div style={{ width: '22%', height: '100%', borderRadius: 2, background: M.gold }} />
+        </div>
+        <span style={{ fontSize: 10, color: M.muted }}>1 of 4</span>
       </div>
+      <MockKicker>Villanova Basketball · The Athletic</MockKicker>
+      <div style={{ fontFamily: SERIF, fontSize: 'clamp(17px, 2.4vw, 23px)', fontWeight: 500, color: M.cream, lineHeight: 1.25, marginBottom: 8 }}>
+        Villanova lands five-star transfer guard Jalen Reyes
+      </div>
+      <div style={{ fontSize: 11.5, color: M.body, marginBottom: 12 }}>Biggest portal win since 2018. 3 hours ago.</div>
+      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 9, background: M.card, border: `1px solid ${M.hairline}`, borderRadius: 11, padding: '8px 12px', marginBottom: 12 }}>
+        <MockAvatar initials="JS" size={26} />
+        <div>
+          <div style={{ fontSize: 11.5, fontWeight: 600, color: M.cream }}>John Sullivan</div>
+          <div style={{ fontSize: 9.5, color: M.muted }}>Shared theme</div>
+        </div>
+      </div>
+      <div style={{ display: 'flex', gap: 9, marginBottom: 14 }}>
+        <div style={{ width: 2, borderRadius: 1, background: M.gold, flexShrink: 0 }} />
+        <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 12, lineHeight: 1.5, color: M.body }}>
+          &ldquo;John — did you see Nova just landed Jalen Reyes?? Biggest portal win in years&hellip;&rdquo;
+        </div>
+      </div>
+      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: M.gold, borderRadius: 9, padding: '9px 18px' }}>
+        <span style={{ fontSize: 12, fontWeight: 600, color: M.bg }}>Review the draft</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={M.bg} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="M13 6l6 6-6 6" /></svg>
+      </div>
+    </BrowserWindow>
+  );
+}
+
+// Voice → mapped themes: "just talk about them."
+function TalkMock() {
+  return (
+    <BrowserWindow path="harbored.app — the quiz">
+      <div style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 500, color: M.cream, marginBottom: 10 }}>
+        What do you share with Tom?
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={M.gold} strokeWidth="2" strokeLinecap="round"><path d="M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3z" /><path d="M5 11a7 7 0 0 0 14 0" /><path d="M12 18v3" /></svg>
+        <span style={{ fontSize: 10, fontWeight: 600, color: M.gold }}>Listening&hellip;</span>
+      </div>
+      <div style={{ fontSize: 11.5, color: M.body, fontStyle: 'italic', background: M.card, border: `1px solid ${M.hairline}`, borderRadius: 9, padding: '10px 12px', marginBottom: 12, lineHeight: 1.6 }}>
+        &ldquo;Met Tom at the Charleston Chamber mixer — he runs a commercial real estate firm downtown, mostly retail. Market's been tight, he said.&rdquo;
+      </div>
+      {['Charleston Commercial Real Estate', 'Downtown Retail Leasing'].map(label => (
+        <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderRadius: 9, background: M.card, border: `1px solid ${M.hairline}`, marginBottom: 6 }}>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={M.gold} strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
+          <span style={{ fontSize: 12, fontWeight: 600, color: M.cream }}>{label}</span>
+        </div>
+      ))}
+      <div style={{ fontSize: 10, color: M.muted, marginTop: 4 }}>Mapped from what you said — watching both.</div>
+    </BrowserWindow>
+  );
+}
+
+// Your crew — plain-language statuses, drift caught early.
+function CrewMock() {
+  const rows = [
+    { init: 'JS', tone: 0, name: 'John Sullivan', note: 'News today · 2 themes', hot: true },
+    { init: 'SC', tone: 1, name: 'Sarah Chen', note: 'In touch · 2d ago', hot: false },
+    { init: 'MW', tone: 2, name: 'Marcus Williams', note: 'Birthday today', hot: true },
+    { init: 'CB', tone: 3, name: 'Connor Blake', note: 'Drifting · 65 days quiet', hot: true },
+  ];
+  return (
+    <BrowserWindow path="harbored.app — your crew">
+      <div style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 500, color: M.cream, marginBottom: 2 }}>Your crew</div>
+      <div style={{ fontSize: 10.5, color: M.muted, marginBottom: 10 }}>12 watched · 3 need attention</div>
       {rows.map((r, i) => (
-        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: i < rows.length - 1 ? '1px solid #F0EEE7' : 'none' }}>
-          <MockAvatar initials={r.init} />
+        <div key={r.name} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderBottom: i < rows.length - 1 ? `1px solid ${M.hairline}` : 'none' }}>
+          <MockAvatar initials={r.init} size={26} tone={r.tone} />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2, flexWrap: 'wrap' }}>
-              <span style={{ fontSize: 12, fontWeight: 600, color: C.ink }}>{r.name}</span>
-              <span style={{ fontSize: 10, fontWeight: 500, padding: '1px 7px', borderRadius: 10, background: `${r.chipColor}14`, color: r.chipColor }}>{r.chip}</span>
+            <div style={{ fontSize: 12, fontWeight: 600, color: M.cream }}>{r.name}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10.5, color: r.hot ? M.gold : M.muted, fontWeight: r.hot ? 600 : 400 }}>
+              {r.hot && <span style={{ width: 4, height: 4, borderRadius: '50%', background: M.gold, display: 'inline-block' }} />}
+              {r.note}
             </div>
-            <div style={{ fontSize: 11.5, color: C.muted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.head}</div>
           </div>
-          <TideGauge score={r.score} width={86} />
-        </div>
-      ))}
-    </BrowserWindow>
-  );
-}
-
-function DiscoveryMock() {
-  return (
-    <BrowserWindow path="harbored.app/discover">
-      <div style={{ fontSize: 11, color: C.muted, fontStyle: 'italic', background: '#F7F5F0', border: '1px solid #EEEBE3', borderRadius: 8, padding: '10px 12px', marginBottom: 12, lineHeight: 1.6 }}>
-        "Met Tom Whitfield at the Charleston Chamber mixer — he runs a commercial real estate firm downtown, mostly retail and mixed-use. Market's been tight, he said."
-      </div>
-      <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600, color: C.teal, marginBottom: 8 }}>
-        Found 2 shared themes
-      </div>
-      {[
-        'Charleston Commercial Real Estate', 'Downtown Retail Leasing',
-      ].map(label => (
-        <div key={label} style={{ display: 'flex', alignItems: 'center', padding: '8px 12px', borderRadius: 9, background: 'rgba(13,92,99,0.05)', border: '1px solid rgba(13,92,99,0.2)', marginBottom: 6 }}>
-          <span style={{ fontSize: 12, fontWeight: 600, color: C.ink }}>{label}</span>
-        </div>
-      ))}
-    </BrowserWindow>
-  );
-}
-
-function DigestMock() {
-  return (
-    <BrowserWindow path="harbored.app/digest">
-      <div style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 600, color: C.ink, marginBottom: 10 }}>Your week in relationships</div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}>
-        {[['4', 'reasons to reach out'], ['2', 'drifting quietly']].map(([n, l]) => (
-          <div key={l} style={{ borderRadius: 9, border: '1px solid #EEEBE3', padding: '10px 12px' }}>
-            <div style={{ fontFamily: SERIF, fontSize: 22, fontWeight: 600, color: C.teal, lineHeight: 1 }}>{n}</div>
-            <div style={{ fontSize: 10.5, color: C.muted, marginTop: 3 }}>{l}</div>
-          </div>
-        ))}
-      </div>
-      {[['TW', 'Tom Whitfield', 'Charleston retail vacancy low — 88'], ['KC', 'Kellan Carney', 'Vikings trade up to No. 4 — 73']].map(([init, name, note]) => (
-        <div key={name} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0', borderTop: '1px solid #F0EEE7' }}>
-          <MockAvatar initials={init} size={24} />
-          <span style={{ fontSize: 12, fontWeight: 600, color: C.ink }}>{name}</span>
-          <span style={{ fontSize: 11, color: C.muted, marginLeft: 'auto' }}>{note}</span>
         </div>
       ))}
     </BrowserWindow>
@@ -331,9 +349,9 @@ function WaitlistModal({ isOpen, onClose, plan }) {
                       width: '100%', padding: '14px', background: C.teal, color: '#fff',
                       fontFamily: SANS, fontWeight: 700, fontSize: 14,
                       border: 'none', borderRadius: 8, cursor: 'pointer',
-                      boxShadow: '0 4px 20px rgba(13,92,99,0.4)', transition: 'background 0.18s',
+                      boxShadow: '0 4px 20px rgba(10,22,40,0.4)', transition: 'background 0.18s',
                     }}
-                    onMouseEnter={e => e.currentTarget.style.background = '#09454B'}
+                    onMouseEnter={e => e.currentTarget.style.background = '#1a3558'}
                     onMouseLeave={e => e.currentTarget.style.background = C.teal}>
                       Join the Waitlist
                     </button>
@@ -383,7 +401,7 @@ function Nav({ scrolled, openModal }) {
         <span style={{ fontFamily: SERIF, fontSize: 21, fontWeight: 600, color: C.cream }}>Harbored</span>
       </a>
       <nav style={{ display: 'flex', alignItems: 'center', gap: 26 }}>
-        {[['Common Ground', '#common-ground'], ['Discovery', '#discovery'], ['Weekly Digest', '#digest'], ['Pricing', '#pricing']].map(([label, href]) => (
+        {[['Today', '#today'], ['Just talk', '#talk'], ['Your crew', '#crew'], ['Pricing', '#pricing']].map(([label, href]) => (
           <a key={label} href={href} className="nav-link"
             style={{ fontFamily: SANS, fontSize: 13, fontWeight: 500, color: 'rgba(250,248,243,0.62)', textDecoration: 'none', transition: 'color 0.18s', display: 'none' }}
             onMouseEnter={e => e.currentTarget.style.color = C.cream}
@@ -395,7 +413,7 @@ function Nav({ scrolled, openModal }) {
           fontFamily: SANS, fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap', flexShrink: 0,
           border: 'none', borderRadius: 8, cursor: 'pointer', transition: 'background 0.18s',
         }}
-        onMouseEnter={e => e.currentTarget.style.background = '#09454B'}
+        onMouseEnter={e => e.currentTarget.style.background = '#1a3558'}
         onMouseLeave={e => e.currentTarget.style.background = C.teal}
         >Get Early Access</button>
       </nav>
@@ -405,9 +423,9 @@ function Nav({ scrolled, openModal }) {
 
 /* ─── Sticky platform sub-nav (Klaviyo-style anchors) ────── */
 const SUBNAV = [
-  ['Common Ground', '#common-ground'],
-  ['Discovery', '#discovery'],
-  ['Weekly Digest', '#digest'],
+  ['Today', '#today'],
+  ['Just talk', '#talk'],
+  ['Your crew', '#crew'],
   ['Pricing', '#pricing'],
 ];
 
@@ -442,7 +460,7 @@ function SubNav() {
 }
 
 /* ─── Alternating feature section ─────────────────────────── */
-function FeatureSection({ id, kicker, title, em, body, points = [], flip = false, tint = 'rgba(13,92,99,0.06)', window: Window, cta, onCta }) {
+function FeatureSection({ id, kicker, title, em, body, points = [], flip = false, tint = 'rgba(10,22,40,0.06)', window: Window, cta, onCta }) {
   return (
     <section id={id} style={{ padding: 'clamp(44px, 6vw, 80px) clamp(20px, 6vw, 80px)', scrollMarginTop: 124 }}>
       <div style={{
@@ -461,7 +479,7 @@ function FeatureSection({ id, kicker, title, em, body, points = [], flip = false
           </p>
           {points.map(point => (
             <div key={point} style={{ display: 'flex', gap: 11, alignItems: 'flex-start', marginBottom: 12 }}>
-              <div style={{ width: 19, height: 19, borderRadius: '50%', background: 'rgba(13,92,99,0.1)', border: '1px solid rgba(13,92,99,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
+              <div style={{ width: 19, height: 19, borderRadius: '50%', background: 'rgba(10,22,40,0.1)', border: '1px solid rgba(10,22,40,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={C.teal} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
               </div>
               <span style={{ fontFamily: SANS, fontSize: 14, color: '#37444a', lineHeight: 1.55 }}>{point}</span>
@@ -542,7 +560,7 @@ export default function Landing() {
               textTransform: 'uppercase', color: C.brassPale, marginBottom: 24,
               animation: 'fadeUp 0.7s 0.05s ease both',
             }}>
-              Common Ground, by Harbored
+              Harbored — private early access
             </div>
             <h1 style={{
               fontFamily: SERIF, fontWeight: 600,
@@ -563,13 +581,13 @@ export default function Landing() {
             </p>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 18, animation: 'fadeUp 0.85s 0.4s ease both' }}>
               <button onClick={() => openModal()} style={{
-                padding: '14px 34px', background: C.teal, color: '#fff',
-                fontFamily: SANS, fontWeight: 600, fontSize: 14.5,
+                padding: '14px 34px', background: C.brassPale, color: C.navy,
+                fontFamily: SANS, fontWeight: 700, fontSize: 14.5,
                 border: 'none', borderRadius: 8, cursor: 'pointer',
                 transition: 'background 0.18s ease',
               }}
-              onMouseEnter={e => e.currentTarget.style.background = '#09454B'}
-              onMouseLeave={e => e.currentTarget.style.background = C.teal}>
+              onMouseEnter={e => e.currentTarget.style.background = '#C29245'}
+              onMouseLeave={e => e.currentTarget.style.background = C.brassPale}>
                 Get Early Access
               </button>
               <button onClick={startDemo} style={{
@@ -592,7 +610,7 @@ export default function Landing() {
 
           {/* Product window — fully contained so it never clips mid-row */}
           <div style={{ maxWidth: 760, margin: 'clamp(44px, 6vw, 64px) auto 0', animation: 'fadeUp 0.9s 0.55s ease both' }}>
-            <FeedMock />
+            <TodayMock />
           </div>
         </div>
       </section>
@@ -600,57 +618,58 @@ export default function Landing() {
       {/* ══════════════════ STICKY PLATFORM SUB-NAV ══════════════════ */}
       <SubNav />
 
-      {/* ══════════════════ FEATURE: COMMON GROUND ══════════════════ */}
+      {/* ══════════════════ FEATURE: TODAY ══════════════════ */}
       <FeatureSection
-        id="common-ground"
-        kicker="Common Ground"
-        title="Shared themes,"
-        em="watched around the clock."
-        body="For every person who matters, tell Harbored what you have in common — or the ground you want to build with them. Those themes become standing reasons to talk — monitored across live news sources and scored for significance, so you're only interrupted when something clears the reach-out bar."
+        id="today"
+        kicker="Today"
+        title="One reason at a time,"
+        em="like a front page about your people."
+        body="Tell Harbored what you share with each person — their company, a team, a city, a market. It watches those themes around the clock, and when something genuinely matters, it becomes a reason: the headline, the person, and the message already drafted. No feed, no metrics, no noise."
         points={[
-          'Themes across sports, places, markets, hobbies, and industries',
-          'A visible reach-out bar at 70 — below it, logged quietly',
-          'A personalized message, drafted for you to review and send',
+          'Themes across companies, teams, places, markets, and hobbies',
+          'Only what clears the bar reaches you — the rest stays quiet',
+          'Every reason arrives with a draft, sent from your own Mail or Messages',
         ]}
-        cta="Explore Common Ground"
-        onCta={() => openModal()}
-        window={FeedMock}
-        tint="rgba(13,92,99,0.07)"
+        cta="See it live — no signup"
+        onCta={startDemo}
+        window={TodayMock}
+        tint="rgba(10,22,40,0.05)"
       />
 
-      {/* ══════════════════ FEATURE: DISCOVERY ══════════════════ */}
+      {/* ══════════════════ FEATURE: JUST TALK ══════════════════ */}
       <FeatureSection
-        id="discovery"
-        kicker="Discovery"
+        id="talk"
+        kicker="Just talk"
         title="Met someone worth knowing?"
-        em="Tell Harbored what you talked about."
-        body="Right after you meet someone — a new contact, a business owner, anyone worth staying close to — describe the relationship in your own words, or drop in the text thread if you've got one. Harbored pulls out the shared ground, quotes the evidence back to you, and starts monitoring the theme the moment you approve it."
+        em="Just say what you share."
+        body="Right after you meet someone, tap the mic and describe them in your own words — where you met, what they're into, what they're building. Harbored maps what you said into watchable themes and starts paying attention the moment you approve them. Prefer typing? A six-prompt quiz does the thinking for you."
         points={[
-          'Evidence-backed proposals, not guesses',
-          'Works from a quick note or a full conversation',
-          'One click to start monitoring each theme',
+          'Speak it or tap it — never fill out a form',
+          'Their company comes pre-filled from your contacts',
+          'One tap to start watching each theme',
         ]}
-        cta="Explore Discovery"
-        onCta={() => openModal()}
-        window={DiscoveryMock}
+        cta="Try the quiz in the demo"
+        onCta={startDemo}
+        window={TalkMock}
         flip
         tint="rgba(169,126,47,0.09)"
       />
 
-      {/* ══════════════════ FEATURE: DIGEST ══════════════════ */}
+      {/* ══════════════════ FEATURE: YOUR CREW ══════════════════ */}
       <FeatureSection
-        id="digest"
-        kicker="Weekly Digest"
-        title="Your themes' week,"
-        em="on one page."
-        body="Every week: what moved on the themes you watch, ranked by significance, with the reach-outs worth making. Consistency is the whole game — the digest is how you keep score."
+        id="crew"
+        kicker="Your crew"
+        title="Know who's drifting,"
+        em="before they're gone."
+        body="Everyone you care about, with an honest one-line status: in touch, quiet, birthday today, drifting. When someone's gone quiet too long, they become a reason on your front page — with a no-agenda check-in already drafted."
         points={[
-          'Reach-out opportunities ranked by significance',
-          'Only what cleared the bar — nothing to wade through',
+          'Plain-language statuses, not health scores',
+          'Import your people straight from your iPhone contacts',
+          "Birthdays and drift surfaced before you'd have noticed",
         ]}
-        cta="Explore the Digest"
-        onCta={() => openModal()}
-        window={DigestMock}
+        cta="Meet the demo crew"
+        onCta={startDemo}
+        window={CrewMock}
         tint="rgba(46,125,91,0.08)"
       />
 
@@ -709,7 +728,7 @@ export default function Landing() {
                   <p style={{ fontFamily: SANS, fontWeight: 300, fontSize: 13, color: C.muted, marginTop: 10, lineHeight: 1.5 }}>Keep your inner five close — and see what Harbored can do.</p>
                 </div>
                 <div style={{ borderTop: '1px solid #EBE7DC', paddingTop: 22, flex: 1 }}>
-                  {['Monitor up to 5 contacts', '2 Common Ground themes per contact', 'Weekly digest email', 'Manual send only'].map(f => (
+                  {['A crew of up to 5 people', '2 shared themes per person', 'Drift and birthday reasons', 'Drafts sent from your own apps'].map(f => (
                     <div key={f} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 12 }}>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2E7D5B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}><polyline points="20 6 9 17 4 12"/></svg>
                       <span style={{ fontFamily: SANS, fontSize: 14, color: '#37444a' }}>{f}</span>
@@ -737,7 +756,7 @@ export default function Landing() {
                   <p style={{ fontFamily: SANS, fontWeight: 300, fontSize: 13, color: 'rgba(250,248,243,0.5)', marginTop: 10, lineHeight: 1.5 }}>For professionals who want their relationships to keep up with their careers.</p>
                 </div>
                 <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 22, flex: 1 }}>
-                  {['Unlimited contacts & Common Ground themes', 'Common Ground discovery from your conversations', 'A personalized message drafted for every reach-out', 'Push and email alerts'].map(f => (
+                  {['Unlimited crew and themes', 'Just talk — voice-mapped themes', 'A drafted message with every reason', 'Push the moment something clears the bar'].map(f => (
                     <div key={f} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 12 }}>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.brassPale} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}><polyline points="20 6 9 17 4 12"/></svg>
                       <span style={{ fontFamily: SANS, fontSize: 14, color: 'rgba(250,248,243,0.78)' }}>{f}</span>
@@ -747,9 +766,9 @@ export default function Landing() {
                 <button onClick={() => openModal('pro')} style={{
                   display: 'block', marginTop: 26, padding: '14px', textAlign: 'center',
                   background: C.teal, borderRadius: 8, fontFamily: SANS, fontWeight: 700, fontSize: 14,
-                  color: '#fff', border: 'none', cursor: 'pointer', boxShadow: '0 4px 20px rgba(13,92,99,0.4)', transition: 'background 0.18s',
+                  color: '#fff', border: 'none', cursor: 'pointer', boxShadow: '0 4px 20px rgba(10,22,40,0.4)', transition: 'background 0.18s',
                 }}
-                onMouseEnter={e => e.currentTarget.style.background = '#09454B'}
+                onMouseEnter={e => e.currentTarget.style.background = '#1a3558'}
                 onMouseLeave={e => e.currentTarget.style.background = C.teal}>
                   Join Waitlist — Pro
                 </button>
@@ -769,13 +788,13 @@ export default function Landing() {
             Join the waitlist. Be the first to show up when it counts.
           </p>
           <button onClick={() => openModal()} style={{
-            padding: '16px 44px', background: C.teal, color: '#fff',
+            padding: '16px 44px', background: C.brassPale, color: C.navy,
             fontFamily: SANS, fontWeight: 700, fontSize: 15,
             border: 'none', borderRadius: 8, cursor: 'pointer',
-            boxShadow: '0 6px 28px rgba(13,92,99,0.5)', transition: 'transform 0.18s ease, background 0.18s',
+            boxShadow: '0 6px 28px rgba(211,169,92,0.3)', transition: 'transform 0.18s ease, background 0.18s',
           }}
-          onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.background = '#09454B'; }}
-          onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.background = C.teal; }}>
+          onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.background = '#C29245'; }}
+          onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.background = C.brassPale; }}>
             Join the Waitlist
           </button>
           <p style={{ fontFamily: SANS, fontSize: 12, color: 'rgba(250,248,243,0.24)', marginTop: 18 }}>
@@ -794,7 +813,7 @@ export default function Landing() {
             </div>
             <div style={{ display: 'flex', gap: 'clamp(28px, 5vw, 72px)', flexWrap: 'wrap' }}>
               {[
-                { heading: 'Platform', links: [['Common Ground', '#common-ground'], ['Discovery', '#discovery'], ['Weekly Digest', '#digest']] },
+                { heading: 'Platform', links: [['Today', '#today'], ['Just talk', '#talk'], ['Your crew', '#crew']] },
                 { heading: 'Company', links: [['Pricing', '#pricing'], ['Support', '/support']] },
                 { heading: 'Legal',   links: [['Privacy', '/privacy'], ['Terms', '#']] },
               ].map(({ heading, links }) => (
