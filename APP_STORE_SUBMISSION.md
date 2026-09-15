@@ -66,12 +66,12 @@ Tell Harbored the themes you share with each person — the team you both follow
 
 WHAT YOU GET
 
-• Common Ground — per-person shared themes, monitored continuously and scored so you're only interrupted when something genuinely matters.
+• Today — your reasons to reach out, one at a time, like a front page written about your people. No feeds, no metrics, no noise.
 • Drafted outreach — a message written for the moment, sent through your own email or Messages. You review every one; nothing goes out without you.
-• Push when it counts — a notification the moment an update clears your reach-out bar, not a firehose of noise.
-• Weekly digest — a quiet roundup of everyone worth reaching out to this week.
-• Discovery — just met someone? Tell Harbored what you talked about and it surfaces the themes worth watching.
+• Push when it counts — a notification the moment something genuinely clears the bar, not a firehose.
+• A quiz, not a form — for each person, tap what you share: their company, a team, a city, a market. Or just talk — describe the relationship out loud and Harbored maps it into themes.
 • Worth sending — Harbored also flags things worth forwarding as a no-ask favor, so you show up useful, not needy.
+• Drift alerts — when someone's gone quiet too long, you get a reason to check in before the relationship cools.
 
 IMPORT IN SECONDS
 
@@ -117,18 +117,18 @@ If asked "shared with third parties?" → No third party uses it for their own p
 ═══════════════════════════════════════════════
 
 Log in with your real account (real themes + results look best). Five shots:
-1. Common Ground "Reach out" list with significance scores  →  the hero shot
-2. A cleared update tapped open — the "Harbored's read" rationale panel
-3. Shared Themes tab — the per-contact theme chips
-4. Import Contacts — the native picker / import modal
-5. Weekly Digest — the roundup
+1. Today — a reason card: kicker, serif headline, pull quote of the draft  →  the hero shot
+2. The draft screen ("To John") — the message ready to send
+3. The quiz — "What do you share with …?" with the prompt cards
+4. Your crew — the list with plain-language statuses ("Drifting · 65 days quiet")
+5. Import — the native contacts picker
 
 Optional captions (benefit, not feature):
-- "Know the moment there's a real reason to reach out"
-- "See why it cleared the bar"
-- "The themes that connect you, watched for you"
+- "A front page written about your people"
+- "The message is already drafted"
+- "Tap what you share — or just say it out loud"
+- "See who's drifting before they're gone"
 - "Bring your people in with one tap"
-- "Your week in relationships, on one page"
 
 ═══════════════════════════════════════════════
 ## 7 · Before you hit Submit
@@ -143,7 +143,6 @@ Optional captions (benefit, not feature):
       encryption question (ITSAppUsesNonExemptEncryption=false is already in Info.plist)
 - [ ] REVIEWER ACCESS — the native app opens on the LOGIN screen (no marketing page,
       no demo button there yet). Apple review WILL fail without a way in. Pick one:
-      (A) Add a "Try a live demo" button to the native login screen (recommended — good
           UX + no credentials to hand Apple). Small code change; ask Claude.
       (B) Provide a working demo account in App Store Connect → "Sign-In Information."
 - [ ] Export compliance: standard HTTPS only → the encryption question is auto-answered
@@ -151,7 +150,7 @@ Optional captions (benefit, not feature):
 
 Review notes (use if you went with option A — the demo button) → paste:
 ```
-Tap "Try a live demo" on the sign-in screen to explore Harbored with a full sample
+Tap "Try a live demo — no account needed" on the sign-in screen to explore Harbored with a full sample
 network, no account needed. Outreach opens the user's own Mail/Messages with a
 prefilled draft — nothing is ever sent automatically.
 ```
