@@ -122,9 +122,13 @@ async function claudeBatch(items) {
         `You know ONLY what is given: the theme label, the contact's name, and (when provided) their company and role. NEVER invent a connection — ` +
         `do not guess that the contact works at, founded, or is otherwise linked to an entity in the headline unless the given data says so. ` +
         `If contactCompany is provided and the headline is about a different company, it is not about their company.\n\n` +
+        `Today's date is ${new Date().toISOString().slice(0, 10)}. ` +
         `For relevant headlines, the user only wants interruptions for things that actually matter to the shared subject — and that includes SIGNIFICANT UPCOMING events, ` +
         `not just things that already happened. A marquee matchup featuring their team, a major launch, a milestone on the calendar — anticipation is one of the best reasons ` +
-        `to reach out ("you watching Saturday?"), so score notable upcoming events as real triggers. What still never clears the bar: routine coverage, ordinary schedule ` +
+        `to reach out ("you watching Saturday?"), so score notable upcoming events as real triggers. When a headline's main subject is a significant event that has NOT ` +
+        `happened yet, also return "eventWhen": when it happens, as a person would say it in a text (e.g. "Saturday night", "this weekend", "Nov 12"), under 25 characters — ` +
+        `and write the draft in an anticipatory voice (looking forward to it together), never as if it already happened. Omit eventWhen entirely for anything already past. ` +
+        `What still never clears the bar: routine coverage, ordinary schedule ` +
         `listings and fixture dumps, minor previews, rumors, and "best of" listicles. The test is always meaningfulness to this specific subject, not tense. ` +
         `Score each headline 0-100 for how strong a reach-out trigger it is. ` +
         `Always include a "rationale": one plain-English sentence (under 140 characters) explaining the judgment behind the score — what about this specific ` +
@@ -136,7 +140,7 @@ async function claudeBatch(items) {
         {
           role: 'user',
           content: `Score each of these ${payload.length} items:\n\n${JSON.stringify(payload, null, 2)}\n\n` +
-            `Respond with exactly this JSON shape:\n{"results":[{"id":"...","score":0-100,"rationale":"...","draftMessage":"..." (only if score >= ${SIGNIFICANCE_THRESHOLD}),"holdReason":"..." (only if score < ${SIGNIFICANCE_THRESHOLD})}]}`,
+            `Respond with exactly this JSON shape:\n{"results":[{"id":"...","score":0-100,"rationale":"...","draftMessage":"..." (only if score >= ${SIGNIFICANCE_THRESHOLD}),"holdReason":"..." (only if score < ${SIGNIFICANCE_THRESHOLD}),"eventWhen":"..." (only for significant upcoming events)}]}`,
         },
       ],
     }),
@@ -164,6 +168,7 @@ async function claudeBatch(items) {
       rationale: truncate(String(r.rationale || ''), 200) || heuristicRationale(score, item.themeLabel),
       draftMessage: above ? truncate(String(r.draftMessage || ''), 400) || undefined : undefined,
       holdReason: !above ? truncate(String(r.holdReason || ''), 200) || heuristicHoldReason(score) : undefined,
+      eventWhen: r.eventWhen ? truncate(String(r.eventWhen), 30) : undefined,
     }
   })
 }

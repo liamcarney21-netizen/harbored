@@ -12,6 +12,7 @@ import { fetchStoredUpdates } from '../../services/scanResults'
 import { openSend, sendChannelFor } from '../../services/outreach'
 import ThemeSpecificityHint from '../../components/ThemeSpecificityHint'
 import { useIsMobile } from '../../hooks/useIsMobile'
+import { isNative } from '../../lib/platform'
 
 const INK = '#F5F4EF'
 const MUTED = '#8C9AAD'
@@ -148,6 +149,32 @@ export default function CommonGround({ onImportContacts }) {
     ...giveables.map(u => ({ kind: 'favor', id: `f-${u.id}`, update: u })),
     ...nudges.slice(0, 2).map(n => ({ kind: 'drift', id: `d-${n.contact.id}`, nudge: n })),
   ]
+
+  // Publish the lead reason to the home-screen widget (native only) through
+  // the shared app group. The widget re-reads it on its own timeline.
+  const leadId = queue[0]?.id
+  useEffect(() => {
+    if (!isNative() || demoActive) return
+    import('@capacitor/preferences').then(({ Preferences }) => {
+      const r = queue[0]
+      if (!r) { Preferences.remove({ key: 'widget_today' }); return }
+      const u = r.update
+      const payload = r.kind === 'drift'
+        ? {
+          kicker: 'Drifting',
+          headline: `It's been ${r.nudge.health.days} days quiet with ${r.nudge.contact.name.split(' ')[0]}.`,
+          name: r.nudge.contact.name,
+        }
+        : {
+          kicker: r.kind === 'favor'
+            ? ['A favor to send', u.themeLabel].filter(Boolean).join(' · ')
+            : (u.headsUp ? `Heads-up · ${u.headsUp}` : u.themeLabel || ''),
+          headline: u.headline,
+          name: u.contactName,
+        }
+      Preferences.set({ key: 'widget_today', value: JSON.stringify({ ...payload, updatedAt: Date.now() }) })
+    }).catch(() => {})
+  }, [leadId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function openReason(r) {
     if (r.kind === 'drift') {
@@ -397,7 +424,9 @@ export default function CommonGround({ onImportContacts }) {
       ? { head: `It's been ${r.nudge.health.days} days quiet with ${firstName(r.nudge.contact.name)}.`, rest: '' }
       : splitHeadline(u.headline)
     const kicker = r.kind === 'news'
-      ? [u.themeLabel, u.source].filter(Boolean).join(' · ')
+      ? (u.headsUp
+        ? ['Heads-up · ' + u.headsUp, u.themeLabel].filter(Boolean).join(' · ')
+        : [u.themeLabel, u.source].filter(Boolean).join(' · '))
       : r.kind === 'favor'
         ? ['A favor to send', u.themeLabel].filter(Boolean).join(' · ')
         : 'Drifting'
@@ -468,7 +497,9 @@ export default function CommonGround({ onImportContacts }) {
               ? { head: `It's been ${r.nudge.health.days} days quiet with ${firstName(r.nudge.contact.name)}.`, rest: '' }
               : splitHeadline(u.headline)
             const kicker = r.kind === 'news'
-              ? [u.themeLabel, u.source].filter(Boolean).join(' · ')
+              ? (u.headsUp
+                ? ['Heads-up · ' + u.headsUp, u.themeLabel].filter(Boolean).join(' · ')
+                : [u.themeLabel, u.source].filter(Boolean).join(' · '))
               : r.kind === 'favor'
                 ? ['A favor to send', u.themeLabel].filter(Boolean).join(' · ')
                 : 'Drifting'

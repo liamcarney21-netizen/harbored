@@ -119,7 +119,11 @@ export function shapeResultRows(found, scoreById, userId, notifiedByKey, scanned
       source: item.source ?? null,
       link: item.link ?? null,
       score,
-      rationale: scored.rationale ?? null,
+      // No dedicated column: a heads-up rides as a structured prefix on the
+      // rationale, which the client parses back out (old rows are unaffected).
+      rationale: scored.eventWhen
+        ? `[Heads-up \u00b7 ${scored.eventWhen}] ${scored.rationale ?? ''}`.trim()
+        : (scored.rationale ?? null),
       draft_message: above ? (scored.draftMessage ?? null) : null,
       above_bar: above,
       content_key: key,

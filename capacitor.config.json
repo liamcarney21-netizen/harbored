@@ -10,6 +10,9 @@
   "plugins": {
     "CapacitorHttp": {
       "enabled": true
+    },
+    "Preferences": {
+      "group": "group.app.harbored"
     }
   }
 }

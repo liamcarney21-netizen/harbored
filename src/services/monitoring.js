@@ -132,6 +132,7 @@ export async function fetchLiveUpdates(contacts, themesByContact, { maxThemes = 
       // Claude's own one-sentence judgment of why this scored the way it did
       // (falls back to a heuristic rationale server-side when no API key).
       rationale: scored?.rationale,
+      headsUp: scored?.eventWhen,
       factors: above
         ? [
             'Fresh coverage detected across news sources',

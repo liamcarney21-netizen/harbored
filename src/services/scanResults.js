@@ -62,6 +62,11 @@ export async function fetchStoredUpdates(contacts = []) {
     const name = row.contact_name || contact?.name || 'Someone'
     const first = name.split(' ')[0]
     const above = row.above_bar
+    // A heads-up (significant upcoming event) rides as a structured prefix on
+    // the rationale — no dedicated column. Parse it back out for the kicker.
+    const headsUpMatch = (row.rationale || '').match(/^\[Heads-up · (.{1,30}?)\]\s*/)
+    const headsUp = headsUpMatch ? headsUpMatch[1] : undefined
+    const rationale = headsUpMatch ? (row.rationale || '').slice(headsUpMatch[0].length) : row.rationale
     const giveable = !above && isGiveable(row.headline || '')
     // Match the live store's numeric ids so navigation/send handlers resolve
     // the contact; fall back to the raw value if it isn't numeric.
@@ -82,7 +87,8 @@ export async function fetchStoredUpdates(contacts = []) {
       source: row.source,
       time: relativeTime(row.scanned_at),
       score: row.score,
-      rationale: row.rationale || undefined,
+      headsUp,
+      rationale: rationale || undefined,
       draftMessage: above
         ? (row.draft_message || `${first} — did you see this? "${row.headline}" Immediately thought of you.`)
         : undefined,
