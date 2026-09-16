@@ -27,6 +27,13 @@ function RootRoute() {
   return <Navigate to={user ? '/dashboard' : '/login'} replace />;
 }
 
+// Shareable one-tap demo: /demo drops straight into the live sample network.
+function DemoRoute() {
+  const enter = useDemoStore(s => s.enter);
+  useEffect(() => { enter(); }, [enter]);
+  return <Navigate to="/dashboard" replace />;
+}
+
 export default function App() {
   const init = useAuthStore(s => s.init);
   const lastUserId = useRef(undefined);
@@ -52,6 +59,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<RootRoute />} />
+        <Route path="/demo" element={<DemoRoute />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/reset-password" element={<ResetPassword />} />
