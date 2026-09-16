@@ -92,6 +92,7 @@ export default function CommonGround({ onImportContacts }) {
   const [scannedAt, setScannedAt] = useState(null)
   const [activeIdx, setActiveIdx] = useState(0)
   // One-time swipe affordance — gone forever after the first real swipe.
+  const [neverScanned, setNeverScanned] = useState(false)
   const [showSwipeHint, setShowSwipeHint] = useState(() => {
     try { return localStorage.getItem('harbored_swiped') !== 'true' } catch { return false }
   })
@@ -117,6 +118,8 @@ export default function CommonGround({ onImportContacts }) {
       const stored = await fetchStoredUpdates(contacts)
       setStoredUpdates(stored)
       if (stored.length === 0) {
+        // The server has never scanned for this account — day one.
+        setNeverScanned(true)
         const updates = await fetchLiveUpdates(contacts, themesByContact, { maxThemes: 6 })
         setLiveUpdates(updates)
         setScannedAt(new Date())
@@ -690,15 +693,40 @@ export default function CommonGround({ onImportContacts }) {
                 </span>
               </button>
             </>
+          ) : scanning ? (
+            <>
+              <h1 className="hb-display" style={{ fontSize: '30px', fontWeight: 500, color: INK, lineHeight: 1.2 }}>
+                Scanning your themes
+              </h1>
+              <p style={{ fontSize: '14px', lineHeight: 1.6, color: '#C2CBD8' }}>
+                Checking the news on everything you share.
+              </p>
+            </>
+          ) : neverScanned ? (
+            // Day one: the account is set up but the around-the-clock watch
+            // hasn't produced its first reasons yet. Warm, not empty.
+            <>
+              <h1 className="hb-display" style={{ fontSize: '30px', fontWeight: 500, color: INK, lineHeight: 1.2 }}>
+                The watch has begun
+              </h1>
+              <p style={{ fontSize: '14px', lineHeight: 1.6, color: '#C2CBD8', maxWidth: '420px' }}>
+                Harbored is now watching {themeCount} theme{themeCount === 1 ? '' : 's'} across your
+                {' '}{contacts.length} {contacts.length === 1 ? 'person' : 'people'}, around the clock.
+                First reasons usually land within a day &mdash; you&rsquo;ll get a push the moment
+                something clears the bar.
+              </p>
+              <p style={{ fontSize: '13px', lineHeight: 1.6, color: MUTED, maxWidth: '420px' }}>
+                The more themes each person has, the more Harbored can catch &mdash; add a few
+                any time.
+              </p>
+            </>
           ) : (
             <>
               <h1 className="hb-display" style={{ fontSize: '30px', fontWeight: 500, color: INK, lineHeight: 1.2 }}>
-                {scanning ? 'Scanning your themes' : 'All quiet'}
+                All quiet
               </h1>
               <p style={{ fontSize: '14px', lineHeight: 1.6, color: '#C2CBD8' }}>
-                {scanning
-                  ? 'Checking the news on everything you share.'
-                  : `Harbored is watching ${themeCount} theme${themeCount === 1 ? '' : 's'} across ${contacts.length} people. You'll hear when something clears the bar.`}
+                Harbored is watching {themeCount} theme{themeCount === 1 ? '' : 's'} across {contacts.length} people. You&rsquo;ll hear when something clears the bar.
               </p>
             </>
           )}
