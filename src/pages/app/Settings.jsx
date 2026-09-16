@@ -5,6 +5,8 @@ import { useAuthStore } from '../../store/authStore'
 import { useDemoStore } from '../../store/demoStore'
 import WarmAvatar from '../../components/WarmAvatar'
 import { useIsMobile } from '../../hooks/useIsMobile'
+import { supabase } from '../../lib/supabase'
+import { apiUrl } from '../../lib/apiBase'
 
 const INK = '#F5F4EF'
 const MUTED = '#8C9AAD'
@@ -88,6 +90,39 @@ export default function Settings() {
     if (demoActive) { navigate('/'); return }
     await logout()
     navigate('/login')
+  }
+
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState('')
+
+  async function handleDeleteAccount() {
+    const ok = window.confirm(
+      'Delete your Harbored account? Your people, themes, and history are removed permanently. This cannot be undone.'
+    )
+    if (!ok) return
+    // In the demo there is no account — deleting just wipes the sample state.
+    if (demoActive) { localStorage.clear(); window.location.href = '/'; return }
+    setDeleting(true)
+    setDeleteError('')
+    try {
+      const { data } = await supabase.auth.getSession()
+      const token = data?.session?.access_token
+      if (!token) throw new Error('Your session expired — sign in again first.')
+      const res = await fetch(apiUrl('/api/delete-account'), {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        throw new Error(body.error || 'Deletion failed — try again in a moment.')
+      }
+      localStorage.clear()
+      await supabase.auth.signOut().catch(() => {})
+      window.location.href = '/'
+    } catch (e) {
+      setDeleteError(e.message)
+      setDeleting(false)
+    }
   }
 
   return (
@@ -175,8 +210,12 @@ export default function Settings() {
       <div style={{ background: 'rgba(232,134,122,0.05)', border: '1px solid rgba(232,134,122,0.2)', borderRadius: '16px', marginTop: '24px', overflow: 'hidden' }}>
         <Row
           title="Delete account"
-          sub="Removes your account and every piece of data, permanently"
-          control={<GhostButton tone="danger">Delete</GhostButton>}
+          sub={deleteError || 'Removes your account and every piece of data, permanently'}
+          control={
+            <GhostButton tone="danger" onClick={deleting ? undefined : handleDeleteAccount}>
+              {deleting ? 'Deleting…' : 'Delete'}
+            </GhostButton>
+          }
           last
         />
       </div>
