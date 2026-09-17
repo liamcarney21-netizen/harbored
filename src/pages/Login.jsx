@@ -8,25 +8,25 @@ import { supabase } from '../lib/supabase';
 
 const inputStyle = {
   width: '100%', padding: '12px 16px', boxSizing: 'border-box',
-  background: '#FFFFFF',
-  border: '1px solid #CCC6B9',
+  background: '#0a1628',
+  border: '1px solid rgba(255,255,255,0.14)',
   borderRadius: 8,
   fontFamily: 'Inter, sans-serif', fontSize: 15,
-  color: '#1C2B33', outline: 'none',
+  color: '#F5F4EF', outline: 'none',
   transition: 'border-color 0.2s, box-shadow 0.2s',
 };
 
 const labelStyle = {
   display: 'block', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600,
-  color: '#3E4B52', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 8,
+  color: '#8C9AAD', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 8,
 };
 
 function focusRing(e) {
-  e.target.style.borderColor = '#0D5C63';
-  e.target.style.boxShadow = '0 0 0 3px rgba(13,92,99,0.15)';
+  e.target.style.borderColor = '#D3A95C';
+  e.target.style.boxShadow = '0 0 0 3px rgba(211,169,92,0.18)';
 }
 function blurRing(e) {
-  e.target.style.borderColor = '#CCC6B9';
+  e.target.style.borderColor = 'rgba(255,255,255,0.14)';
   e.target.style.boxShadow = 'none';
 }
 
@@ -76,7 +76,7 @@ export default function Login() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: '#F6F4EF',
+      background: '#0a1628',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       padding: '24px 16px',
     }}>
@@ -86,10 +86,10 @@ export default function Login() {
         transition={{ duration: 0.5, ease: 'easeOut' }}
         style={{
           width: '100%', maxWidth: 420,
-          background: '#FFFFFF',
-          border: '1px solid #E6E2D8',
+          background: '#0f2040',
+          border: '1px solid rgba(255,255,255,0.08)',
           borderRadius: 12,
-          boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
+          boxShadow: '0 8px 28px rgba(0,0,0,0.35)',
           padding: '48px 40px',
         }}
       >
@@ -98,20 +98,20 @@ export default function Login() {
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             marginBottom: 32,
           }}>
-            <AnchorMark size={18} color="#A97E2F" />
+            <AnchorMark size={18} color="#D3A95C" />
             <span style={{
-              fontFamily: '"Fraunces", Georgia, serif', fontSize: 22, fontWeight: 600,
-              color: '#1C2B33',
+              fontFamily: '"Lora", Georgia, serif', fontSize: 22, fontWeight: 600,
+              color: '#F5F4EF',
             }}>Harbored</span>
           </div>
         </Link>
 
         <h1 style={{
-          fontFamily: '"Fraunces", Georgia, serif', fontSize: 26, fontWeight: 600,
-          color: '#1C2B33', marginBottom: 8, textAlign: 'center',
+          fontFamily: '"Lora", Georgia, serif', fontSize: 26, fontWeight: 600,
+          color: '#F5F4EF', marginBottom: 8, textAlign: 'center',
         }}>{mode === 'signin' ? 'Welcome back' : 'Reset your password'}</h1>
         <p style={{
-          fontFamily: 'Inter, sans-serif', fontSize: 14, color: '#5C6B73',
+          fontFamily: 'Inter, sans-serif', fontSize: 14, color: '#8C9AAD',
           textAlign: 'center', marginBottom: 32,
         }}>
           {mode === 'signin' && 'Your network missed you.'}
@@ -124,9 +124,9 @@ export default function Login() {
             onClick={() => setMode('signin')}
             style={{
               width: '100%', padding: '13px', background: 'none',
-              border: '1px solid #CCC6B9', borderRadius: 24,
+              border: '1px solid rgba(255,255,255,0.2)', borderRadius: 24,
               fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: 14,
-              color: '#3E4B52', cursor: 'pointer',
+              color: '#8C9AAD', cursor: 'pointer',
             }}
           >Back to sign in</button>
         )}
@@ -145,20 +145,20 @@ export default function Login() {
               />
             </div>
             {error && (
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#B4423A', marginBottom: 16, textAlign: 'center' }}>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#E8867A', marginBottom: 16, textAlign: 'center' }}>
                 {error}
               </p>
             )}
             <button type="submit" disabled={loading} style={{
-              width: '100%', padding: '13px', background: '#0D5C63', color: '#FFFFFF',
+              width: '100%', padding: '13px', background: '#D3A95C', color: '#0a1628',
               fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: 15,
               border: 'none', borderRadius: 24,
               cursor: loading ? 'default' : 'pointer', opacity: loading ? 0.7 : 1,
             }}>{loading ? 'Sending…' : 'Send reset link'}</button>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#5C6B73', textAlign: 'center', marginTop: 24 }}>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#8C9AAD', textAlign: 'center', marginTop: 24 }}>
               Remembered it?{' '}
               <button type="button" onClick={() => { setMode('signin'); setError(''); }}
-                style={{ background: 'none', border: 'none', padding: 0, color: '#0D5C63', fontWeight: 600, fontSize: 13, fontFamily: 'Inter, sans-serif', cursor: 'pointer' }}>
+                style={{ background: 'none', border: 'none', padding: 0, color: '#D3A95C', fontWeight: 600, fontSize: 13, fontFamily: 'Inter, sans-serif', cursor: 'pointer' }}>
                 Back to sign in
               </button>
             </p>
@@ -190,22 +190,22 @@ export default function Login() {
             />
             <div style={{ textAlign: 'right', marginTop: 8 }}>
               <button type="button" onClick={() => { setMode('forgot'); setError(''); }}
-                style={{ background: 'none', border: 'none', padding: 0, color: '#0D5C63', fontWeight: 600, fontSize: 12.5, fontFamily: 'Inter, sans-serif', cursor: 'pointer' }}>
+                style={{ background: 'none', border: 'none', padding: 0, color: '#D3A95C', fontWeight: 600, fontSize: 12.5, fontFamily: 'Inter, sans-serif', cursor: 'pointer' }}>
                 Forgot password?
               </button>
             </div>
           </div>
 
           {error && (
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#B4423A', marginBottom: 16, textAlign: 'center' }}>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#E8867A', marginBottom: 16, textAlign: 'center' }}>
               {error}
             </p>
           )}
 
           <button type="submit" disabled={loading} style={{
             width: '100%', padding: '13px',
-            background: '#0D5C63',
-            color: '#FFFFFF',
+            background: '#D3A95C',
+            color: '#0a1628',
             fontFamily: 'Inter, sans-serif',
             fontWeight: 600, fontSize: 15,
             border: 'none', borderRadius: 24,
@@ -213,8 +213,8 @@ export default function Login() {
             opacity: loading ? 0.7 : 1,
             transition: 'background 0.2s',
           }}
-          onMouseEnter={e => { if (!loading) e.currentTarget.style.background = '#09454B'; }}
-          onMouseLeave={e => { if (!loading) e.currentTarget.style.background = '#0D5C63'; }}
+          onMouseEnter={e => { if (!loading) e.currentTarget.style.background = '#C29245'; }}
+          onMouseLeave={e => { if (!loading) e.currentTarget.style.background = '#D3A95C'; }}
           >{loading ? 'Signing in…' : 'Sign In'}</button>
         </form>
         )}
@@ -222,31 +222,31 @@ export default function Login() {
         {mode === 'signin' && (
         <>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '20px 0' }}>
-          <span style={{ flex: 1, height: 1, background: '#E6E2D8' }} />
-          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: '#5C6B73', opacity: 0.7 }}>or</span>
-          <span style={{ flex: 1, height: 1, background: '#E6E2D8' }} />
+          <span style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)' }} />
+          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: '#8C9AAD', opacity: 0.7 }}>or</span>
+          <span style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)' }} />
         </div>
         <button
           type="button"
           onClick={startDemo}
           style={{
             width: '100%', padding: '13px', background: 'none',
-            border: '1px solid #CCC6B9', borderRadius: 24,
+            border: '1px solid rgba(255,255,255,0.2)', borderRadius: 24,
             fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: 14,
-            color: '#3E4B52', cursor: 'pointer', transition: 'border-color 0.2s, color 0.2s',
+            color: '#C2CBD8', cursor: 'pointer', transition: 'border-color 0.2s, color 0.2s',
           }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = '#A97E2F'; e.currentTarget.style.color = '#A97E2F'; }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = '#CCC6B9'; e.currentTarget.style.color = '#3E4B52'; }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = '#D3A95C'; e.currentTarget.style.color = '#D3A95C'; }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; e.currentTarget.style.color = '#C2CBD8'; }}
         >
           Try a live demo — no account needed
         </button>
         <p style={{
           fontFamily: 'Inter, sans-serif', fontSize: 13,
-          color: '#5C6B73',
+          color: '#8C9AAD',
           textAlign: 'center', marginTop: 24,
         }}>
           New to Harbored?{' '}
-          <Link to="/signup" style={{ color: '#0D5C63', textDecoration: 'none', fontWeight: 600 }}>
+          <Link to="/signup" style={{ color: '#D3A95C', textDecoration: 'none', fontWeight: 600 }}>
             Create an account
           </Link>
         </p>
