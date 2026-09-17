@@ -21,6 +21,23 @@ createRoot(document.getElementById('root')).render(
 // window.Capacitor is injected by the native runtime; on the web it's undefined,
 // so this stays a no-op for the PWA build.
 const isNativeApp = typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.()
+
+// iOS pans the whole WKWebView up when the keyboard would cover a focused
+// input — and with our fixed 100vh/overflow-hidden layouts it sometimes never
+// pans back, leaving the app shifted under the status bar. Nothing in the page
+// can scroll it back, so snap the pan home whenever focus leaves an input.
+if (isNativeApp) {
+  window.addEventListener('focusout', () => {
+    setTimeout(() => {
+      const ae = document.activeElement
+      if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable)) return
+      window.scrollTo(0, 0)
+      document.documentElement.scrollTop = 0
+      document.body.scrollTop = 0
+    }, 250) // let the keyboard start dismissing first
+  })
+}
+
 if (import.meta.env.PROD && !isNativeApp && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').catch(() => {})

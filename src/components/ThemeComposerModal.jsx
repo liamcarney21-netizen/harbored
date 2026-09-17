@@ -49,6 +49,8 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
   const [transcript, setTranscript] = useState('')
   const [voiceError, setVoiceError] = useState('')
   const recognizerRef = useRef(null)
+  const transcriptRef = useRef('') // mirror for timer callbacks, which see stale state
+  const silenceRef = useRef(null)
 
   const current = contacts[index]
   const total = contacts.length
@@ -61,6 +63,8 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
   function resetForContact() {
     recognizerRef.current?.stop()
     recognizerRef.current = null
+    clearTimeout(silenceRef.current)
+    transcriptRef.current = ''
     setThemes([]); setLabel(''); setPromptIdx(null)
     setVoiceMode('idle'); setTranscript(''); setVoiceError('')
   }
@@ -105,20 +109,34 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
   }
 
   // ── "Just talk about them" — voice → transcript → theme extraction ──
+  // A pause of a few seconds finishes the take automatically, so nobody is
+  // left wondering how to stop; tapping the mic again finishes it right away.
+  function bumpSilenceTimer() {
+    clearTimeout(silenceRef.current)
+    silenceRef.current = setTimeout(() => finishListening(), 3000)
+  }
+
   function startListening() {
     setVoiceError('')
     setTranscript('')
+    transcriptRef.current = ''
     setVoiceMode('listening')
     recognizerRef.current = createRecognizer({
-      onText: setTranscript,
+      onText: (t) => { transcriptRef.current = t; setTranscript(t); bumpSilenceTimer() },
       onEnd: (finalText) => finishListening(finalText),
-      onError: (msg) => { setVoiceError(msg); setVoiceMode('idle'); recognizerRef.current = null },
+      onError: (msg) => {
+        clearTimeout(silenceRef.current)
+        setVoiceError(msg); setVoiceMode('idle'); recognizerRef.current = null
+      },
     })
     recognizerRef.current.start()
+    bumpSilenceTimer()
   }
 
   async function finishListening(finalOverride) {
-    const heard = (recognizerRef.current ? recognizerRef.current.stop() : finalOverride) || transcript
+    if (!recognizerRef.current) return // already finished (mic tap + timer can race)
+    clearTimeout(silenceRef.current)
+    const heard = recognizerRef.current.stop() || transcriptRef.current || finalOverride
     recognizerRef.current = null
     const text = (heard || '').trim()
     if (text.length < 12) {
@@ -127,6 +145,8 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
       return
     }
     setVoiceMode('mapping')
+    setTranscript('')
+    transcriptRef.current = ''
     try {
       const existing = new Set(themes.map(t => t.label.toLowerCase()))
       const found = ((await discoverThemes(text, current?.name)).themes || [])
@@ -164,12 +184,17 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
   function closeAll() {
     recognizerRef.current?.stop()
     recognizerRef.current = null
+    clearTimeout(silenceRef.current)
     onClose()
   }
 
   if (!open || !current) return null
 
   const first = current.name.split(' ')[0]
+  // While listening, the one-line input shows a rolling tail of the transcript
+  // (like dictation), not the whole speech crammed in and clipped.
+  const tWords = transcript.split(/\s+/).filter(Boolean)
+  const transcriptTail = tWords.length > 8 ? '… ' + tWords.slice(-8).join(' ') : transcript
   const question = QUESTIONS[index % QUESTIONS.length](first)
   const nextFirst = !isLast ? contacts[index + 1]?.name.split(' ')[0] : null
 
@@ -267,7 +292,7 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
                 <div style={{ position: 'relative', flex: 1, minWidth: 0 }}>
                   <input
                     ref={inputRef}
-                    value={voiceMode === 'idle' ? label : transcript}
+                    value={voiceMode === 'idle' ? label : transcriptTail}
                     readOnly={voiceMode !== 'idle'}
                     onChange={e => setLabel(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addChip() } }}
@@ -332,6 +357,11 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
               {isSpeechSupported() && voiceMode === 'idle' && themes.length === 0 && !voiceError && (
                 <p style={{ fontSize: '12px', color: MUTED, marginTop: '9px', lineHeight: 1.5 }}>
                   Prefer to talk? Tap the mic and just describe {first} &mdash; Harbored maps it.
+                </p>
+              )}
+              {voiceMode === 'listening' && (
+                <p style={{ fontSize: '12px', color: ACCENT, marginTop: '9px', lineHeight: 1.5 }}>
+                  Pause when you&rsquo;re done &mdash; or tap the mic to map it now.
                 </p>
               )}
               {voiceError && (

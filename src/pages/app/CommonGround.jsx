@@ -176,6 +176,23 @@ export default function CommonGround({ onImportContacts }) {
     }).catch(() => {})
   }, [leadId]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // iOS mandatory scroll-snap only re-engages on touch, so when the queue
+  // changes (a reason sent/dismissed, live updates landing) or the viewport
+  // resizes, the deck can rest between cards — showing 3/4 of one and a
+  // sliver of the next. Re-snap it to the nearest card whenever that happens.
+  useEffect(() => {
+    const el = deckRef.current
+    if (!el) return
+    const snap = () => {
+      if (!el.clientWidth) return
+      const i = Math.min(queue.length - 1, Math.max(0, Math.round(el.scrollLeft / el.clientWidth)))
+      el.scrollTo({ left: i * el.clientWidth })
+    }
+    snap()
+    window.addEventListener('resize', snap)
+    return () => window.removeEventListener('resize', snap)
+  }, [queue.length]) // eslint-disable-line react-hooks/exhaustive-deps
+
   function openReason(r) {
     if (r.kind === 'drift') {
       setSelected(r)

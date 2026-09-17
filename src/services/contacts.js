@@ -45,10 +45,13 @@ function birthdayFromPayload(b) {
   return `${mm}-${dd}`
 }
 
-// Reads the whole address book (after permission) and returns normalized contacts
-// with a name. Throws a user-facing Error if the user denies contacts access.
+// Reads the whole address book (after permission) and returns normalized
+// contacts with a name, plus whether iOS is only sharing a limited selection
+// (iOS 18 "limited access": reads work, but return only the contacts the user
+// picked in the system sheet — possibly just one or two). Throws a user-facing
+// Error if the user denies contacts access outright.
 export async function pickNativeContacts() {
-  if (!isNativeContactsAvailable()) return []
+  if (!isNativeContactsAvailable()) return { contacts: [], limited: false }
 
   // Dynamic import keeps the native plugin out of the web bundle.
   const { Contacts } = await import('@capacitor-community/contacts')
@@ -57,11 +60,8 @@ export async function pickNativeContacts() {
   if (perm.contacts === 'prompt' || perm.contacts === 'prompt-with-rationale') {
     perm = await Contacts.requestPermissions()
   }
+  const limited = perm.contacts === 'limited'
 
-  // iOS 18 "limited access" reports a status this plugin doesn't map to
-  // 'granted', but reads still work — they return exactly the contacts the
-  // user chose in the system sheet. So always attempt the read, and only
-  // surface the Settings hint when the read comes back empty under a denial.
   let contacts = []
   try {
     const res = await Contacts.getContacts({
@@ -71,9 +71,18 @@ export async function pickNativeContacts() {
   } catch {
     contacts = []
   }
-  if (!contacts.length && perm.contacts !== 'granted' && perm.contacts !== 'limited') {
+  if (!contacts.length && perm.contacts !== 'granted' && !limited) {
     throw new Error('Harbored needs permission to read your contacts. You can enable it in Settings → Harbored → Contacts.')
   }
 
-  return contacts.map(normalize).filter(c => c.name)
+  return { contacts: contacts.map(normalize).filter(c => c.name), limited }
+}
+
+// Jumps to Harbored's own page in the Settings app, where the user can switch
+// contacts access from "Limited" to "Full" (or pick more people).
+export async function openContactSettings() {
+  try {
+    const { AppLauncher } = await import('@capacitor/app-launcher')
+    await AppLauncher.openUrl({ url: 'app-settings:' })
+  } catch { /* plugin missing — the inline copy still explains the manual path */ }
 }

@@ -5,7 +5,7 @@ import { useDataStore } from '../store/dataStore'
 import { useDemoStore } from '../store/demoStore'
 import { parseVCard } from '../services/vcard'
 import { SAMPLE_VCARD } from '../data/sampleContacts'
-import { isNativeContactsAvailable, pickNativeContacts } from '../services/contacts'
+import { isNativeContactsAvailable, pickNativeContacts, openContactSettings } from '../services/contacts'
 
 const hasContactPicker = typeof navigator !== 'undefined' && 'contacts' in navigator && 'ContactsManager' in window
 
@@ -20,6 +20,7 @@ export default function ImportContactsModal({ open, onClose, onImported, onAddMa
   const [error, setError] = useState('')
   const [importing, setImporting] = useState(false)
   const [loadingNative, setLoadingNative] = useState(false)
+  const [limitedAccess, setLimitedAccess] = useState(false)
 
   const nativeContacts = isNativeContactsAvailable()
 
@@ -30,6 +31,7 @@ export default function ImportContactsModal({ open, onClose, onImported, onAddMa
     setError('')
     setImporting(false)
     setLoadingNative(false)
+    setLimitedAccess(false)
   }
 
   function handleClose() {
@@ -71,9 +73,12 @@ export default function ImportContactsModal({ open, onClose, onImported, onAddMa
     setError('')
     setLoadingNative(true)
     try {
-      const parsed = await pickNativeContacts()
+      const { contacts: parsed, limited } = await pickNativeContacts()
+      setLimitedAccess(limited)
       if (!parsed.length) {
-        setError('No contacts with a name were found.')
+        setError(limited
+          ? "iOS isn't sharing any contacts with Harbored yet — allow full access in Settings → Harbored → Contacts."
+          : 'No contacts with a name were found.')
         return
       }
       ingest(parsed)
@@ -231,6 +236,25 @@ export default function ImportContactsModal({ open, onClose, onImported, onAddMa
 
               {candidates && (
                 <>
+                  {limitedAccess && (
+                    <div style={{
+                      padding: '12px 14px', borderRadius: '10px',
+                      background: 'rgba(211,169,92,0.07)', border: '1px solid rgba(211,169,92,0.25)',
+                    }}>
+                      <p style={{ fontSize: '12px', color: '#C2CBD8', lineHeight: 1.55 }}>
+                        iOS is sharing only {candidates.length === 1 ? 'one contact' : `${candidates.length} contacts`} with
+                        Harbored. To bring in more of your people, switch Contacts access to
+                        &ldquo;Full&rdquo; in Settings, then import again.
+                      </p>
+                      <button className="hb-press" onClick={openContactSettings} style={{
+                        marginTop: '8px', padding: '7px 12px', borderRadius: '8px',
+                        fontSize: '12px', fontWeight: 600, background: 'none', color: '#D3A95C',
+                        border: '1px solid rgba(211,169,92,0.4)', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+                      }}>
+                        Open Settings
+                      </button>
+                    </div>
+                  )}
                   {skippedCount > 0 && (
                     <p style={{ fontSize: '12px', color: '#8C9AAD' }}>
                       Skipped {skippedCount} already in your crew.

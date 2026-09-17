@@ -20,13 +20,18 @@ export function createRecognizer({ onText, onEnd, onError }) {
   let stopped = false
 
   rec.onresult = (e) => {
+    // Rebuild from every result on each event instead of accumulating from
+    // resultIndex: iOS Safari re-delivers finalized results, so `+=` doubles
+    // words and the transcript visibly stutters on device.
+    let final = ''
     let interim = ''
-    for (let i = e.resultIndex; i < e.results.length; i++) {
+    for (let i = 0; i < e.results.length; i++) {
       const r = e.results[i]
-      if (r.isFinal) finalText += r[0].transcript + ' '
+      if (r.isFinal) final += r[0].transcript + ' '
       else interim += r[0].transcript
     }
-    onText?.((finalText + interim).trim())
+    finalText = final
+    onText?.((final + interim).trim())
   }
   rec.onerror = (e) => {
     if (stopped) return
