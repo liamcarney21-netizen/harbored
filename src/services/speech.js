@@ -31,7 +31,9 @@ export function createRecognizer({ onText, onEnd, onError }) {
   rec.onerror = (e) => {
     if (stopped) return
     onError?.(e.error === 'not-allowed' || e.error === 'service-not-allowed'
-      ? 'Microphone access was blocked — allow it in your browser settings, or type instead.'
+      ? (window.Capacitor?.isNativePlatform?.()
+        ? 'Microphone access is off — allow it in Settings \u2192 Harbored, or type instead.'
+        : 'Microphone access was blocked — allow it in your browser settings, or type instead.')
       : "Couldn't hear that — try again, or type it.")
   }
   rec.onend = () => {

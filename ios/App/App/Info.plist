@@ -47,6 +47,10 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Harbored uses the microphone so you can describe a relationship out loud and have it mapped into shared themes. Audio is transcribed on-device and never stored.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Harbored uses speech recognition to turn what you say about a person into shared themes to watch. Nothing is saved or shared.</string>
 	<key>NSContactsUsageDescription</key>
 	<string>Harbored imports the people you choose so it can watch for their milestones and remind you to reach out. Your contacts stay yours — they are never shared or sold.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>

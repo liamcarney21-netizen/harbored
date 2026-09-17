@@ -26,9 +26,12 @@ export default function AppLayout() {
   const isMobile = useIsMobile()
   const navigate = useNavigate()
   // In demo mode skip the first-run walkthrough — judges land straight on the
-  // seeded Common Ground so the product explains itself.
+  // seeded Common Ground so the product explains itself. The seen-flag is
+  // per-account (not per-device), so every new sign-up gets the intro even on
+  // a phone that has run Harbored before.
+  const obKey = user ? `harbored_onboarded_${user.id}` : 'harbored_onboarded'
   const [showOnboarding, setShowOnboarding] = useState(
-    () => !demoActive && localStorage.getItem('harbored_onboarded') !== 'true'
+    () => !demoActive && localStorage.getItem(obKey) !== 'true'
   )
   const [showAddContact, setShowAddContact] = useState(false)
   const [addContactFirstRun, setAddContactFirstRun] = useState(false)
@@ -46,7 +49,7 @@ export default function AppLayout() {
   // Import-first: onboarding hands off to the contacts importer, not the
   // manual-entry form — nobody types their network in by hand.
   function finishOnboarding(andBringContacts = false) {
-    localStorage.setItem('harbored_onboarded', 'true')
+    localStorage.setItem(obKey, 'true')
     setShowOnboarding(false)
     if (andBringContacts) setShowImportContacts(true)
   }

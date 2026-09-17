@@ -57,13 +57,23 @@ export async function pickNativeContacts() {
   if (perm.contacts === 'prompt' || perm.contacts === 'prompt-with-rationale') {
     perm = await Contacts.requestPermissions()
   }
-  if (perm.contacts !== 'granted') {
+
+  // iOS 18 "limited access" reports a status this plugin doesn't map to
+  // 'granted', but reads still work — they return exactly the contacts the
+  // user chose in the system sheet. So always attempt the read, and only
+  // surface the Settings hint when the read comes back empty under a denial.
+  let contacts = []
+  try {
+    const res = await Contacts.getContacts({
+      projection: { name: true, phones: true, emails: true, organization: true, birthday: true },
+    })
+    contacts = res.contacts || []
+  } catch {
+    contacts = []
+  }
+  if (!contacts.length && perm.contacts !== 'granted' && perm.contacts !== 'limited') {
     throw new Error('Harbored needs permission to read your contacts. You can enable it in Settings → Harbored → Contacts.')
   }
 
-  const { contacts } = await Contacts.getContacts({
-    projection: { name: true, phones: true, emails: true, organization: true, birthday: true },
-  })
-
-  return (contacts || []).map(normalize).filter(c => c.name)
+  return contacts.map(normalize).filter(c => c.name)
 }

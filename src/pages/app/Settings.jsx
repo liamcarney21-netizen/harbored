@@ -189,7 +189,7 @@ export default function Settings() {
           title="Replay the walkthrough"
           sub="The first-run tour of how Harbored works"
           control={
-            <GhostButton onClick={() => { localStorage.removeItem('harbored_onboarded'); window.location.href = '/dashboard' }}>
+            <GhostButton onClick={() => { localStorage.removeItem('harbored_onboarded'); if (user) localStorage.removeItem(`harbored_onboarded_${user.id}`); window.location.href = '/dashboard' }}>
               Replay
             </GhostButton>
           }

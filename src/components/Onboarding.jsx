@@ -6,30 +6,30 @@ import AnchorMark from './AnchorMark'
 const STEPS = [
   {
     icon: AnchorMark,
-    kicker: 'Welcome to Harbored',
-    title: 'Your network is your most valuable asset.',
-    body: "And it erodes quietly. The promotions you never congratulated, the moves you never acknowledged, the people who slowly became strangers. Harbored exists so that never happens — it watches over the relationships your career is built on, and tells you exactly when to show up.",
+    kicker: 'How Harbored works',
+    title: 'Going quiet is never on purpose.',
+    body: "You don't stop caring about people — you just stop knowing when to reach out, and what to say that doesn't feel random. Harbored fixes exactly that part: it finds you a real reason, and writes the first draft.",
     visual: null,
   },
   {
     icon: Compass,
-    kicker: 'The heart of Harbored',
-    title: 'Common Ground',
-    body: "For every person who matters, tell Harbored what connects you — a team you both follow, a city you both love, or the ground you want to build, like the market you're trying to break into. These themes become standing reasons to talk. This is where your network stops being a list of names and becomes a set of living connections.",
+    kicker: 'Step one',
+    title: 'Tell it what you share.',
+    body: "For each person, tap what connects you — a team you both follow, a city, a market, a hobby. Or just talk about them out loud and Harbored maps it. Those themes become standing reasons to stay in touch.",
     visual: 'themes',
   },
   {
     icon: Gauge,
-    kicker: 'Signal, not noise',
-    title: 'We only interrupt you when it matters.',
-    body: "Harbored monitors every shared theme around the clock and scores each development for significance. Routine news gets logged quietly. Only updates that clear the reach-out bar arrive at your door — with a personalized message already drafted. You decide with one click.",
+    kicker: 'Step two',
+    title: 'Harbored keeps watch.',
+    body: "It follows your themes in the news around the clock and scores everything it finds. Routine coverage is logged quietly. Only the things genuinely worth a message reach you — as a front page written about your people.",
     visual: 'gauge',
   },
   {
     icon: TrendingUp,
-    kicker: 'Watch it compound',
-    title: 'Relationships, measured.',
-    body: "My Network shows you the health of every relationship — who's strong, who's cooling, who's at risk of drifting away. Small, well-timed gestures compound into a network that works for you. Start now by adding the first person worth staying close to.",
+    kicker: 'Step three',
+    title: 'You send it — nothing sends itself.',
+    body: "Every reason comes with a short message already drafted. It opens in your own Messages or Mail; you can edit or toss it. And when someone's been quiet too long, Harbored quietly nudges before they drift. Start by bringing in a few of your people.",
     visual: null,
   },
 ]
@@ -172,7 +172,7 @@ export default function Onboarding({ onFinish }) {
               display: 'flex', alignItems: 'center', gap: '6px',
               padding: '9px 16px', borderRadius: '8px', fontSize: '13px', fontWeight: 500,
               background: 'none', border: '1px solid rgba(255,255,255,0.15)', cursor: step === 0 ? 'default' : 'pointer',
-              color: step === 0 ? '#C6C0B3' : '#C2CBD8', fontFamily: 'Inter, sans-serif',
+              color: step === 0 ? '#5B6880' : '#C2CBD8', fontFamily: 'Inter, sans-serif',
               opacity: step === 0 ? 0.6 : 1, transition: 'all 0.15s',
             }}
           >
@@ -188,7 +188,7 @@ export default function Onboarding({ onFinish }) {
                 aria-label={`Go to step ${i + 1}`}
                 style={{
                   width: i === step ? '20px' : '7px', height: '7px', borderRadius: '4px',
-                  background: i === step ? '#D3A95C' : i < step ? 'rgba(211,169,92,0.4)' : '#DEDACF',
+                  background: i === step ? '#D3A95C' : i < step ? 'rgba(211,169,92,0.4)' : 'rgba(255,255,255,0.18)',
                   border: 'none', cursor: 'pointer', padding: 0, transition: 'all 0.25s ease',
                 }}
               />
