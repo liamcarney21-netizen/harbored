@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import AnchorMark from '../components/AnchorMark';
 import { useAuthStore } from '../store/authStore';
@@ -38,8 +38,12 @@ export default function Login() {
   // 'signin' → normal login; 'forgot' → ask for email; 'sent' → reset email sent
   const [mode, setMode] = useState('signin');
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const signIn = useAuthStore(s => s.signIn);
   const enterDemo = useDemoStore(s => s.enter);
+  // Set when someone lands here right after deleting their account — the
+  // quiet goodbye that makes the sign-out feel finished, not broken.
+  const farewell = searchParams.get('farewell') === '1';
 
   // App Store reviewer access (and curious humans): a full sample network,
   // no account needed. Same demo the landing page offers.
@@ -80,12 +84,24 @@ export default function Login() {
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       padding: '24px 16px',
     }}>
+      <div style={{ width: '100%', maxWidth: 420 }}>
+      {farewell && (
+        <motion.p
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.2 }}
+          style={{
+            textAlign: 'center', fontSize: 13, color: '#8C9AAD', lineHeight: 1.6,
+            margin: '0 0 18px', fontFamily: 'Inter, sans-serif',
+          }}
+        >
+          Your account and everything in it are deleted. Thanks for giving Harbored a look — fair winds.
+        </motion.p>
+      )}
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: 'easeOut' }}
         style={{
-          width: '100%', maxWidth: 420,
+          width: '100%',
           background: '#0f2040',
           border: '1px solid rgba(255,255,255,0.08)',
           borderRadius: 12,
@@ -253,6 +269,7 @@ export default function Login() {
         </>
         )}
       </motion.div>
+      </div>
     </div>
   );
 }

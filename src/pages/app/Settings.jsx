@@ -4,6 +4,7 @@ import { useDataStore } from '../../store/dataStore'
 import { useAuthStore } from '../../store/authStore'
 import { useDemoStore } from '../../store/demoStore'
 import WarmAvatar from '../../components/WarmAvatar'
+import ThinkingMark from '../../components/ThinkingMark'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { supabase } from '../../lib/supabase'
 import { apiUrl } from '../../lib/apiBase'
@@ -92,14 +93,20 @@ export default function Settings() {
     navigate('/login')
   }
 
+  // Delete flow: our own confirm sheet (window.confirm renders as a washed-out
+  // native panel in the WKWebView), then a visible working state the whole way
+  // through — the server round-trip takes a few seconds and silence there read
+  // as a glitch.
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState('')
 
-  async function handleDeleteAccount() {
-    const ok = window.confirm(
-      'Delete your Harbored account? Your people, themes, and history are removed permanently. This cannot be undone.'
-    )
-    if (!ok) return
+  function handleDeleteAccount() {
+    setDeleteError('')
+    setConfirmingDelete(true)
+  }
+
+  async function confirmDeleteAccount() {
     // In the demo there is no account — deleting just wipes the sample state.
     if (demoActive) { localStorage.clear(); window.location.href = '/'; return }
     setDeleting(true)
@@ -118,10 +125,13 @@ export default function Settings() {
       }
       localStorage.clear()
       await supabase.auth.signOut().catch(() => {})
-      window.location.href = '/'
+      // The login page reads this flag and says a quiet goodbye, so the jump
+      // out of the app doesn't feel like a crash.
+      window.location.href = '/login?farewell=1'
     } catch (e) {
       setDeleteError(e.message)
       setDeleting(false)
+      setConfirmingDelete(false)
     }
   }
 
@@ -220,6 +230,54 @@ export default function Settings() {
         />
       </div>
       </div>
+
+      {/* Delete confirm sheet + working state — solid backdrop from the first
+          frame, and the asterisk keeps breathing through the server call. */}
+      {confirmingDelete && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 80,
+          background: 'rgba(4, 10, 22, 0.78)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px',
+        }}>
+          <div style={{
+            width: 'min(400px, 100%)', background: CARD, borderRadius: '16px',
+            border: `1px solid ${HAIRLINE}`, padding: '24px',
+            boxShadow: '0 18px 50px -12px rgba(0,0,0,0.6)',
+          }}>
+            {deleting ? (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px', padding: '10px 0' }}>
+                <ThinkingMark size={26} />
+                <div style={{ fontSize: '15px', fontWeight: 500, color: INK }}>Removing your account</div>
+                <p style={{ fontSize: '13px', color: MUTED, lineHeight: 1.55, textAlign: 'center', margin: 0 }}>
+                  Deleting your people, themes, and history from our servers…
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="hb-display" style={{ fontSize: '19px', fontWeight: 500, color: INK, lineHeight: 1.3 }}>
+                  Delete your Harbored account?
+                </div>
+                <p style={{ fontSize: '13px', color: MUTED, lineHeight: 1.6, margin: '10px 0 20px' }}>
+                  Your people, themes, and history are removed permanently. This cannot be undone.
+                </p>
+                <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                  <GhostButton onClick={() => setConfirmingDelete(false)}>Cancel</GhostButton>
+                  <button
+                    className="hb-press"
+                    onClick={confirmDeleteAccount}
+                    style={{
+                      padding: '9px 18px', borderRadius: '12px', fontSize: '13px', fontWeight: 600,
+                      background: '#E8867A', color: '#0a1628', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+                    }}
+                  >
+                    Delete forever
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
     </div>
   )

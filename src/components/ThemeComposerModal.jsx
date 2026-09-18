@@ -7,6 +7,7 @@ import { discoverThemes } from '../services/discovery'
 import { isSpeechSupported, createRecognizer } from '../services/speech'
 import WarmAvatar from './WarmAvatar'
 import ThemeSpecificityHint from './ThemeSpecificityHint'
+import ThinkingMark from './ThinkingMark'
 import { useIsMobile } from '../hooks/useIsMobile'
 
 const INK = '#F5F4EF'
@@ -372,9 +373,12 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
                     marginTop: '10px', padding: '10px 12px', maxHeight: '108px', overflowY: 'auto',
                     borderRadius: '10px', background: CARD,
                     borderLeft: `2px solid ${ACCENT}`,
-                    opacity: voiceMode === 'mapping' ? 0.75 : 1,
+                    opacity: voiceMode === 'mapping' ? 0.85 : 1,
                   }}
                 >
+                  {voiceMode === 'mapping' && (
+                    <ThinkingMark size={12} label={`Mapping what you said about ${first}…`} style={{ marginBottom: '7px' }} labelStyle={{ fontSize: '12px' }} />
+                  )}
                   <p style={{ fontSize: '13px', color: '#C2CBD8', lineHeight: 1.55, margin: 0, fontStyle: 'italic' }}>
                     {transcript}
                   </p>
@@ -408,9 +412,18 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
                           <X style={{ width: 13, height: 13 }} />
                         </button>
                       </div>
-                      <div style={{ fontSize: '12px', color: MUTED, marginTop: '4px', lineHeight: 1.45, fontStyle: t.refining ? 'italic' : 'normal' }}>
-                        {t.refining ? 'Working out what to watch…' : (t.display || "We'll watch this for significant news.")}
-                      </div>
+                      {t.refining ? (
+                        <ThinkingMark
+                          size={11}
+                          label="Working out what to watch…"
+                          style={{ marginTop: '4px' }}
+                          labelStyle={{ fontSize: '12px', fontStyle: 'italic' }}
+                        />
+                      ) : (
+                        <div style={{ fontSize: '12px', color: MUTED, marginTop: '4px', lineHeight: 1.45 }}>
+                          {t.display || "We'll watch this for significant news."}
+                        </div>
+                      )}
                     </motion.div>
                   ))}
                 </div>

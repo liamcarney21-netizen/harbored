@@ -127,6 +127,10 @@ body {
 
 @keyframes hbPulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.2); opacity: 0.6; } }
 
+/* ThinkingMark's breath: a slow half-turn with a soft fade, like a thought
+   forming — calmer than a spinner, livelier than a static glyph. */
+@keyframes hbThink { 0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; } 50% { transform: scale(1.12) rotate(45deg); opacity: 0.55; } }
+
 /* ─── Scrollbar ─────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: #EFEEEB; }

@@ -19,7 +19,16 @@ export const useAuthStore = create((set) => ({
       password,
       options: { data: { name } },
     });
-    if (error) return { error: error.message };
+    const alreadyMsg = 'That email already has a Harbored account — sign in below instead.';
+    if (error) {
+      return { error: /already registered/i.test(error.message) ? alreadyMsg : error.message };
+    }
+    // Supabase obfuscates existing emails: signUp "succeeds" with a user that
+    // has no identities. Treating that as a fresh account silently drops the
+    // person into (or half into) someone's existing data — surface it instead.
+    if (data.user && (data.user.identities?.length ?? 0) === 0) {
+      return { error: alreadyMsg };
+    }
     set({ user: data.user, initialized: true });
     return { error: null };
   },
