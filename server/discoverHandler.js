@@ -88,7 +88,7 @@ async function claudeDiscover(text, contactName, mode = 'conversation') {
     ? {
       system:
         'The user is describing one of their contacts out loud, in their own words. Your job is to pull out the WATCHABLE themes in that description — specific teams, places, markets, industries, or hobbies that could be followed in the news as reasons to reach out. The description is one-sided; do NOT require evidence that both people share the interest. Turn casual phrasing into canonical, followable names ("he\'s a Georgia bulldog" → "Georgia Bulldogs"; "does commercial real estate down south" → "Commercial real estate in the Sunbelt"). Speech transcripts have unreliable capitalization and punctuation — read through that. Skip pure biography with nothing to watch (a girlfriend, a birthday). Respond with JSON only, no prose.',
-      user: `The user, describing ${contactName || 'their contact'}:\n\n${text.slice(0, 12000)}\n\nExtract 1-6 watchable themes. Respond with exactly this JSON shape:\n{"themes":[{"label":"...","category":"sports|place|market|hobby|industry","confidence":0-100,"evidence":"the phrase from the description this came from"}]}`,
+      user: `The user, describing ${contactName || 'their contact'}:\n\n${text.slice(0, 12000)}\n\nExtract 1-6 watchable themes. Also list what you deliberately set aside — details that were mentioned but aren't watchable (a girlfriend, a birthday, a move) — as short lowercase phrases, so the user can see nothing was lost. Respond with exactly this JSON shape:\n{"themes":[{"label":"...","category":"sports|place|market|hobby|industry","confidence":0-100,"evidence":"the phrase from the description this came from"}],"skipped":["short phrase",...]}`,
     }
     : {
       system:
@@ -117,7 +117,7 @@ async function claudeDiscover(text, contactName, mode = 'conversation') {
   const jsonEnd = raw.lastIndexOf('}')
   const parsed = JSON.parse(raw.slice(jsonStart, jsonEnd + 1))
   const valid = ['sports', 'place', 'market', 'hobby', 'industry']
-  return (parsed.themes || [])
+  const themes = (parsed.themes || [])
     .filter(t => t.label)
     .map(t => ({
       label: String(t.label).slice(0, 60),
@@ -126,6 +126,12 @@ async function claudeDiscover(text, contactName, mode = 'conversation') {
       evidence: String(t.evidence || '').slice(0, 200),
     }))
     .slice(0, 6)
+  // Description mode also reports what it consciously set aside, so the UI
+  // can show the user their words were heard, not dropped.
+  const skipped = Array.isArray(parsed.skipped)
+    ? parsed.skipped.filter(s => typeof s === 'string' && s.trim()).map(s => s.trim().slice(0, 60)).slice(0, 6)
+    : []
+  return { themes, skipped }
 }
 
 export async function handleDiscoverRequest({ text, contactName, mode }) {
@@ -138,13 +144,13 @@ export async function handleDiscoverRequest({ text, contactName, mode }) {
   }
   if (process.env.ANTHROPIC_API_KEY) {
     try {
-      const themes = await claudeDiscover(text, contactName, m)
-      return { status: 200, body: { engine: 'claude', themes } }
+      const { themes, skipped } = await claudeDiscover(text, contactName, m)
+      return { status: 200, body: { engine: 'claude', themes, skipped } }
     } catch (err) {
       // Fall through to heuristic so the feature never hard-fails — but say
       // why in the function logs, or a dead key degrades quality silently.
       console.error('discover: claude engine failed, using heuristic:', err?.message || err)
     }
   }
-  return { status: 200, body: { engine: 'heuristic', themes: heuristicDiscover(text, m) } }
+  return { status: 200, body: { engine: 'heuristic', themes: heuristicDiscover(text, m), skipped: [] } }
 }

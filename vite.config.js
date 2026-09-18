@@ -6,6 +6,7 @@ import { handleDiscoverRequest } from './server/discoverHandler.js'
 import { handleRefineRequest } from './server/refineHandler.js'
 import { handleWaitlistRequest } from './server/waitlistHandler.js'
 import { handleScoreRequest } from './server/scoreHandler.js'
+import { handleRedraftRequest } from './server/redraftHandler.js'
 import { runScan, createServiceClient } from './server/scanHandler.js'
 import { runDigest } from './server/digestHandler.js'
 import { runPush } from './server/pushHandler.js'
@@ -51,6 +52,16 @@ function harboredApi() {
         let payload = {}
         try { payload = JSON.parse(raw || '{}') } catch { /* handled below as empty */ }
         const { status, body } = await handleRefineRequest(payload)
+        res.statusCode = status
+        res.setHeader('content-type', 'application/json')
+        res.end(JSON.stringify(body))
+      })
+      server.middlewares.use('/api/redraft', async (req, res) => {
+        let raw = ''
+        for await (const chunk of req) raw += chunk
+        let payload = {}
+        try { payload = JSON.parse(raw || '{}') } catch { /* handled below as empty */ }
+        const { status, body } = await handleRedraftRequest(payload)
         res.statusCode = status
         res.setHeader('content-type', 'application/json')
         res.end(JSON.stringify(body))

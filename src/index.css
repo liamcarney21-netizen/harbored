@@ -131,6 +131,9 @@ body {
    forming — calmer than a spinner, livelier than a static glyph. */
 @keyframes hbThink { 0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; } 50% { transform: scale(1.12) rotate(45deg); opacity: 0.55; } }
 
+/* StreamText's caret while a draft writes itself in. */
+@keyframes hbCaret { 0%, 100% { opacity: 1; } 50% { opacity: 0.15; } }
+
 /* ─── Scrollbar ─────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: #EFEEEB; }

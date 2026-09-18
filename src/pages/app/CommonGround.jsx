@@ -11,8 +11,14 @@ import { fetchLiveUpdates } from '../../services/monitoring'
 import { fetchStoredUpdates } from '../../services/scanResults'
 import { openSend, sendChannelFor } from '../../services/outreach'
 import ThemeSpecificityHint from '../../components/ThemeSpecificityHint'
+import StreamText from '../../components/StreamText'
+import WhyDisclosure from '../../components/WhyDisclosure'
+import ScanNarration from '../../components/ScanNarration'
+import ThinkingMark from '../../components/ThinkingMark'
+import { haptic } from '../../services/haptics'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { isNative } from '../../lib/platform'
+import { apiUrl } from '../../lib/apiBase'
 
 const INK = '#F5F4EF'
 const MUTED = '#8C9AAD'
@@ -98,6 +104,21 @@ export default function CommonGround({ onImportContacts }) {
     try { return localStorage.getItem('harbored_swiped') !== 'true' } catch { return false }
   })
   const deckRef = useRef(null)
+  // Mirrors activeIdx for scroll/touch handlers, which see stale state.
+  const activeIdxRef = useRef(0)
+  useEffect(() => { activeIdxRef.current = activeIdx }, [activeIdx])
+
+  // The drafted message writes itself in when the draft screen opens; a tap
+  // (or the end of the stream) turns it into the editable textarea.
+  const [draftStreaming, setDraftStreaming] = useState(false)
+  const [redrafting, setRedrafting] = useState(false)
+  const [angleIdx, setAngleIdx] = useState(0)
+
+  // Pull-to-refresh (phone): drag Today down to run a fresh scan.
+  const [pull, setPull] = useState(0)
+  const [pulling, setPulling] = useState(false)
+  const [ptrRefreshing, setPtrRefreshing] = useState(false)
+  const ptrGesture = useRef({ startY: 0, startX: 0, engaged: false, canPull: false })
 
   async function scan() {
     setScanning(true)
@@ -216,12 +237,50 @@ export default function CommonGround({ onImportContacts }) {
   }, [queueKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function openReason(r) {
+    haptic.soft()
+    setAngleIdx(0)
+    setDraftStreaming(true)
     if (r.kind === 'drift') {
       setSelected(r)
       setMsgText(r.nudge.opener)
     } else {
       setSelected(r)
       setMsgText(r.kind === 'favor' ? r.update.giveMessage : r.update.draftMessage)
+    }
+  }
+
+  // "Try another angle" — rewrite the current draft in the next voice from
+  // the rotation. The new text streams in like the first draft did.
+  const ANGLE_ROTATION = ['warmer', 'shorter', 'curious']
+  async function handleRedraft() {
+    if (!selected || redrafting) return
+    setRedrafting(true)
+    try {
+      const u = selected.update
+      const contact = draftContact()
+      const resp = await fetch(apiUrl('/api/redraft'), {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          contactName: contact?.name || u?.contactName || '',
+          headline: u?.headline || '',
+          themeLabel: u?.themeLabel || '',
+          kind: selected.kind,
+          current: msgText,
+          angle: ANGLE_ROTATION[angleIdx % ANGLE_ROTATION.length],
+        }),
+      })
+      const body = await resp.json()
+      if (resp.ok && body.message) {
+        setAngleIdx(i => i + 1)
+        setMsgText(body.message)
+        setDraftStreaming(true)
+        haptic.tick()
+      }
+    } catch {
+      // keep the current draft — a failed rewrite should be invisible
+    } finally {
+      setRedrafting(false)
     }
   }
 
@@ -252,6 +311,7 @@ export default function CommonGround({ onImportContacts }) {
       })
       setSent(prev => [...prev, u.id])
     }
+    haptic.success()
     setSelected(null)
   }
 
@@ -275,7 +335,54 @@ export default function CommonGround({ onImportContacts }) {
       setShowSwipeHint(false)
       try { localStorage.setItem('harbored_swiped', 'true') } catch { /* private mode */ }
     }
-    setActiveIdx(Math.min(queue.length - 1, Math.max(0, Math.round(el.scrollLeft / el.clientWidth))))
+    const idx = Math.min(queue.length - 1, Math.max(0, Math.round(el.scrollLeft / el.clientWidth)))
+    // A tick the moment the deck lands on a different reason — the page turn.
+    if (idx !== activeIdxRef.current) haptic.tick()
+    setActiveIdx(idx)
+  }
+
+  // ── Pull-to-refresh (phone) ────────────────────────────────────────
+  // Drag down from the top of a card (or an empty state) and the asterisk
+  // winds up with the pull; release past the threshold to run a fresh scan.
+  // A mostly-horizontal drag is a deck swipe and never engages it.
+  function activeCardAtTop() {
+    const el = deckRef.current
+    if (!el) return true // empty states: nothing scrolls
+    const card = el.children[activeIdxRef.current]
+    return !card || card.scrollTop <= 0
+  }
+  function onPtrStart(e) {
+    if (!isMobile || ptrRefreshing || selected) return
+    const t = e.touches[0]
+    ptrGesture.current = { startY: t.clientY, startX: t.clientX, engaged: false, canPull: activeCardAtTop() }
+  }
+  function onPtrMove(e) {
+    const g = ptrGesture.current
+    if (!isMobile || ptrRefreshing || selected || !g.canPull) return
+    const t = e.touches[0]
+    const dy = t.clientY - g.startY
+    const dx = t.clientX - g.startX
+    if (!g.engaged) {
+      if (dy > 14 && Math.abs(dy) > Math.abs(dx) * 1.4) { g.engaged = true; setPulling(true) }
+      else if (Math.abs(dx) > 12 || dy < -8) { g.canPull = false; return }
+      else return
+    }
+    setPull(Math.min(110, Math.max(0, (dy - 14) * 0.55)))
+  }
+  async function onPtrEnd() {
+    const g = ptrGesture.current
+    if (!g.engaged) { setPull(0); setPulling(false); return }
+    g.engaged = false
+    setPulling(false)
+    if (pull >= 62) {
+      haptic.tick()
+      setPtrRefreshing(true)
+      setPull(62)
+      try { if (useStored) { await loadStored() } else { await scan() } }
+      finally { setPtrRefreshing(false); setPull(0) }
+    } else {
+      setPull(0)
+    }
   }
 
   function jumpTo(i) {
@@ -484,11 +591,34 @@ export default function CommonGround({ onImportContacts }) {
 
   // ── Today ──────────────────────────────────────────────────────────
   return (
-    <div style={{
-      flex: '1 1 0', minHeight: 0, width: '100%', maxWidth: isMobile ? '520px' : '1120px', alignSelf: 'center',
-      display: 'flex', flexDirection: 'column', overflow: 'hidden',
-      justifyContent: isMobile ? 'flex-start' : 'center',
-    }}>
+    <div
+      onTouchStart={onPtrStart}
+      onTouchMove={onPtrMove}
+      onTouchEnd={onPtrEnd}
+      onTouchCancel={onPtrEnd}
+      style={{
+        flex: '1 1 0', minHeight: 0, width: '100%', maxWidth: isMobile ? '520px' : '1120px', alignSelf: 'center',
+        display: 'flex', flexDirection: 'column', overflow: 'hidden',
+        justifyContent: isMobile ? 'flex-start' : 'center',
+      }}>
+
+      {/* Pull-to-refresh: the asterisk winds up with the pull, then spins
+          through the scan. Height collapses to zero when idle. */}
+      {isMobile && (pull > 0 || ptrRefreshing) && (
+        <div style={{
+          height: `${pull}px`, flexShrink: 0, overflow: 'hidden',
+          display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+          transition: pulling ? 'none' : 'height 0.28s ease',
+        }}>
+          <div style={{
+            paddingBottom: '10px',
+            opacity: ptrRefreshing ? 1 : Math.min(1, pull / 62),
+            transform: ptrRefreshing ? 'none' : `rotate(${pull * 2.6}deg)`,
+          }}>
+            <AsteriskMark size={22} spinning={ptrRefreshing} />
+          </div>
+        </div>
+      )}
 
       {/* Progress — segments up to 6 reasons, a single track beyond (phone only) */}
       {isMobile && queue.length > 1 && (
@@ -544,7 +674,7 @@ export default function CommonGround({ onImportContacts }) {
                 : 'Drifting'
             const draftPreview = r.kind === 'drift' ? r.nudge.opener : (r.kind === 'favor' ? u.giveMessage : u.draftMessage)
             return (
-              <div key={r.id} style={{ display: 'flex', flexDirection: 'column', padding: '0 24px', overflowY: 'auto' }}>
+              <div key={r.id} style={{ display: 'flex', flexDirection: 'column', padding: '0 24px', overflowY: 'auto', overscrollBehaviorY: 'none' }}>
                 {/* Kicker — newspaper section label */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '22px' }}>
                   <span style={{ width: 7, height: 7, borderRadius: '50%', background: ACCENT, flexShrink: 0 }} />
@@ -598,6 +728,10 @@ export default function CommonGround({ onImportContacts }) {
                       &ldquo;{clip(draftPreview)}&rdquo;
                     </p>
                   </div>
+                )}
+
+                {r.kind !== 'drift' && (
+                  <WhyDisclosure update={u} kind={r.kind} style={{ marginTop: '16px' }} />
                 )}
 
                 <div style={{ flex: isMobile ? 1 : '0 0 auto', minHeight: isMobile ? '18px' : '36px' }} />
@@ -676,6 +810,9 @@ export default function CommonGround({ onImportContacts }) {
                         &ldquo;{clip(v.draftPreview, 180)}&rdquo;
                       </p>
                     </div>
+                  )}
+                  {lead.kind !== 'drift' && (
+                    <WhyDisclosure update={v.u} kind={lead.kind} style={{ marginTop: '18px', width: '100%', maxWidth: '560px' }} />
                   )}
                   <button
                     className="hb-cta hb-press"
@@ -768,9 +905,7 @@ export default function CommonGround({ onImportContacts }) {
               <h1 className="hb-display" style={{ fontSize: '30px', fontWeight: 500, color: INK, lineHeight: 1.2 }}>
                 Scanning your themes
               </h1>
-              <p style={{ fontSize: '14px', lineHeight: 1.6, color: '#C2CBD8' }}>
-                Checking the news on everything you share.
-              </p>
+              <ScanNarration contacts={contacts} themesByContact={themesByContact} />
             </>
           ) : neverScanned ? (
             // Day one: the account is set up but the around-the-clock watch
@@ -878,20 +1013,57 @@ export default function CommonGround({ onImportContacts }) {
               </p>
 
               <div style={{ background: CARD, border: `1px solid ${HAIRLINE}`, borderRadius: '16px', padding: '18px', marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <textarea
-                  value={msgText}
-                  onChange={e => setMsgText(e.target.value)}
-                  rows={Math.min(12, Math.max(4, Math.ceil(msgText.length / 28)))}
-                  aria-label="Your draft message"
-                  style={{
-                    width: '100%', background: 'transparent', border: 'none', outline: 'none',
-                    resize: 'none', fontSize: '15px', lineHeight: 1.65, color: INK,
-                    fontFamily: 'inherit', boxSizing: 'border-box',
-                  }}
-                />
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: MUTED }}>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 20l1-4L16.5 4.5a2.1 2.1 0 0 1 3 3L8 19l-4 1z" /></svg>
-                  Tap the text to edit
+                {draftStreaming ? (
+                  // The draft writes itself in; a tap (or the end of the
+                  // stream) turns it into the editable field below. Same
+                  // type, same rhythm — no layout jump at the handoff.
+                  <div
+                    onClick={() => setDraftStreaming(false)}
+                    style={{
+                      minHeight: `${Math.min(12, Math.max(4, Math.ceil(msgText.length / 28))) * 1.65}em`,
+                      fontSize: '15px', lineHeight: 1.65, color: INK, cursor: 'text',
+                      whiteSpace: 'pre-wrap', opacity: redrafting ? 0.45 : 1, transition: 'opacity 0.2s',
+                    }}
+                  >
+                    <StreamText text={msgText} active={!redrafting} onDone={() => setDraftStreaming(false)} />
+                  </div>
+                ) : (
+                  <textarea
+                    value={msgText}
+                    onChange={e => setMsgText(e.target.value)}
+                    rows={Math.min(12, Math.max(4, Math.ceil(msgText.length / 28)))}
+                    aria-label="Your draft message"
+                    style={{
+                      width: '100%', background: 'transparent', border: 'none', outline: 'none',
+                      resize: 'none', fontSize: '15px', lineHeight: 1.65, color: INK,
+                      fontFamily: 'inherit', boxSizing: 'border-box',
+                      opacity: redrafting ? 0.45 : 1, transition: 'opacity 0.2s',
+                    }}
+                  />
+                )}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', minHeight: '20px' }}>
+                  {redrafting ? (
+                    <ThinkingMark size={12} label="Finding another angle…" labelStyle={{ fontSize: '12px' }} />
+                  ) : (
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: MUTED }}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 20l1-4L16.5 4.5a2.1 2.1 0 0 1 3 3L8 19l-4 1z" /></svg>
+                      Tap the text to edit
+                    </span>
+                  )}
+                  <button
+                    className="hb-press"
+                    onClick={handleRedraft}
+                    disabled={redrafting}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: '6px', flexShrink: 0,
+                      background: 'none', border: 'none', padding: 0, minHeight: '20px',
+                      cursor: redrafting ? 'default' : 'pointer', fontFamily: 'inherit',
+                      fontSize: '12px', fontWeight: 600, color: redrafting ? MUTED : ACCENT,
+                    }}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 2.6-6.4" /><path d="M3 4v4h4" /></svg>
+                    Try another angle
+                  </button>
                 </div>
               </div>
 

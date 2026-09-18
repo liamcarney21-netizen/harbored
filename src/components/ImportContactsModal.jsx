@@ -6,6 +6,7 @@ import { useDemoStore } from '../store/demoStore'
 import { parseVCard } from '../services/vcard'
 import { SAMPLE_VCARD } from '../data/sampleContacts'
 import { isNativeContactsAvailable, pickNativeContacts, openContactSettings } from '../services/contacts'
+import { haptic } from '../services/haptics'
 
 const hasContactPicker = typeof navigator !== 'undefined' && 'contacts' in navigator && 'ContactsManager' in window
 
@@ -131,7 +132,7 @@ export default function ImportContactsModal({ open, onClose, onImported, onAddMa
     handleClose()
     // Hand the new contacts to the theme composer so people set themes right after
     // importing, instead of landing empty.
-    if (created.length) onImported?.(created)
+    if (created.length) { haptic.success(); onImported?.(created) }
   }
 
   return (

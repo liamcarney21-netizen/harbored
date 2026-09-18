@@ -8,6 +8,7 @@ import { isSpeechSupported, createRecognizer } from '../services/speech'
 import WarmAvatar from './WarmAvatar'
 import ThemeSpecificityHint from './ThemeSpecificityHint'
 import ThinkingMark from './ThinkingMark'
+import { haptic } from '../services/haptics'
 import { useIsMobile } from '../hooks/useIsMobile'
 
 const INK = '#F5F4EF'
@@ -49,6 +50,7 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
   const [voiceMode, setVoiceMode] = useState('idle') // 'idle' | 'listening' | 'mapping'
   const [transcript, setTranscript] = useState('')
   const [voiceError, setVoiceError] = useState('')
+  const [mapSummary, setMapSummary] = useState('') // post-map receipt: kept + set aside
   const recognizerRef = useRef(null)
   const transcriptRef = useRef('') // mirror for timer callbacks, which see stale state
   const transcriptBoxRef = useRef(null)
@@ -72,7 +74,7 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
     recognizerRef.current = null
     transcriptRef.current = ''
     setThemes([]); setLabel(''); setPromptIdx(null)
-    setVoiceMode('idle'); setTranscript(''); setVoiceError('')
+    setVoiceMode('idle'); setTranscript(''); setVoiceError(''); setMapSummary('')
   }
 
   function pickPrompt(i) {
@@ -87,6 +89,7 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
   // "here's what we'll watch" the user can eyeball before committing.
   async function addThemeWithRefine(l, cat) {
     const cid = `c${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+    haptic.tick()
     setThemes(t => [...t, { cid, label: l, category: cat, refining: true }])
     try {
       const resp = await fetch(apiUrl('/api/refine-theme'), {
@@ -120,6 +123,7 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
   // timer — an auto-stop after a thinking pause read as "it cut me off".
   function startListening() {
     setVoiceError('')
+    setMapSummary('')
     setTranscript('')
     transcriptRef.current = ''
     setVoiceMode('listening')
@@ -149,13 +153,21 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
     setTranscript(text)
     try {
       const existing = new Set(themes.map(t => t.label.toLowerCase()))
-      const found = ((await discoverThemes(text, current?.name, 'description')).themes || [])
+      const result = await discoverThemes(text, current?.name, 'description')
+      const found = (result.themes || [])
         .filter(t => t.label && !existing.has(t.label.toLowerCase()))
         .slice(0, 5)
       if (found.length === 0) {
         setVoiceError("Nothing watchable in that yet — try naming the specific team, place, or market.")
       } else {
         found.forEach(t => addThemeWithRefine(t.label, t.category || 'hobby'))
+        // Say what was heard AND what was deliberately set aside — proof the
+        // whole take landed, even the parts that aren't watchable.
+        const kept = found.map(t => t.label).join(', ')
+        const skipped = (result.skipped || []).slice(0, 3).join(', ')
+        setMapSummary(
+          `Heard you — watching ${kept}.` + (skipped ? ` Set aside ${skipped} (nothing to watch there).` : '')
+        )
       }
     } catch {
       setVoiceError("Couldn't map that just now — try again or type it.")
@@ -175,6 +187,7 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
   }
 
   function advance() {
+    haptic.soft()
     if (!isLast) { setIndex(i => i + 1); resetForContact() }
     else { closeAll() }
   }
@@ -386,6 +399,12 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
               )}
               {voiceError && (
                 <p style={{ fontSize: '12px', color: '#E8867A', marginTop: '9px', lineHeight: 1.5 }}>{voiceError}</p>
+              )}
+              {mapSummary && !voiceError && voiceMode === 'idle' && (
+                <p style={{ display: 'flex', gap: '7px', fontSize: '12px', color: MUTED, marginTop: '9px', lineHeight: 1.5 }}>
+                  <Check style={{ width: 12, height: 12, color: ACCENT, flexShrink: 0, marginTop: '2px' }} />
+                  <span style={{ minWidth: 0 }}>{mapSummary}</span>
+                </p>
               )}
 
               <ThemeSpecificityHint label={label} style={{ marginTop: 10 }} />
