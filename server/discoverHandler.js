@@ -47,7 +47,7 @@ function sentenceAround(text, index) {
   return text.slice(start, end + 1).trim().slice(0, 160)
 }
 
-export function heuristicDiscover(text) {
+export function heuristicDiscover(text, mode = 'conversation') {
   const themes = []
   for (const entry of TAXONOMY) {
     const matches = [...text.matchAll(entry.re)]
@@ -63,9 +63,11 @@ export function heuristicDiscover(text) {
           : `${q[1]} ${entry.label}`
       }
     }
-    // A single mention isn't enough unless it's a strong, qualified signal
-    // like "Villanova basketball" (proper noun + domain).
-    if (matches.length < 2 && !qualified) continue
+    // In a pasted conversation, a single mention isn't enough unless it's a
+    // strong, qualified signal like "Villanova basketball" (proper noun +
+    // domain). A spoken description names each thing once, so there every
+    // mention counts.
+    if (mode !== 'description' && matches.length < 2 && !qualified) continue
     themes.push({
       label,
       category: entry.category,
@@ -76,7 +78,23 @@ export function heuristicDiscover(text) {
   return themes.sort((a, b) => b.confidence - a.confidence).slice(0, 6)
 }
 
-async function claudeDiscover(text, contactName) {
+async function claudeDiscover(text, contactName, mode = 'conversation') {
+  // Two very different inputs arrive here. A pasted conversation supports the
+  // strict reading (only themes BOTH people engage with). A spoken description
+  // ("just talk about them") is one-sided by nature — demanding two-way
+  // evidence there returns nothing every time, so the description prompt asks
+  // for watchable themes about the contact instead.
+  const prompts = mode === 'description'
+    ? {
+      system:
+        'The user is describing one of their contacts out loud, in their own words. Your job is to pull out the WATCHABLE themes in that description — specific teams, places, markets, industries, or hobbies that could be followed in the news as reasons to reach out. The description is one-sided; do NOT require evidence that both people share the interest. Turn casual phrasing into canonical, followable names ("he\'s a Georgia bulldog" → "Georgia Bulldogs"; "does commercial real estate down south" → "Commercial real estate in the Sunbelt"). Speech transcripts have unreliable capitalization and punctuation — read through that. Skip pure biography with nothing to watch (a girlfriend, a birthday). Respond with JSON only, no prose.',
+      user: `The user, describing ${contactName || 'their contact'}:\n\n${text.slice(0, 12000)}\n\nExtract 1-6 watchable themes. Respond with exactly this JSON shape:\n{"themes":[{"label":"...","category":"sports|place|market|hobby|industry","confidence":0-100,"evidence":"the phrase from the description this came from"}]}`,
+    }
+    : {
+      system:
+        'You analyze a conversation between the user and one of their contacts to find genuinely SHARED interests — topics both people actively engage with, not things only one person mentions. Be specific where the text supports it ("Villanova Basketball", not "Sports"). Respond with JSON only, no prose.',
+      user: `Conversation between me and ${contactName || 'my contact'}:\n\n${text.slice(0, 12000)}\n\nExtract 2-6 shared themes. Respond with exactly this JSON shape:\n{"themes":[{"label":"...","category":"sports|place|market|hobby|industry","confidence":0-100,"evidence":"short quote from the conversation showing both people engage with this"}]}`,
+    }
   const resp = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -87,14 +105,8 @@ async function claudeDiscover(text, contactName) {
     body: JSON.stringify({
       model: CLAUDE_MODEL,
       max_tokens: 1024,
-      system:
-        'You analyze a conversation between the user and one of their contacts to find genuinely SHARED interests — topics both people actively engage with, not things only one person mentions. Be specific where the text supports it ("Villanova Basketball", not "Sports"). Respond with JSON only, no prose.',
-      messages: [
-        {
-          role: 'user',
-          content: `Conversation between me and ${contactName || 'my contact'}:\n\n${text.slice(0, 12000)}\n\nExtract 2-6 shared themes. Respond with exactly this JSON shape:\n{"themes":[{"label":"...","category":"sports|place|market|hobby|industry","confidence":0-100,"evidence":"short quote from the conversation showing both people engage with this"}]}`,
-        },
-      ],
+      system: prompts.system,
+      messages: [{ role: 'user', content: prompts.user }],
     }),
     signal: AbortSignal.timeout(20000),
   })
@@ -116,17 +128,23 @@ async function claudeDiscover(text, contactName) {
     .slice(0, 6)
 }
 
-export async function handleDiscoverRequest({ text, contactName }) {
-  if (!text || text.trim().length < 40) {
+export async function handleDiscoverRequest({ text, contactName, mode }) {
+  const m = mode === 'description' ? 'description' : 'conversation'
+  // A useful spoken description can be one sentence; pasted conversation
+  // keeps the higher bar.
+  const minLength = m === 'description' ? 12 : 40
+  if (!text || text.trim().length < minLength) {
     return { status: 400, body: { error: 'Paste at least a few sentences of conversation.' } }
   }
   if (process.env.ANTHROPIC_API_KEY) {
     try {
-      const themes = await claudeDiscover(text, contactName)
+      const themes = await claudeDiscover(text, contactName, m)
       return { status: 200, body: { engine: 'claude', themes } }
-    } catch {
-      // fall through to heuristic so the feature never hard-fails
+    } catch (err) {
+      // Fall through to heuristic so the feature never hard-fails — but say
+      // why in the function logs, or a dead key degrades quality silently.
+      console.error('discover: claude engine failed, using heuristic:', err?.message || err)
     }
   }
-  return { status: 200, body: { engine: 'heuristic', themes: heuristicDiscover(text) } }
+  return { status: 200, body: { engine: 'heuristic', themes: heuristicDiscover(text, m) } }
 }

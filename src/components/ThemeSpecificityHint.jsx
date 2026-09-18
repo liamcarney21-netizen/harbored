@@ -1,3 +1,5 @@
+import { useState, useEffect } from 'react'
+
 // Soft nudge shown while a user types a theme that looks like a bare category.
 // A generic theme ("fintech startup", "pickleball") can't be monitored well —
 // the news search returns category noise and the scorer caps it below the
@@ -14,7 +16,16 @@ export function looksGeneric(label) {
 }
 
 export default function ThemeSpecificityHint({ label, style }) {
-  if (!looksGeneric(label)) return null
+  // Judging a label mid-keystroke ("Su", "Superhero mo") makes the hint
+  // flash in and out and shove the layout around while someone types. Only
+  // speak up once they've paused.
+  const [settled, setSettled] = useState(label)
+  useEffect(() => {
+    const t = setTimeout(() => setSettled(label), 700)
+    return () => clearTimeout(t)
+  }, [label])
+
+  if (settled !== label || !looksGeneric(label)) return null
   return (
     <p style={{ fontSize: 12, color: '#D3A95C', lineHeight: 1.5, margin: '8px 0 0', ...style }}>
       Sounds broad — Harbored watches specifics best. Try naming it:

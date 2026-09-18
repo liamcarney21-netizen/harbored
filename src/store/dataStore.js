@@ -140,8 +140,17 @@ export const useDataStore = create((set, get) => {
       if (error) console.error('Failed to load data from Supabase:', error.message)
       if (data?.data) {
         set({ ...data.data, loading: false })
-      } else {
+      } else if ((user.email || '').toLowerCase() === 'review@harbored.app') {
+        // The App Review demo account self-seeds a sample crew so Apple sees
+        // a working network on first sign-in.
         set({ ...seedSnapshot(), loading: false })
+        scheduleSync(get)
+      } else {
+        // Real accounts start clean: the sample crew showing up as "your
+        // people" on a fresh sign-up reads as fake data, and Today has a
+        // proper day-one state now. The no-auth demo (loadDemo) and the
+        // Settings "restore sample data" control still use the seeds.
+        set({ contacts: [], themesByContact: {}, touches: [], meetings: [], loading: false })
         scheduleSync(get)
       }
     },

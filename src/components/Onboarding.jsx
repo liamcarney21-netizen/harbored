@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Compass, Gauge, TrendingUp, ArrowRight, ArrowLeft, Check } from 'lucide-react'
 import AnchorMark from './AnchorMark'
+import { useIsMobile } from '../hooks/useIsMobile'
 
 const STEPS = [
   {
@@ -89,6 +90,9 @@ function GaugeVisual() {
 
 export default function Onboarding({ onFinish }) {
   const [step, setStep] = useState(0)
+  // On a phone, "Bring in your people" + Back + the dots don't all fit one
+  // row — the CTA wrapped to two lines and collided with the dots.
+  const isNarrow = useIsMobile(480)
   const current = STEPS[step]
   const Icon = current.icon
   const isLast = step === STEPS.length - 1
@@ -163,13 +167,13 @@ export default function Onboarding({ onFinish }) {
         </div>
 
         {/* Footer */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', padding: '20px 24px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
           <button
             onClick={() => setStep(s => Math.max(0, s - 1))}
             disabled={step === 0}
             aria-label="Previous step"
             style={{
-              display: 'flex', alignItems: 'center', gap: '6px',
+              display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0, whiteSpace: 'nowrap',
               padding: '9px 16px', borderRadius: '8px', fontSize: '13px', fontWeight: 500,
               background: 'none', border: '1px solid rgba(255,255,255,0.15)', cursor: step === 0 ? 'default' : 'pointer',
               color: step === 0 ? '#5B6880' : '#C2CBD8', fontFamily: 'Inter, sans-serif',
@@ -179,26 +183,30 @@ export default function Onboarding({ onFinish }) {
             <ArrowLeft style={{ width: '13px', height: '13px' }} /> Back
           </button>
 
-          {/* Progress dots */}
-          <div style={{ display: 'flex', gap: '8px' }} role="progressbar" aria-valuenow={step + 1} aria-valuemin={1} aria-valuemax={STEPS.length}>
-            {STEPS.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setStep(i)}
-                aria-label={`Go to step ${i + 1}`}
-                style={{
-                  width: i === step ? '20px' : '7px', height: '7px', borderRadius: '4px',
-                  background: i === step ? '#D3A95C' : i < step ? 'rgba(211,169,92,0.4)' : 'rgba(255,255,255,0.18)',
-                  border: 'none', cursor: 'pointer', padding: 0, transition: 'all 0.25s ease',
-                }}
-              />
-            ))}
-          </div>
+          {/* Progress dots — on a narrow screen the last step's wide CTA needs
+              the room, and the gold button IS the end of the trail. */}
+          {!(isNarrow && isLast) && (
+            <div style={{ display: 'flex', gap: '8px' }} role="progressbar" aria-valuenow={step + 1} aria-valuemin={1} aria-valuemax={STEPS.length}>
+              {STEPS.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setStep(i)}
+                  aria-label={`Go to step ${i + 1}`}
+                  style={{
+                    width: i === step ? '20px' : '7px', height: '7px', borderRadius: '4px',
+                    background: i === step ? '#D3A95C' : i < step ? 'rgba(211,169,92,0.4)' : 'rgba(255,255,255,0.18)',
+                    border: 'none', cursor: 'pointer', padding: 0, transition: 'all 0.25s ease',
+                  }}
+                />
+              ))}
+            </div>
+          )}
 
           <button
             onClick={() => (isLast ? onFinish(true) : setStep(s => s + 1))}
             style={{
-              display: 'flex', alignItems: 'center', gap: '6px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', whiteSpace: 'nowrap',
+              flexGrow: isNarrow && isLast ? 1 : 0, flexShrink: 0,
               padding: '9px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
               background: '#D3A95C', color: '#0a1628', border: 'none', cursor: 'pointer',
               fontFamily: 'Inter, sans-serif', transition: 'background 0.15s',

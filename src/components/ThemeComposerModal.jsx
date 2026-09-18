@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Plus, Check, ArrowRight, Mic } from 'lucide-react'
 import { useDataStore } from '../store/dataStore'
@@ -50,7 +50,13 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
   const [voiceError, setVoiceError] = useState('')
   const recognizerRef = useRef(null)
   const transcriptRef = useRef('') // mirror for timer callbacks, which see stale state
-  const silenceRef = useRef(null)
+  const transcriptBoxRef = useRef(null)
+
+  // The live transcript panel follows the newest words as they stream in.
+  useEffect(() => {
+    const el = transcriptBoxRef.current
+    if (el) el.scrollTop = el.scrollHeight
+  }, [transcript])
 
   const current = contacts[index]
   const total = contacts.length
@@ -63,7 +69,6 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
   function resetForContact() {
     recognizerRef.current?.stop()
     recognizerRef.current = null
-    clearTimeout(silenceRef.current)
     transcriptRef.current = ''
     setThemes([]); setLabel(''); setPromptIdx(null)
     setVoiceMode('idle'); setTranscript(''); setVoiceError('')
@@ -109,33 +114,26 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
   }
 
   // ── "Just talk about them" — voice → transcript → theme extraction ──
-  // A pause of a few seconds finishes the take automatically, so nobody is
-  // left wondering how to stop; tapping the mic again finishes it right away.
-  function bumpSilenceTimer() {
-    clearTimeout(silenceRef.current)
-    silenceRef.current = setTimeout(() => finishListening(), 3000)
-  }
-
+  // Dictation-style, like talking to Claude: the take runs until the person
+  // taps the mic again (or the OS recognizer ends on its own). No silence
+  // timer — an auto-stop after a thinking pause read as "it cut me off".
   function startListening() {
     setVoiceError('')
     setTranscript('')
     transcriptRef.current = ''
     setVoiceMode('listening')
     recognizerRef.current = createRecognizer({
-      onText: (t) => { transcriptRef.current = t; setTranscript(t); bumpSilenceTimer() },
+      onText: (t) => { transcriptRef.current = t; setTranscript(t) },
       onEnd: (finalText) => finishListening(finalText),
       onError: (msg) => {
-        clearTimeout(silenceRef.current)
         setVoiceError(msg); setVoiceMode('idle'); recognizerRef.current = null
       },
     })
     recognizerRef.current.start()
-    bumpSilenceTimer()
   }
 
   async function finishListening(finalOverride) {
     if (!recognizerRef.current) return // already finished (mic tap + timer can race)
-    clearTimeout(silenceRef.current)
     const heard = recognizerRef.current.stop() || transcriptRef.current || finalOverride
     recognizerRef.current = null
     const text = (heard || '').trim()
@@ -144,12 +142,13 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
       setVoiceMode('idle')
       return
     }
+    // Keep the transcript on screen through mapping — clearing it here made
+    // a long take look like it was thrown away ("it just cut off").
     setVoiceMode('mapping')
-    setTranscript('')
-    transcriptRef.current = ''
+    setTranscript(text)
     try {
       const existing = new Set(themes.map(t => t.label.toLowerCase()))
-      const found = ((await discoverThemes(text, current?.name)).themes || [])
+      const found = ((await discoverThemes(text, current?.name, 'description')).themes || [])
         .filter(t => t.label && !existing.has(t.label.toLowerCase()))
         .slice(0, 5)
       if (found.length === 0) {
@@ -162,6 +161,7 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
     } finally {
       setVoiceMode('idle')
       setTranscript('')
+      transcriptRef.current = ''
     }
   }
 
@@ -184,7 +184,6 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
   function closeAll() {
     recognizerRef.current?.stop()
     recognizerRef.current = null
-    clearTimeout(silenceRef.current)
     onClose()
   }
 
@@ -361,8 +360,25 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
               )}
               {voiceMode === 'listening' && (
                 <p style={{ fontSize: '12px', color: ACCENT, marginTop: '9px', lineHeight: 1.5 }}>
-                  Pause when you&rsquo;re done &mdash; or tap the mic to map it now.
+                  Take your time &mdash; tap the mic again when you&rsquo;re done and Harbored maps it.
                 </p>
+              )}
+              {/* Everything heard so far, in full — the input only shows the
+                  tail, and a long take needs proof it's all being kept. */}
+              {voiceMode !== 'idle' && transcript && (
+                <div
+                  ref={transcriptBoxRef}
+                  style={{
+                    marginTop: '10px', padding: '10px 12px', maxHeight: '108px', overflowY: 'auto',
+                    borderRadius: '10px', background: CARD,
+                    borderLeft: `2px solid ${ACCENT}`,
+                    opacity: voiceMode === 'mapping' ? 0.75 : 1,
+                  }}
+                >
+                  <p style={{ fontSize: '13px', color: '#C2CBD8', lineHeight: 1.55, margin: 0, fontStyle: 'italic' }}>
+                    {transcript}
+                  </p>
+                </div>
               )}
               {voiceError && (
                 <p style={{ fontSize: '12px', color: '#E8867A', marginTop: '9px', lineHeight: 1.5 }}>{voiceError}</p>

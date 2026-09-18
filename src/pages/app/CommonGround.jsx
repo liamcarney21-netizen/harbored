@@ -179,19 +179,41 @@ export default function CommonGround({ onImportContacts }) {
   // iOS mandatory scroll-snap only re-engages on touch, so when the queue
   // changes (a reason sent/dismissed, live updates landing) or the viewport
   // resizes, the deck can rest between cards — showing 3/4 of one and a
-  // sliver of the next. Re-snap it to the nearest card whenever that happens.
+  // sliver of the next. Snapping only on queue-length changes wasn't enough
+  // (the deck sat off-center "for a while" on device when updates landed
+  // mid-swipe), so also watch the scroll itself: any time scrolling settles
+  // away from a card boundary while no finger is down, glide to the nearest
+  // card.
+  const queueKey = queue.map(r => r.id).join('|')
   useEffect(() => {
     const el = deckRef.current
     if (!el) return
-    const snap = () => {
-      if (!el.clientWidth) return
+    let touching = false
+    let timer
+    const snap = (smooth) => {
+      if (touching || !el.clientWidth) return
       const i = Math.min(queue.length - 1, Math.max(0, Math.round(el.scrollLeft / el.clientWidth)))
-      el.scrollTo({ left: i * el.clientWidth })
+      const target = i * el.clientWidth
+      if (Math.abs(el.scrollLeft - target) > 2) el.scrollTo({ left: target, behavior: smooth ? 'smooth' : 'auto' })
     }
-    snap()
-    window.addEventListener('resize', snap)
-    return () => window.removeEventListener('resize', snap)
-  }, [queue.length]) // eslint-disable-line react-hooks/exhaustive-deps
+    const settle = () => { clearTimeout(timer); timer = setTimeout(() => snap(true), 180) }
+    const touchStart = () => { touching = true; clearTimeout(timer) }
+    const touchEnd = () => { touching = false; settle() }
+    snap(false)
+    el.addEventListener('scroll', settle, { passive: true })
+    el.addEventListener('touchstart', touchStart, { passive: true })
+    el.addEventListener('touchend', touchEnd, { passive: true })
+    el.addEventListener('touchcancel', touchEnd, { passive: true })
+    window.addEventListener('resize', settle)
+    return () => {
+      clearTimeout(timer)
+      el.removeEventListener('scroll', settle)
+      el.removeEventListener('touchstart', touchStart)
+      el.removeEventListener('touchend', touchEnd)
+      el.removeEventListener('touchcancel', touchEnd)
+      window.removeEventListener('resize', settle)
+    }
+  }, [queueKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function openReason(r) {
     if (r.kind === 'drift') {

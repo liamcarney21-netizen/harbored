@@ -21,6 +21,7 @@ export default function ImportContactsModal({ open, onClose, onImported, onAddMa
   const [importing, setImporting] = useState(false)
   const [loadingNative, setLoadingNative] = useState(false)
   const [limitedAccess, setLimitedAccess] = useState(false)
+  const [query, setQuery] = useState('')
 
   const nativeContacts = isNativeContactsAvailable()
 
@@ -32,6 +33,7 @@ export default function ImportContactsModal({ open, onClose, onImported, onAddMa
     setImporting(false)
     setLoadingNative(false)
     setLimitedAccess(false)
+    setQuery('')
   }
 
   function handleClose() {
@@ -55,9 +57,14 @@ export default function ImportContactsModal({ open, onClose, onImported, onAddMa
       return
     }
     setCandidates(fresh)
-    setSelected(new Set(fresh.map((_, i) => i)))
+    // A short list means the person already hand-picked these (the iOS limited
+    // picker, or the web picker) — check them all. A whole address book starts
+    // unchecked: choosing who belongs in the crew is the point, and "import
+    // everyone" stays one tap away via Select all.
+    setSelected(fresh.length <= 12 ? new Set(fresh.map((_, i) => i)) : new Set())
     setSkippedCount(skipped)
     setError('')
+    setQuery('')
   }
 
   // Demo convenience: run a realistic sample export through the real parser
@@ -262,25 +269,65 @@ export default function ImportContactsModal({ open, onClose, onImported, onAddMa
                   )}
                   {candidates.length === 0 ? (
                     <p style={{ fontSize: '13px', color: '#8C9AAD' }}>Everyone there is already in your crew.</p>
-                  ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '320px', overflowY: 'auto' }}>
-                      {candidates.map((c, i) => (
-                        <label key={i} style={{
-                          display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px',
-                          borderRadius: '8px', border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer',
-                          background: selected.has(i) ? 'rgba(211,169,92,0.04)' : 'transparent',
-                        }}>
-                          <input type="checkbox" checked={selected.has(i)} onChange={() => toggle(i)} style={{ accentColor: '#D3A95C' }} />
-                          <div style={{ minWidth: 0, flex: 1 }}>
-                            <div style={{ fontSize: '13px', fontWeight: 600, color: '#F5F4EF' }}>{c.name}</div>
-                            <div style={{ fontSize: '12px', color: '#8C9AAD', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                              {[c.company, c.email].filter(Boolean).join(' · ') || 'No extra details'}
-                            </div>
-                          </div>
-                        </label>
-                      ))}
-                    </div>
-                  )}
+                  ) : (() => {
+                    const q = query.trim().toLowerCase()
+                    const shown = candidates
+                      .map((c, i) => ({ c, i }))
+                      .filter(({ c }) => !q || [c.name, c.company, c.email].some(v => v && v.toLowerCase().includes(q)))
+                    const allShownSelected = shown.length > 0 && shown.every(({ i }) => selected.has(i))
+                    const toggleShown = () => setSelected(s => {
+                      const next = new Set(s)
+                      shown.forEach(({ i }) => allShownSelected ? next.delete(i) : next.add(i))
+                      return next
+                    })
+                    return (
+                      <>
+                        <p style={{ fontSize: '13px', color: '#C2CBD8', lineHeight: 1.5, margin: 0 }}>
+                          Tap the people you actually want to keep close — a handful is a great start.
+                        </p>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <input
+                            type="search"
+                            value={query}
+                            onChange={e => setQuery(e.target.value)}
+                            placeholder={`Search ${candidates.length} contacts…`}
+                            style={{
+                              flex: 1, minWidth: 0, padding: '10px 12px', borderRadius: '8px', fontSize: '14px',
+                              background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)',
+                              color: '#F5F4EF', fontFamily: 'Inter, sans-serif', outline: 'none',
+                            }}
+                          />
+                          <button onClick={toggleShown} style={{
+                            padding: '9px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, whiteSpace: 'nowrap',
+                            background: 'none', color: '#D3A95C', border: '1px solid rgba(211,169,92,0.4)',
+                            cursor: 'pointer', fontFamily: 'Inter, sans-serif', flexShrink: 0,
+                          }}>
+                            {allShownSelected ? 'Clear' : q ? 'Select these' : 'Select all'}
+                          </button>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '320px', overflowY: 'auto' }}>
+                          {shown.length === 0 && (
+                            <p style={{ fontSize: '13px', color: '#8C9AAD', padding: '8px 2px' }}>No one matches &ldquo;{query}&rdquo;.</p>
+                          )}
+                          {shown.map(({ c, i }) => (
+                            <label key={i} style={{
+                              display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px',
+                              borderRadius: '8px', border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer',
+                              background: selected.has(i) ? 'rgba(211,169,92,0.04)' : 'transparent',
+                            }}>
+                              <input type="checkbox" checked={selected.has(i)} onChange={() => toggle(i)} style={{ accentColor: '#D3A95C' }} />
+                              <div style={{ minWidth: 0, flex: 1 }}>
+                                <div style={{ fontSize: '13px', fontWeight: 600, color: '#F5F4EF' }}>{c.name}</div>
+                                <div style={{ fontSize: '12px', color: '#8C9AAD', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                  {[c.company, c.email].filter(Boolean).join(' · ') || 'No extra details'}
+                                </div>
+                              </div>
+                            </label>
+                          ))}
+                        </div>
+                      </>
+                    )
+                  })()}
                 </>
               )}
             </div>
