@@ -264,7 +264,7 @@ export default function ImportContactsModal({ open, onClose, onImported, onAddMa
                   )}
                   {skippedCount > 0 && (
                     <p style={{ fontSize: '12px', color: '#8C9AAD' }}>
-                      Skipped {skippedCount} already in your crew.
+                      {skippedCount === 1 ? 'One contact is' : `${skippedCount} contacts are`} already in your crew, so they&rsquo;re not shown here.
                     </p>
                   )}
                   {candidates.length === 0 ? (
