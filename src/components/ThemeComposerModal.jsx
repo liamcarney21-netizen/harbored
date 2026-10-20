@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Plus, Check, ArrowRight, Mic } from 'lucide-react'
 import { useDataStore } from '../store/dataStore'
-import { apiUrl } from '../lib/apiBase'
+import { refineTheme } from '../services/themes'
 import { discoverThemes } from '../services/discovery'
 import { isSpeechSupported, createRecognizer } from '../services/speech'
 import WarmAvatar from './WarmAvatar'
@@ -40,6 +40,7 @@ const PROMPTS = [
 
 export default function ThemeComposerModal({ open, contacts = [], onClose }) {
   const addTheme = useDataStore(s => s.addTheme)
+  const updateTheme = useDataStore(s => s.updateTheme)
   const isMobile = useIsMobile()
   const inputRef = useRef(null)
 
@@ -54,6 +55,10 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
   const recognizerRef = useRef(null)
   const transcriptRef = useRef('') // mirror for timer callbacks, which see stale state
   const transcriptBoxRef = useRef(null)
+  // Themes saved while their refinement was still in flight: cid -> where the
+  // saved theme lives, so the refinement can be patched in when it arrives
+  // instead of being thrown away with the quiz screen.
+  const committedRef = useRef(new Map())
 
   // The live transcript panel follows the newest words as they stream in.
   useEffect(() => {
@@ -91,21 +96,19 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
     const cid = `c${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
     haptic.tick()
     setThemes(t => [...t, { cid, label: l, category: cat, refining: true }])
-    try {
-      const resp = await fetch(apiUrl('/api/refine-theme'), {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ label: l, contactName: current?.name, contactCompany: current?.company, contactRole: current?.role }),
-      })
-      const data = resp.ok ? await resp.json() : null
-      setThemes(t => t.map(x => x.cid === cid ? {
-        ...x, refining: false,
-        display: data?.display || null,
-        refinement: data ? { query: data.query, entityType: data.entityType, watchFor: data.watchFor } : null,
-      } : x))
-    } catch {
-      setThemes(t => t.map(x => x.cid === cid ? { ...x, refining: false } : x))
+    const result = await refineTheme(l, current)
+    // Already saved (user moved on mid-spinner)? Patch the stored theme.
+    const saved = committedRef.current.get(cid)
+    if (saved) {
+      committedRef.current.delete(cid)
+      if (result) updateTheme(saved.contactId, saved.themeId, result.refinement)
+      return
     }
+    setThemes(t => t.map(x => x.cid === cid ? {
+      ...x, refining: false,
+      display: result?.display || null,
+      refinement: result?.refinement || null,
+    } : x))
   }
 
   function addChip() {
@@ -181,9 +184,17 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
   // Persist the current contact's themes (plus any text left un-added in the field).
   function commitCurrent() {
     if (!current) return
+    const contactId = current.id
+    themes.forEach(t => {
+      const saved = addTheme(contactId, t.label, t.category, t.refinement || {})
+      if (t.refining) committedRef.current.set(t.cid, { contactId, themeId: saved.id })
+    })
+    // Text left in the field counts too — saved now, refined in the background.
     const pending = label.trim()
-    const all = pending ? [...themes, { label: pending, category }] : themes
-    all.forEach(t => addTheme(current.id, t.label, t.category, t.refinement || {}))
+    if (pending) {
+      const saved = addTheme(contactId, pending, category)
+      refineTheme(pending, current).then(r => { if (r) updateTheme(contactId, saved.id, r.refinement) })
+    }
   }
 
   function advance() {

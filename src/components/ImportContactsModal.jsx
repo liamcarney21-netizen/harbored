@@ -7,6 +7,7 @@ import { parseVCard } from '../services/vcard'
 import { SAMPLE_VCARD } from '../data/sampleContacts'
 import { isNativeContactsAvailable, pickNativeContacts, openContactSettings } from '../services/contacts'
 import { haptic } from '../services/haptics'
+import ThinkingMark from './ThinkingMark'
 
 const hasContactPicker = typeof navigator !== 'undefined' && 'contacts' in navigator && 'ContactsManager' in window
 
@@ -197,15 +198,23 @@ export default function ImportContactsModal({ open, onClose, onImported, onAddMa
                       </div>
                     </>
                   )}
-                  {nativeContacts && (
-                    <button className="hb-press" onClick={handleNativeContacts} disabled={loadingNative} style={{
+                  {nativeContacts && loadingNative && (
+                    <div style={{ padding: '18px 14px', borderRadius: '12px', background: 'rgba(211,169,92,0.06)', border: '1px solid rgba(211,169,92,0.2)' }}>
+                      <ThinkingMark size={13} label="Reading your contacts…" labelStyle={{ fontSize: '13px', color: '#F5F4EF' }} />
+                      <p style={{ fontSize: '12px', color: '#8C9AAD', lineHeight: 1.5, margin: '8px 0 0' }}>
+                        A big address book takes a few seconds. Nothing is saved until you choose who to keep.
+                      </p>
+                    </div>
+                  )}
+                  {nativeContacts && !loadingNative && (
+                    <button className="hb-press" onClick={handleNativeContacts} style={{
                       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                       width: '100%', padding: '14px', borderRadius: '12px', fontSize: '14px', fontWeight: 600,
                       background: '#D3A95C', color: '#0a1628', border: 'none',
-                      cursor: loadingNative ? 'default' : 'pointer', opacity: loadingNative ? 0.7 : 1, fontFamily: 'Inter, sans-serif',
+                      cursor: 'pointer', fontFamily: 'Inter, sans-serif',
                     }}>
                       <Smartphone style={{ width: '15px', height: '15px' }} />
-                      {loadingNative ? 'Opening Contacts…' : 'Pick from your contacts'}
+                      Pick from your contacts
                     </button>
                   )}
                   {!nativeContacts && hasContactPicker && (

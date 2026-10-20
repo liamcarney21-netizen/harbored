@@ -17,6 +17,7 @@ export function createRecognizer({ onText, onEnd, onError }) {
   rec.lang = 'en-US'
 
   let finalText = ''
+  let lastText = '' // finals + the interim phrase still being transcribed
   let stopped = false
 
   rec.onresult = (e) => {
@@ -31,7 +32,8 @@ export function createRecognizer({ onText, onEnd, onError }) {
       else interim += r[0].transcript
     }
     finalText = final
-    onText?.((final + interim).trim())
+    lastText = (final + interim).trim()
+    onText?.(lastText)
   }
   rec.onerror = (e) => {
     if (stopped) return
@@ -47,6 +49,9 @@ export function createRecognizer({ onText, onEnd, onError }) {
 
   return {
     start: () => { try { rec.start() } catch { /* already started */ } },
-    stop: () => { stopped = true; try { rec.stop() } catch { /* not started */ } return finalText.trim() },
+    // Return everything heard, including the not-yet-finalized tail: tapping
+    // the mic to finish used to hand back finals only, so the last phrase the
+    // person said never made it into the mapping.
+    stop: () => { stopped = true; try { rec.stop() } catch { /* not started */ } return lastText || finalText.trim() },
   }
 }

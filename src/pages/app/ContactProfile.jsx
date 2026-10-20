@@ -5,6 +5,7 @@ import { ChevronLeft, Mail, Phone, Send, Check, Plus, X, MessageCircle, Compass,
 import WarmAvatar from '../../components/WarmAvatar'
 import DiscoverThemesModal from '../../components/DiscoverThemesModal'
 import { useDataStore, healthFromLastTouch } from '../../store/dataStore'
+import { refineTheme } from '../../services/themes'
 import { openSend } from '../../services/outreach'
 
 const CATEGORIES = ['sports', 'place', 'market', 'hobby', 'industry']
@@ -26,6 +27,7 @@ export default function ContactProfile() {
   const themes = themesByContact[Number(id)] || themesByContact[id] || []
   const touches = allTouches.filter(t => String(t.contactId) === String(id))
   const addTheme = useDataStore(s => s.addTheme)
+  const updateTheme = useDataStore(s => s.updateTheme)
   const removeTheme = useDataStore(s => s.removeTheme)
   const recordTouch = useDataStore(s => s.recordTouch)
   const saveNote = useDataStore(s => s.saveNote)
@@ -71,7 +73,10 @@ export default function ContactProfile() {
   function confirmAdd() {
     const label = newLabel.trim()
     if (!label) return
-    addTheme(contact.id, label, newCategory)
+    // Same refinement the quiz runs, so a theme added here watches a precise
+    // query instead of the raw label. Saved now, patched when the refine lands.
+    const saved = addTheme(contact.id, label, newCategory)
+    refineTheme(label, contact).then(r => { if (r) updateTheme(contact.id, saved.id, r.refinement) })
     setNewLabel('')
     setAdding(false)
   }

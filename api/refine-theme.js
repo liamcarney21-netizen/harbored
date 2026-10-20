@@ -7,8 +7,10 @@ export default async function handler(req, res) {
     res.status(405).json({ error: 'POST only' })
     return
   }
-  // Strict: this endpoint can spend Anthropic credits.
-  if (!rateLimit(`refine:${clientIp(req)}`, 30, 3600000)) {
+  // Guards Anthropic spend, but sized for a real first run: importing a dozen
+  // people and giving each a few themes is ~40 refines in one sitting. At 30/hr
+  // the tail of an import silently fell back to unrefined themes.
+  if (!rateLimit(`refine:${clientIp(req)}`, 150, 3600000)) {
     res.status(429).json({ error: 'Rate limit reached — try again in a bit.' })
     return
   }

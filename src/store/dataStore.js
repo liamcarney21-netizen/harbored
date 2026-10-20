@@ -93,24 +93,50 @@ function nextContactId() {
   return Date.now() * 1000 + contactIdCounter
 }
 
+// Same story for themes: "Save & next" adds several in one synchronous loop,
+// and `t${Date.now()}` gave them all one id — duplicate React keys made the
+// quiz flicker and removing one theme removed its siblings.
+let themeIdCounter = 0
+function nextThemeId() {
+  themeIdCounter = (themeIdCounter + 1) % 1000
+  return `t${Date.now()}-${themeIdCounter}`
+}
+
 // Every mutation writes the full snapshot back to Supabase, debounced so
 // rapid successive actions (e.g. typing a note) don't spam the network.
 let syncTimer = null
+let pendingGet = null
+function writeSnapshot(get) {
+  const user = useAuthStore.getState().user
+  if (!user) return
+  const { contacts, themesByContact, touches, meetings } = get()
+  supabase.from('user_data').upsert({
+    user_id: user.id,
+    data: { contacts, themesByContact, touches, meetings },
+    updated_at: new Date().toISOString(),
+  }).then(({ error }) => {
+    if (error) console.error('Failed to sync data to Supabase:', error.message)
+  })
+}
 function scheduleSync(get) {
   if (get().loading) return
   clearTimeout(syncTimer)
-  syncTimer = setTimeout(() => {
-    const user = useAuthStore.getState().user
-    if (!user) return
-    const { contacts, themesByContact, touches, meetings } = get()
-    supabase.from('user_data').upsert({
-      user_id: user.id,
-      data: { contacts, themesByContact, touches, meetings },
-      updated_at: new Date().toISOString(),
-    }).then(({ error }) => {
-      if (error) console.error('Failed to sync data to Supabase:', error.message)
-    })
-  }, 600)
+  pendingGet = get
+  syncTimer = setTimeout(() => { pendingGet = null; writeSnapshot(get) }, 600)
+}
+// Write anything still debounced right now. Called when the app goes to the
+// background: on iOS an import followed by an immediate swipe-away used to
+// die inside the 600ms window and never reach Supabase.
+export function flushSync() {
+  if (!pendingGet) return
+  clearTimeout(syncTimer)
+  const get = pendingGet
+  pendingGet = null
+  writeSnapshot(get)
+}
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushSync() })
+  window.addEventListener('pagehide', flushSync)
 }
 
 export const useDataStore = create((set, get) => {
@@ -222,18 +248,33 @@ export const useDataStore = create((set, get) => {
 
     // refinement (optional): { query, entityType, watchFor } from /api/refine-theme.
     // The scan searches news with `query` when present, falling back to `label`.
-    addTheme: (contactId, label, category, refinement = {}) => syncedSet(s => ({
+    addTheme: (contactId, label, category, refinement = {}) => {
+      const theme = {
+        id: nextThemeId(), label, category, updatesThisMonth: 0,
+        query: refinement.query || null,
+        entityType: refinement.entityType || null,
+        watchFor: refinement.watchFor || null,
+      }
+      syncedSet(s => ({
+        themesByContact: {
+          ...s.themesByContact,
+          [contactId]: [...(s.themesByContact[contactId] || []), theme],
+        },
+      }))
+      return theme
+    },
+
+    // A refinement that finished after the theme was already saved (the user
+    // tapped "Save & next" mid-spinner) lands here instead of being dropped.
+    updateTheme: (contactId, themeId, refinement = {}) => syncedSet(s => ({
       themesByContact: {
         ...s.themesByContact,
-        [contactId]: [
-          ...(s.themesByContact[contactId] || []),
-          {
-            id: `t${Date.now()}`, label, category, updatesThisMonth: 0,
-            query: refinement.query || null,
-            entityType: refinement.entityType || null,
-            watchFor: refinement.watchFor || null,
-          },
-        ],
+        [contactId]: (s.themesByContact[contactId] || []).map(t => t.id === themeId ? {
+          ...t,
+          query: refinement.query || t.query,
+          entityType: refinement.entityType || t.entityType,
+          watchFor: refinement.watchFor || t.watchFor,
+        } : t),
       },
     })),
 
