@@ -7,7 +7,7 @@ import ThinkingMark from '../../components/ThinkingMark'
 import { useDataStore } from '../../store/dataStore'
 import { openSend, sendChannelFor } from '../../services/outreach'
 import { haptic } from '../../services/haptics'
-import { statusFor } from '../../lib/status'
+import { statusFor, themeRefining } from '../../lib/status'
 import Card, { Eyebrow } from '../../ui/Card'
 import Button from '../../ui/Button'
 import Sheet from '../../ui/Sheet'
@@ -164,7 +164,7 @@ export default function ContactProfile() {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 14, fontWeight: 600, color: T.ink }}>{t.label}</div>
                   <div style={{ fontSize: 12, color: T.muted, marginTop: 3, lineHeight: 1.45 }}>
-                    {t.display || (t.query ? 'Watching for significant news.' : <ThinkingMark size={10} label="Working out what to watch…" labelStyle={{ fontSize: 12 }} />)}
+                    {t.display || (themeRefining(t) ? <ThinkingMark size={10} label="Working out what to watch…" labelStyle={{ fontSize: 12 }} /> : 'Watching for significant news.')}
                   </div>
                 </div>
                 <button

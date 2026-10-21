@@ -12,3 +12,11 @@ export function statusFor(contact) {
   return { text: `In touch · ${health.days === 0 ? 'today' : `${health.days}d ago`}`, hot: false }
 }
 
+
+// True while a just-added theme is still being refined (a minute at most);
+// older themes without a query are simply watched by their label.
+export function themeRefining(t) {
+  if (!t || t.query) return false
+  if (!t.createdAt) return false
+  return Date.now() - new Date(t.createdAt).getTime() < 60_000
+}

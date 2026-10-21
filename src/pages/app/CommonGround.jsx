@@ -19,6 +19,7 @@ import { publishWidget } from '../../services/widget'
 import { haptic } from '../../services/haptics'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { apiUrl } from '../../lib/apiBase'
+import { themeRefining } from '../../lib/status'
 import { supabase } from '../../lib/supabase'
 import Button from '../../ui/Button'
 import Card, { PageTitle } from '../../ui/Card'
@@ -100,7 +101,7 @@ function reasonView(r, contactsById) {
     kicker: u.headsUp
       ? ['Heads-up · ' + u.headsUp, u.themeLabel].filter(Boolean).join(' · ')
       : [u.themeLabel, u.source].filter(Boolean).join(' · '),
-    body: rest ? `${sentence(rest)}${when}` : `On ${u.themeLabel || 'something'} you share with ${first}.${when}`,
+    body: rest ? `${sentence(rest)}${when}` : (u.themeLabel ? `${u.themeLabel}, which you and ${first} share.${when}` : `Something you and ${first} share.${when}`),
     sub: 'Something you share',
     draftPreview: u.draftMessage,
     cta: 'Review the draft',
@@ -755,7 +756,9 @@ function ThemesManager({ contacts, themesByContact, themeCount, onBack }) {
                     <div key={t.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px', borderRadius: 12, background: T.ground, border: `1px solid ${T.hairline}` }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 14, fontWeight: 600, color: T.ink }}>{t.label}</div>
-                        {t.display && <div style={{ fontSize: 12, color: T.muted, marginTop: 3, lineHeight: 1.45 }}>{t.display}</div>}
+                        <div style={{ fontSize: 12, color: T.muted, marginTop: 3, lineHeight: 1.45 }}>
+                          {t.display || (themeRefining(t) ? <ThinkingMark size={10} label="Working out what to watch…" labelStyle={{ fontSize: 12 }} /> : 'Watching for significant news.')}
+                        </div>
                       </div>
                       <button
                         className="hb-press"

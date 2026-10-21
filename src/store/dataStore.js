@@ -480,7 +480,7 @@ export const useDataStore = create((set, get) => {
     // refinement (optional): { query, entityType, watchFor } from /api/refine-theme.
     addTheme: (contactId, label, category = 'topic', refinement = {}) => {
       const theme = {
-        id: nextThemeId(), label: label.trim(), category,
+        id: nextThemeId(), label: label.trim(), category, createdAt: new Date().toISOString(),
         query: refinement.query || null,
         entityType: refinement.entityType || null,
         watchFor: refinement.watchFor || null,
