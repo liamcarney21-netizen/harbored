@@ -19,7 +19,7 @@ export default function StreamText({ text = '', active = true, onDone, style, cl
   useEffect(() => {
     doneRef.current = false
     if (!active || reduced || !text) {
-      setCount(words.length)
+      setCount(words.length) // eslint-disable-line react-hooks/set-state-in-effect -- jump to the end when streaming is off
       if (!doneRef.current) { doneRef.current = true; onDone?.() }
       return
     }

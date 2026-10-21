@@ -34,7 +34,7 @@ describe('daysUntilBirthday', () => {
 
 describe('selectUpcomingBirthdays', () => {
   it('includes only birthdays within the window, soonest first', () => {
-    const now = new Date(2026, 5, 1)
+
     const contacts = [
       { id: 1, name: 'Soon Soonerson', initials: 'SS', color: '#000', birthday: '06-04' },
       { id: 2, name: 'Today Person', initials: 'TP', color: '#000', birthday: '06-01' },

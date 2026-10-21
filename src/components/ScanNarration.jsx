@@ -19,7 +19,7 @@ export default function ScanNarration({ contacts = [], themesByContact = {}, sty
     // lightly so consecutive scans don't narrate identically.
     const unique = [...new Set(out)]
     for (let i = unique.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1))
+      const j = Math.floor(Math.random() * (i + 1)) // eslint-disable-line react-hooks/purity -- one-time shuffle inside a lazy initializer
       ;[unique[i], unique[j]] = [unique[j], unique[i]]
     }
     unique.push('Scoring what surfaced…')

@@ -62,7 +62,7 @@ export async function pickNativeContacts() {
   }
   const limited = perm.contacts === 'limited'
 
-  let contacts = []
+  let contacts
   try {
     const res = await Contacts.getContacts({
       projection: { name: true, phones: true, emails: true, organization: true, birthday: true },

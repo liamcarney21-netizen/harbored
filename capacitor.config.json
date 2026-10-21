@@ -17,6 +17,11 @@
     "Keyboard": {
       "resize": "native",
       "resizeOnFullScreen": true
+    },
+    "SplashScreen": {
+      "launchAutoHide": false,
+      "backgroundColor": "#0a1628",
+      "showSpinner": false
     }
   }
 }

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Compass, Gauge, TrendingUp, ArrowRight, ArrowLeft, Check } from 'lucide-react'
+import { Compass, Waves, TrendingUp, ArrowRight, ArrowLeft, Check } from 'lucide-react'
 import AnchorMark from './AnchorMark'
 import { useIsMobile } from '../hooks/useIsMobile'
 
@@ -20,11 +20,11 @@ const STEPS = [
     visual: 'themes',
   },
   {
-    icon: Gauge,
+    icon: Waves,
     kicker: 'Step two',
     title: 'Harbored keeps watch.',
-    body: "It follows your themes in the news around the clock and scores everything it finds. Routine coverage is logged quietly. Only the things genuinely worth a message reach you — as a front page written about your people.",
-    visual: 'gauge',
+    body: "It follows your themes in the news around the clock. Routine coverage stays quiet. Only the few things genuinely worth a message reach you — as a front page written about your people.",
+    visual: 'quiet',
   },
   {
     icon: TrendingUp,
@@ -58,32 +58,31 @@ function ThemesVisual() {
   )
 }
 
-function GaugeVisual() {
+function QuietVisual() {
+  const rows = [
+    { text: 'Weekly roundup', note: 'stays quiet', hot: false },
+    { text: 'Routine coverage', note: 'stays quiet', hot: false },
+    { text: 'Something that actually matters', note: 'reaches you', hot: true },
+  ]
   return (
-    <div style={{ maxWidth: '300px', margin: '0 auto', width: '100%' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-        <span style={{ fontSize: '11px', color: '#8C9AAD', fontFamily: 'Inter, sans-serif' }}>Significance</span>
-        <motion.span
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.1 }}
-          style={{ fontSize: '13px', fontWeight: 700, color: '#D3A95C', fontFamily: 'Inter, sans-serif' }}
-        >
-          92 — worth reaching out
-        </motion.span>
-      </div>
-      <div style={{ position: 'relative', height: '6px', borderRadius: '3px', background: 'rgba(255,255,255,0.12)' }}>
+    <div style={{ maxWidth: '320px', margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', gap: '8px', textAlign: 'left' }}>
+      {rows.map((r, i) => (
         <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: '92%' }}
-          transition={{ delay: 0.4, duration: 0.8, ease: 'easeOut' }}
-          style={{ height: '100%', borderRadius: '3px', background: 'linear-gradient(90deg, #D3A95C 55%, #D3A95C)' }}
-        />
-        <div style={{ position: 'absolute', left: '70%', top: '-4px', width: '2px', height: '14px', background: 'rgba(29,34,38,0.4)', borderRadius: '1px' }} />
-      </div>
-      <div style={{ fontSize: '11px', color: '#8C9AAD', marginTop: '6px', textAlign: 'left', fontFamily: 'Inter, sans-serif' }}>
-        Reach-out threshold: 70
-      </div>
+          key={r.text}
+          initial={{ opacity: 0, x: -8 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.3 + i * 0.22, duration: 0.3 }}
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px',
+            padding: '9px 12px', borderRadius: '10px', fontFamily: 'Inter, sans-serif',
+            background: r.hot ? 'rgba(211,169,92,0.1)' : 'rgba(255,255,255,0.03)',
+            border: `1px solid ${r.hot ? 'rgba(211,169,92,0.35)' : 'rgba(255,255,255,0.06)'}`,
+          }}
+        >
+          <span style={{ fontSize: '12px', fontWeight: r.hot ? 600 : 400, color: r.hot ? '#F5F4EF' : '#8C9AAD' }}>{r.text}</span>
+          <span style={{ fontSize: '11px', fontWeight: 600, color: r.hot ? '#D3A95C' : '#5C6B73', whiteSpace: 'nowrap' }}>{r.note}</span>
+        </motion.div>
+      ))}
     </div>
   )
 }
@@ -126,8 +125,8 @@ export default function Onboarding({ onFinish }) {
             <span style={{ fontFamily: '"Lora", Georgia, serif', fontSize: '16px', fontWeight: 600, color: '#F5F4EF' }}>Harbored</span>
           </div>
           <button
-            onClick={onFinish}
-            style={{ fontSize: '12px', fontWeight: 500, color: '#8C9AAD', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}
+            onClick={() => onFinish(false)}
+            style={{ fontSize: '13px', fontWeight: 500, color: '#8C9AAD', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif', padding: '8px 4px' }}
           >
             Skip tour
           </button>
@@ -161,7 +160,7 @@ export default function Onboarding({ onFinish }) {
                 {current.body}
               </p>
               {current.visual === 'themes' && <ThemesVisual />}
-              {current.visual === 'gauge' && <GaugeVisual />}
+              {current.visual === 'quiet' && <QuietVisual />}
             </motion.div>
           </AnimatePresence>
         </div>

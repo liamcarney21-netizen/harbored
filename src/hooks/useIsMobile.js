@@ -8,7 +8,6 @@ export function useIsMobile(breakpoint = 820) {
   useEffect(() => {
     const mq = window.matchMedia(`(max-width: ${breakpoint}px)`)
     const onChange = e => setIsMobile(e.matches)
-    setIsMobile(mq.matches)
     mq.addEventListener('change', onChange)
     return () => mq.removeEventListener('change', onChange)
   }, [breakpoint])

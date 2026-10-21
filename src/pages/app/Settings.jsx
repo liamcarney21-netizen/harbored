@@ -1,114 +1,61 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDataStore } from '../../store/dataStore'
 import { useAuthStore } from '../../store/authStore'
 import { useDemoStore } from '../../store/demoStore'
 import WarmAvatar from '../../components/WarmAvatar'
 import ThinkingMark from '../../components/ThinkingMark'
-import { useIsMobile } from '../../hooks/useIsMobile'
 import { supabase } from '../../lib/supabase'
 import { apiUrl } from '../../lib/apiBase'
-
-const INK = '#F5F4EF'
-const MUTED = '#8C9AAD'
-const ACCENT = '#D3A95C'
-const CARD = '#0f2040'
-const HAIRLINE = 'rgba(255,255,255,0.08)'
-
-function Toggle({ checked, onChange, label }) {
-  return (
-    <button
-      className="hb-press"
-      onClick={() => onChange(!checked)}
-      aria-label={label}
-      aria-pressed={checked}
-      style={{
-        position: 'relative', width: '44px', height: '26px', borderRadius: '13px',
-        border: 'none', cursor: 'pointer', flexShrink: 0, transition: 'background 0.2s',
-        background: checked ? ACCENT : 'rgba(255,255,255,0.15)',
-      }}
-    >
-      <span style={{
-        position: 'absolute', width: '20px', height: '20px', borderRadius: '50%',
-        background: '#0a1628', top: '3px', transition: 'left 0.2s',
-        left: checked ? '21px' : '3px',
-      }} />
-    </button>
-  )
-}
-
-// A row that never crams: label + optional sub stacked on the left (free to
-// wrap), one fixed-width control on the right.
-function Row({ title, sub, control, last = false }) {
-  return (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: '16px', padding: '16px 18px',
-      minHeight: '44px', borderBottom: last ? 'none' : `1px solid ${HAIRLINE}`,
-    }}>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: '15px', fontWeight: 500, color: INK }}>{title}</div>
-        {sub && <div style={{ fontSize: '12px', color: MUTED, marginTop: '3px', lineHeight: 1.5 }}>{sub}</div>}
-      </div>
-      <div style={{ flexShrink: 0 }}>{control}</div>
-    </div>
-  )
-}
-
-function GhostButton({ children, onClick, tone = 'default' }) {
-  const color = tone === 'danger' ? '#E8867A' : INK
-  return (
-    <button
-      className="hb-press"
-      onClick={onClick}
-      style={{
-        padding: '9px 16px', borderRadius: '12px', fontSize: '13px', fontWeight: 600,
-        background: 'none', color, border: `1px solid ${tone === 'danger' ? 'rgba(232,134,122,0.35)' : 'rgba(255,255,255,0.2)'}`,
-        cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap',
-      }}
-    >
-      {children}
-    </button>
-  )
-}
+import { isNative } from '../../lib/platform'
+import { signOutEverywhereLocal, forgetThisDevice } from '../../services/session'
+import { pushPermissionState, registerPushNotifications } from '../../services/push'
+import { openContactSettings } from '../../services/contacts'
+import Card, { Eyebrow, PageTitle, Row } from '../../ui/Card'
+import Button from '../../ui/Button'
+import { Toggle } from '../../ui/Field'
+import { T } from '../../ui/tokens'
 
 export default function Settings() {
   const navigate = useNavigate()
-  const isMobile = useIsMobile()
   const contacts = useDataStore(s => s.contacts)
-  const clearSampleData = useDataStore(s => s.clearSampleData)
-  const restoreSampleData = useDataStore(s => s.restoreSampleData)
+  const prefs = useDataStore(s => s.prefs)
+  const setPref = useDataStore(s => s.setPref)
   const user = useAuthStore(s => s.user)
-  const logout = useAuthStore(s => s.logout)
   const demoActive = useDemoStore(s => s.active)
-  const sampleCount = contacts.filter(c => c.seed).length
-  const [pushOn, setPushOn] = useState(true)
-  const [digestOn, setDigestOn] = useState(true)
+  const exitDemo = useDemoStore(s => s.exit)
 
-  const email = user?.email || (demoActive ? 'demo@harbored.app' : '')
+  const email = user?.email || ''
   const initials = (email[0] || 'H').toUpperCase()
 
+  // Native: the toggle reflects what iOS actually allows.
+  const [osPush, setOsPush] = useState('web')
+  useEffect(() => {
+    if (!isNative()) return
+    pushPermissionState().then(setOsPush).catch(() => {})
+  }, [])
+
+  async function togglePush(on) {
+    setPref('push', on)
+    if (on && isNative() && osPush !== 'granted') {
+      const state = await registerPushNotifications({ prompt: true })
+      setOsPush(state)
+    }
+  }
+
   async function handleSignOut() {
-    if (demoActive) { navigate('/'); return }
-    await logout()
+    if (demoActive) { exitDemo(); navigate(user ? '/dashboard' : '/'); return }
+    await signOutEverywhereLocal()
     navigate('/login')
   }
 
-  // Delete flow: our own confirm sheet (window.confirm renders as a washed-out
-  // native panel in the WKWebView), then a visible working state the whole way
-  // through — the server round-trip takes a few seconds and silence there read
-  // as a glitch.
+  // Delete flow: our own confirm sheet, then a visible working state the whole
+  // way through — the server round-trip takes a few seconds.
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState('')
 
-  function handleDeleteAccount() {
-    setDeleteError('')
-    setConfirmingDelete(true)
-  }
-
   async function confirmDeleteAccount() {
-    // In the demo there is no account — deleting just wipes the sample state.
-    if (demoActive) { localStorage.clear(); window.location.href = '/'; return }
     setDeleting(true)
     setDeleteError('')
     try {
@@ -123,10 +70,10 @@ export default function Settings() {
         const body = await res.json().catch(() => ({}))
         throw new Error(body.error || 'Deletion failed — try again in a moment.')
       }
-      localStorage.clear()
-      await supabase.auth.signOut().catch(() => {})
-      // The login page reads this flag and says a quiet goodbye, so the jump
-      // out of the app doesn't feel like a crash.
+      await forgetThisDevice(user?.id)
+      await supabase.auth.signOut({ scope: 'local' }).catch(() => {})
+      useDataStore.getState().reset()
+      // The login page reads this flag and says a quiet goodbye.
       window.location.href = '/login?farewell=1'
     } catch (e) {
       setDeleteError(e.message)
@@ -135,150 +82,120 @@ export default function Settings() {
     }
   }
 
+  function exportData() {
+    const { contacts, themesByContact, touches } = useDataStore.getState()
+    const blob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), contacts, themesByContact, touches }, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'harbored-export.json'
+    a.click()
+    setTimeout(() => URL.revokeObjectURL(url), 2000)
+  }
+
+  const pushSub = !prefs.push
+    ? 'Off — nothing reaches your phone'
+    : isNative() && osPush === 'denied'
+      ? 'Turned off in iOS Settings'
+      : 'Only when Harbored finds a real reason'
+
   return (
-    // Phone: one column. Desktop: identity on the left, settings wide right.
-    <div style={isMobile
-      ? { width: '100%', maxWidth: '620px', alignSelf: 'center', padding: '18px 24px 32px' }
-      : {
-        display: 'grid', gridTemplateColumns: '300px minmax(0, 1fr)', gap: '64px', alignItems: 'start',
-        width: '100%', maxWidth: '1120px', alignSelf: 'center', padding: '40px 48px 48px',
-      }}>
+    <div style={{ width: '100%', padding: `18px ${T.gutter}px 32px` }}>
+      <PageTitle title="You" sub="Account, notifications, and your data" />
 
-      <div>
-      <h1 className="hb-display" style={{ fontSize: '30px', fontWeight: 500, color: INK, lineHeight: 1.1 }}>
-        You
-      </h1>
-      <p style={{ fontSize: '13px', color: MUTED, marginTop: '8px' }}>
-        Account, notifications, and your data
-      </p>
-
-      {/* Account */}
-      <div style={{ background: CARD, border: `1px solid ${HAIRLINE}`, borderRadius: '16px', marginTop: '22px', overflow: 'hidden' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '18px' }}>
+      <Card style={{ marginTop: 22, padding: 0, overflow: 'hidden' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: 18 }}>
           <WarmAvatar initials={initials} size="lg" />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: '15px', fontWeight: 600, color: INK, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {demoActive ? 'Demo account' : (email || 'Signed in')}
+            <div style={{ fontSize: 15, fontWeight: 600, color: T.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {demoActive ? 'Demo' : (email || 'Signed in')}
             </div>
-            <div style={{ fontSize: '12px', color: MUTED, marginTop: '3px' }}>
-              {contacts.length} people &middot; watched quietly
+            <div style={{ fontSize: 12, color: T.muted, marginTop: 3 }}>
+              {contacts.length} {contacts.length === 1 ? 'person' : 'people'} in your crew
             </div>
           </div>
         </div>
         <div style={{ padding: '0 18px 16px' }}>
-          <GhostButton onClick={handleSignOut}>{demoActive ? 'Leave the demo' : 'Sign out'}</GhostButton>
+          <Button variant="secondary" size="sm" onClick={handleSignOut}>{demoActive ? 'Leave the demo' : 'Sign out'}</Button>
         </div>
-      </div>
-      </div>
+      </Card>
 
-      <div>
-      {/* Notifications */}
-      <div style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: MUTED, margin: isMobile ? '24px 0 10px' : '0 0 10px', paddingLeft: '4px' }}>
-        Notifications
-      </div>
-      <div style={{ background: CARD, border: `1px solid ${HAIRLINE}`, borderRadius: '16px', overflow: 'hidden' }}>
+      <Eyebrow>Notifications</Eyebrow>
+      <Card flush>
         <Row
           title="Push notifications"
-          sub="Only when a reason clears the bar — never noise"
-          control={<Toggle checked={pushOn} onChange={setPushOn} label="Push notifications" />}
+          sub={pushSub}
+          control={<Toggle checked={!!prefs.push} onChange={togglePush} label="Push notifications" />}
         />
+        {isNative() && osPush === 'denied' && prefs.push && (
+          <div style={{ padding: '0 18px 14px' }}>
+            <Button variant="secondary" size="sm" onClick={openContactSettings}>Open iOS Settings</Button>
+          </div>
+        )}
         <Row
-          title="Weekly digest"
-          sub={email ? `Sunday mornings to ${email}` : 'A Sunday-morning summary by email'}
-          control={<Toggle checked={digestOn} onChange={setDigestOn} label="Weekly digest" />}
+          title="Weekly recap"
+          sub={email ? `Monday mornings to ${email}` : 'A Monday-morning summary by email'}
+          control={<Toggle checked={!!prefs.digest} onChange={v => setPref('digest', v)} label="Weekly recap email" />}
           last
         />
-      </div>
+      </Card>
 
-      {/* Your data */}
-      <div style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: MUTED, margin: '24px 0 10px', paddingLeft: '4px' }}>
-        Your data
-      </div>
-      <div style={{ background: CARD, border: `1px solid ${HAIRLINE}`, borderRadius: '16px', overflow: 'hidden' }}>
+      <Eyebrow>Your data</Eyebrow>
+      <Card flush>
         <Row
-          title="Replay the walkthrough"
-          sub="The first-run tour of how Harbored works"
-          control={
-            <GhostButton onClick={() => { localStorage.removeItem('harbored_onboarded'); if (user) localStorage.removeItem(`harbored_onboarded_${user.id}`); window.location.href = '/dashboard' }}>
-              Replay
-            </GhostButton>
-          }
-        />
-        <Row
-          title="Sample contacts"
-          sub={sampleCount > 0
-            ? `${sampleCount} examples loaded — clearing them never touches your own people`
-            : 'Cleared — restore any time to explore'}
-          control={sampleCount > 0
-            ? <GhostButton onClick={clearSampleData}>Clear</GhostButton>
-            : <GhostButton onClick={restoreSampleData}>Restore</GhostButton>}
+          title="Export your data"
+          sub="Your people, themes and history as a file"
+          control={<Button variant="secondary" size="sm" onClick={exportData}>Export</Button>}
           last
         />
-      </div>
+      </Card>
 
-      {/* Danger */}
-      <div style={{ background: 'rgba(232,134,122,0.05)', border: '1px solid rgba(232,134,122,0.2)', borderRadius: '16px', marginTop: '24px', overflow: 'hidden' }}>
-        <Row
-          title="Delete account"
-          sub={deleteError || 'Removes your account and every piece of data, permanently'}
-          control={
-            <GhostButton tone="danger" onClick={deleting ? undefined : handleDeleteAccount}>
-              {deleting ? 'Deleting…' : 'Delete'}
-            </GhostButton>
-          }
-          last
-        />
-      </div>
-      </div>
+      {!demoActive && (
+        <Card flush style={{ marginTop: 24, background: 'rgba(232,134,122,0.05)', borderColor: 'rgba(232,134,122,0.2)' }}>
+          <Row
+            title="Delete account"
+            sub={deleteError || 'Removes your account and every piece of data, permanently'}
+            control={
+              <Button variant="secondary" size="sm" style={{ color: T.danger, borderColor: 'rgba(232,134,122,0.35)' }} onClick={() => { setDeleteError(''); setConfirmingDelete(true) }}>
+                {deleting ? 'Deleting…' : 'Delete'}
+              </Button>
+            }
+            last
+          />
+        </Card>
+      )}
 
-      {/* Delete confirm sheet + working state — solid backdrop from the first
-          frame, and the asterisk keeps breathing through the server call. */}
       {confirmingDelete && (
-        <div style={{
-          position: 'fixed', inset: 0, zIndex: 80,
-          background: 'rgba(4, 10, 22, 0.78)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px',
+        <div role="dialog" aria-modal="true" aria-label="Delete your Harbored account?" style={{
+          position: 'fixed', inset: 0, zIndex: 80, background: 'rgba(4, 10, 22, 0.78)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
         }}>
-          <div style={{
-            width: 'min(400px, 100%)', background: CARD, borderRadius: '16px',
-            border: `1px solid ${HAIRLINE}`, padding: '24px',
-            boxShadow: '0 18px 50px -12px rgba(0,0,0,0.6)',
-          }}>
+          <Card style={{ width: 'min(400px, 100%)', padding: 24, boxShadow: '0 18px 50px -12px rgba(0,0,0,0.6)' }}>
             {deleting ? (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px', padding: '10px 0' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, padding: '10px 0' }}>
                 <ThinkingMark size={26} />
-                <div style={{ fontSize: '15px', fontWeight: 500, color: INK }}>Removing your account</div>
-                <p style={{ fontSize: '13px', color: MUTED, lineHeight: 1.55, textAlign: 'center', margin: 0 }}>
+                <div style={{ fontSize: 15, fontWeight: 500, color: T.ink }}>Removing your account</div>
+                <p style={{ fontSize: 13, color: T.muted, lineHeight: 1.55, textAlign: 'center', margin: 0 }}>
                   Deleting your people, themes, and history from our servers…
                 </p>
               </div>
             ) : (
               <>
-                <div className="hb-display" style={{ fontSize: '19px', fontWeight: 500, color: INK, lineHeight: 1.3 }}>
+                <div className="hb-display" style={{ fontSize: 19, fontWeight: 500, color: T.ink, lineHeight: 1.3 }}>
                   Delete your Harbored account?
                 </div>
-                <p style={{ fontSize: '13px', color: MUTED, lineHeight: 1.6, margin: '10px 0 20px' }}>
+                <p style={{ fontSize: 13, color: T.muted, lineHeight: 1.6, margin: '10px 0 20px' }}>
                   Your people, themes, and history are removed permanently. This cannot be undone.
                 </p>
-                <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-                  <GhostButton onClick={() => setConfirmingDelete(false)}>Cancel</GhostButton>
-                  <button
-                    className="hb-press"
-                    onClick={confirmDeleteAccount}
-                    style={{
-                      padding: '9px 18px', borderRadius: '12px', fontSize: '13px', fontWeight: 600,
-                      background: '#E8867A', color: '#0a1628', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
-                    }}
-                  >
-                    Delete forever
-                  </button>
+                <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+                  <Button variant="secondary" size="sm" onClick={() => setConfirmingDelete(false)}>Cancel</Button>
+                  <Button variant="danger" size="sm" onClick={confirmDeleteAccount}>Delete forever</Button>
                 </div>
               </>
             )}
-          </div>
+          </Card>
         </div>
       )}
-
     </div>
   )
 }

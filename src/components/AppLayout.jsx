@@ -1,150 +1,150 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Navigate, Routes, Route, useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
 import AnchorMark from './AnchorMark'
+import ThinkingMark from './ThinkingMark'
 import { useAuthStore } from '../store/authStore'
 import { useDataStore } from '../store/dataStore'
 import { useDemoStore } from '../store/demoStore'
-import AppSidebar from './AppSidebar'
 import BottomTabBar from './BottomTabBar'
 import Onboarding from './Onboarding'
 import AddContactModal from './AddContactModal'
 import ImportContactsModal from './ImportContactsModal'
 import ThemeComposerModal from './ThemeComposerModal'
-import { useIsMobile } from '../hooks/useIsMobile'
 import Network from '../pages/app/Network'
 import CommonGround from '../pages/app/CommonGround'
 import ContactProfile from '../pages/app/ContactProfile'
-import Digest from '../pages/app/Digest'
 import Settings from '../pages/app/Settings'
+import { ToastHost } from '../ui/toast'
+import Button from '../ui/Button'
+import { T } from '../ui/tokens'
+import { registerPushNotifications } from '../services/push'
+import { refineMissingThemes } from '../services/themes'
+import { hideSplash } from '../lib/splash'
+import { isNative } from '../lib/platform'
 
+// One phone-width column on every screen size. The desktop "front page"
+// layouts are gone: the phone app is the product and the web is its demo and
+// companion, so there is exactly one of each screen to keep polished.
 export default function AppLayout() {
   const user = useAuthStore(s => s.user)
   const initialized = useAuthStore(s => s.initialized)
   const demoActive = useDemoStore(s => s.active)
-  const dataLoading = useDataStore(s => s.loading)
-  const isMobile = useIsMobile()
+  const exitDemo = useDemoStore(s => s.exit)
+  const loading = useDataStore(s => s.loading)
+  const loadError = useDataStore(s => s.loadError)
+  const fromCache = useDataStore(s => s.fromCache)
+  const dirty = useDataStore(s => s.dirty)
+  const syncError = useDataStore(s => s.syncError)
+  const retryLoad = useDataStore(s => s.retryLoad)
+  const contacts = useDataStore(s => s.contacts)
+  const themesByContact = useDataStore(s => s.themesByContact)
+  const updateTheme = useDataStore(s => s.updateTheme)
   const navigate = useNavigate()
-  // In demo mode skip the first-run walkthrough — judges land straight on the
-  // seeded Common Ground so the product explains itself. The seen-flag is
-  // per-account (not per-device), so every new sign-up gets the intro even on
-  // a phone that has run Harbored before.
-  const obKey = user ? `harbored_onboarded_${user.id}` : 'harbored_onboarded'
-  const [showOnboarding, setShowOnboarding] = useState(
-    () => !demoActive && localStorage.getItem(obKey) !== 'true'
-  )
+
+  const [tourDismissed, setTourDismissed] = useState(false)
   const [showAddContact, setShowAddContact] = useState(false)
-  const [addContactFirstRun, setAddContactFirstRun] = useState(false)
   const [showImportContacts, setShowImportContacts] = useState(false)
   const [composerContacts, setComposerContacts] = useState([])
-  if (!initialized) return null
+
+  // Whatever renders here is the first real screen on native.
+  useEffect(() => { if (initialized) hideSplash() }, [initialized])
+
+  // The first-run tour shows once per account, only while the crew is empty
+  // (a new phone is not a new user), and never in the demo.
+  const showOnboarding = initialized && !loading && !demoActive && !!user && !tourDismissed
+    && contacts.length === 0 && !tourSeen(user.id)
+
+  // Themes that never got a refined query (the refine service was down when
+  // they were added) get one quietly, a few at a time.
+  useEffect(() => {
+    if (!user || demoActive || loading || loadError) return
+    refineMissingThemes(contacts, themesByContact, updateTheme)
+  }, [user, demoActive, loading, loadError]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (!initialized) return <Shell center><ThinkingMark size={22} /></Shell>
   if (!user && !demoActive) return <Navigate to="/login" replace />
-  if (dataLoading) return null
+  if (loading && !fromCache) {
+    return <Shell center><ThinkingMark size={22} label="Opening your harbor…" /></Shell>
+  }
+  if (loadError && !fromCache && contacts.length === 0) {
+    return (
+      <Shell center>
+        <div style={{ textAlign: 'center', maxWidth: 320, padding: '0 24px' }}>
+          <h1 className="hb-display" style={{ fontSize: 26, fontWeight: 500, color: T.ink, lineHeight: 1.2 }}>Couldn't reach Harbored</h1>
+          <p style={{ fontSize: 14, lineHeight: 1.6, color: T.body, margin: '12px 0 22px' }}>
+            Your people are safe on the server; this device just couldn't load them. Check your connection and try again.
+          </p>
+          <Button size="lg" onClick={retryLoad}>Try again</Button>
+        </div>
+      </Shell>
+    )
+  }
 
-  // Just navigate — Landing clears the demo state on mount, once this component
-  // (and its auth guard) is safely unmounted. Clearing it here, while still on
-  // /dashboard, would trip the guard below and bounce to /login instead.
-  const leaveDemo = () => navigate('/')
-
-  // Import-first: onboarding hands off to the contacts importer, not the
-  // manual-entry form — nobody types their network in by hand.
   function finishOnboarding(andBringContacts = false) {
-    localStorage.setItem(obKey, 'true')
-    setShowOnboarding(false)
-    if (andBringContacts) setShowImportContacts(true)
+    try { if (user) localStorage.setItem(`harbored_onboarded_${user.id}`, 'true') } catch { /* private mode */ }
+    setTourDismissed(true)
+    if (andBringContacts === true) setShowImportContacts(true)
   }
 
-  const openAddContact = () => {
-    setAddContactFirstRun(false)
-    setShowAddContact(true)
+  // After the first people are in and their themes set, a push means
+  // something — that is the moment to ask for permission.
+  function closeComposer() {
+    setComposerContacts([])
+    if (isNative() && user && !demoActive) registerPushNotifications({ prompt: true })
   }
 
-  const openImportContacts = () => {
-    setShowImportContacts(true)
-  }
+  const openAddContact = () => setShowAddContact(true)
+  const openImportContacts = () => setShowImportContacts(true)
 
   return (
-    <motion.div
-      className="hb-app"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.35 }}
-      style={{
-        display: 'flex',
-        flexDirection: isMobile ? 'column' : 'row',
-        height: '100vh',
-        overflow: 'hidden',
-      }}
-    >
-      {/* Mobile top bar — wordmark left, date right, on the charcoal itself
-          (no chrome bar; the bottom tab bar owns navigation). */}
-      {isMobile && (
-        <header style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
-          padding: 'calc(env(safe-area-inset-top) + 16px) 24px 4px',
-        }}>
-          <button
-            className="hb-press"
-            onClick={() => navigate('/dashboard')}
-            style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-          >
-            <AnchorMark size={16} color="#D3A95C" />
-            <span className="hb-display" style={{ fontSize: '19px', fontWeight: 500, color: '#F5F4EF' }}>
-              Harbored
-            </span>
-          </button>
-          <span style={{ fontSize: '12px', color: '#8C9AAD' }}>
-            {new Date().toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}
-          </span>
-        </header>
+    <Shell>
+      {/* Top bar — wordmark left, date right */}
+      <header style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
+        padding: `calc(env(safe-area-inset-top) + 16px) ${T.gutter}px 4px`,
+      }}>
+        <button
+          className="hb-press"
+          onClick={() => navigate('/dashboard')}
+          style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+          aria-label="Today"
+        >
+          <AnchorMark size={16} color={T.accent} />
+          <span className="hb-display" style={{ fontSize: 19, fontWeight: 500, color: T.ink }}>Harbored</span>
+        </button>
+        <span style={{ fontSize: 12, color: T.muted }}>
+          {new Date().toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}
+        </span>
+      </header>
+
+      {demoActive && (
+        <Banner
+          text={<><strong style={{ fontWeight: 600, color: T.accent }}>Live demo</strong> — nothing here is saved</>}
+          action="Exit"
+          onAction={() => { exitDemo(); navigate(user ? '/dashboard' : '/') }}
+        />
+      )}
+      {!demoActive && loadError && fromCache && (
+        <Banner text="Showing your last copy — couldn't reach Harbored." action="Retry" onAction={retryLoad} tone="warn" />
+      )}
+      {!demoActive && !loadError && (dirty || syncError) && (
+        <Banner text={syncError ? "Changes not saved yet — we'll keep trying." : 'Saving…'} tone="quiet" />
       )}
 
-      {/* Desktop keeps the sidebar; mobile uses the bottom tab bar below. */}
-      {!isMobile && <AppSidebar onAddContact={openAddContact} onImportContacts={openImportContacts} />}
-
       <main style={{ flex: 1, overflowY: 'auto', minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-        {demoActive && (
-          <div style={{
-            position: 'sticky', top: 0, zIndex: 30,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            flexWrap: 'wrap', gap: '4px 12px',
-            padding: '8px 16px', background: '#0f2040', color: '#C2CBD8',
-            borderBottom: '1px solid rgba(255,255,255,0.08)',
-            fontSize: '12px', textAlign: 'center',
-          }}>
-            <span>
-              <strong style={{ fontWeight: 600, color: '#D3A95C' }}>Live demo</strong>
-              {' — nothing here is saved'}
-            </span>
-            <button
-              className="hb-press"
-              onClick={leaveDemo}
-              style={{
-                background: 'none', color: '#F5F4EF',
-                border: '1px solid rgba(255,255,255,0.2)', borderRadius: '999px',
-                padding: '3px 12px', fontSize: '12px', fontWeight: 600,
-                cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap',
-              }}
-            >
-              Exit
-            </button>
-          </div>
-        )}
         <Routes>
           <Route index element={<CommonGround onImportContacts={openImportContacts} />} />
-          <Route path="network"   element={<Network onAddContact={openAddContact} onImportContacts={openImportContacts} />} />
+          <Route path="network" element={<Network onImportContacts={openImportContacts} />} />
           <Route path="contact/:id" element={<ContactProfile />} />
-          <Route path="digest"    element={<Digest />} />
-          <Route path="settings"  element={<Settings />} />
-          {/* Retired sections (overview/alerts/messages/analytics/prep) land on Common Ground */}
+          <Route path="settings" element={<Settings />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </main>
-      {isMobile && <BottomTabBar />}
+      <BottomTabBar />
+
       {showOnboarding && <Onboarding onFinish={finishOnboarding} />}
       <AddContactModal
         open={showAddContact}
-        firstRun={addContactFirstRun}
         onClose={() => setShowAddContact(false)}
         onCreated={(contact) => setComposerContacts([contact])}
       />
@@ -158,8 +158,55 @@ export default function AppLayout() {
         key={composerContacts.length ? composerContacts[0].id : 'empty'}
         open={composerContacts.length > 0}
         contacts={composerContacts}
-        onClose={() => setComposerContacts([])}
+        onClose={closeComposer}
       />
-    </motion.div>
+      <ToastHost />
+    </Shell>
+  )
+}
+
+function tourSeen(uid) {
+  try { return localStorage.getItem(`harbored_onboarded_${uid}`) === 'true' } catch { return false }
+}
+
+function Shell({ center = false, children }) {
+  return (
+    <div className="hb-app" style={{ height: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', overflow: 'hidden' }}>
+      <div
+        className="hb-column"
+        style={{
+          width: '100%', maxWidth: T.pageWidth, flex: 1, minHeight: 0, position: 'relative',
+          display: 'flex', flexDirection: 'column',
+          alignItems: center ? 'center' : 'stretch', justifyContent: center ? 'center' : 'flex-start',
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  )
+}
+
+function Banner({ text, action, onAction, tone = 'demo' }) {
+  const bg = tone === 'warn' ? 'rgba(232,134,122,0.08)' : tone === 'quiet' ? 'transparent' : T.card
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', gap: '4px 12px',
+      padding: tone === 'quiet' ? '2px 16px 6px' : '8px 16px', background: bg, color: T.body,
+      borderBottom: tone === 'quiet' ? 'none' : `1px solid ${T.hairline}`, fontSize: 12, textAlign: 'center', flexShrink: 0,
+    }}>
+      <span style={{ color: tone === 'quiet' ? T.muted : T.body }}>{text}</span>
+      {action && (
+        <button
+          className="hb-press"
+          onClick={onAction}
+          style={{
+            background: 'none', color: T.ink, border: `1px solid ${T.hairlineStrong}`, borderRadius: 999,
+            padding: '3px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap',
+          }}
+        >
+          {action}
+        </button>
+      )}
+    </div>
   )
 }

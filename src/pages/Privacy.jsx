@@ -1,13 +1,14 @@
 import { Link } from 'react-router-dom'
 import AnchorMark from '../components/AnchorMark'
 
-const SERIF = '"Fraunces", Georgia, serif'
+const SERIF = '"Fraunces Variable", "Fraunces", "Lora", Georgia, serif'
 const SANS = 'Inter, sans-serif'
 const INK = '#1C2B33'
 const MUTE = '#5C6B73'
-const TEAL = '#0D5C63'
+const NAVY = '#0a1628'
+const LINK = { color: NAVY, fontWeight: 500, textDecoration: 'underline', textDecorationColor: 'rgba(169,126,47,0.6)', textUnderlineOffset: 3 }
 
-const EFFECTIVE = 'July 17, 2026'
+const EFFECTIVE = 'October 21, 2026'
 const CONTACT_EMAIL = 'harboredsupport@gmail.com'
 
 // Substantive privacy policy — Harbored imports contacts and stores personal data,
@@ -54,17 +55,20 @@ export default function Privacy() {
         </p>
 
         <Section title="Who we are">
-          Harbored, Inc. ("Harbored", "we", "us") provides the Harbored web and iOS application.
+          Harbored ("Harbored", "we", "us") provides the Harbored web and iOS application.
           If you have any question about this policy or your data, email{' '}
-          <a href={`mailto:${CONTACT_EMAIL}`} style={{ color: TEAL, fontWeight: 500 }}>{CONTACT_EMAIL}</a>.
+          <a href={`mailto:${CONTACT_EMAIL}`} style={LINK}>{CONTACT_EMAIL}</a>.
         </Section>
 
         <Section title="Information you give us">
           <ul style={{ paddingLeft: 20, margin: '4px 0 0' }}>
-            <Bullet><strong>Account details.</strong> The email address and password you use to sign in. Authentication is handled by Supabase; we never see your password in plain text.</Bullet>
-            <Bullet><strong>Contacts you import.</strong> When you import from your phone's contacts, Harbored reads only the contacts you select, and only these fields: name, email address, phone number, and company/role. We do not read your entire address book without your action, and we don't collect fields you don't need us to.</Bullet>
+            <Bullet><strong>Account details.</strong> Your name, and the email address and password you use to sign in. Authentication is handled by Supabase; we never see your password in plain text.</Bullet>
+            <Bullet><strong>Contacts you import.</strong> When you import from your iPhone's contacts, Harbored lists them on your device so you can choose who to bring in. Only the people you select are saved to your account, and only these fields: name, email address, phone number, company and role, and birthday. We do not read your entire address book without your action, and we don't collect fields you don't need us to.</Bullet>
+            <Bullet><strong>Birthdays.</strong> If a contact you choose to import has a birthday saved (or you add one yourself), Harbored keeps only the month and day, and uses it only for birthday reminders.</Bullet>
             <Bullet><strong>Themes and notes.</strong> The shared themes, notes, and reminders you add for each contact — these are the basis of what Harbored watches for you.</Bullet>
-            <Bullet><strong>Conversation text you paste into Discovery.</strong> When you use Discovery to surface shared themes, the text you paste is sent for analysis (see "AI processing" below) and is not stored after the themes are returned.</Bullet>
+            <Bullet><strong>Messages you send.</strong> When you send a drafted message, Harbored saves its text to your account history. See "Sending messages" below.</Bullet>
+            <Bullet><strong>What you tell Harbored about someone.</strong> When you describe a person to find shared themes, out loud or by typing, that text is sent for analysis (see "AI processing" below) and is not stored after the themes are returned. If you use the mic, your device's built-in speech recognition turns your voice into text; Harbored only ever receives the text, never audio.</Bullet>
+            <Bullet><strong>Email updates.</strong> If you sign up for updates on our website, we use your first name and email address only to send you those updates.</Bullet>
           </ul>
         </Section>
 
@@ -72,28 +76,31 @@ export default function Privacy() {
           <ul style={{ paddingLeft: 20, margin: '4px 0 0' }}>
             <Bullet>To watch public news sources for meaningful developments related to the themes you've saved, and to score how significant each one is.</Bullet>
             <Bullet>To draft outreach messages you can review and send, and to send you a periodic digest of what's worth reaching out about.</Bullet>
-            <Bullet>To send push notifications when something clears your reach-out bar (iOS only, and only if you allow notifications).</Bullet>
+            <Bullet>To send push notifications when something is worth reaching out about (iOS only, and only if you allow notifications).</Bullet>
             <Bullet>To operate, secure, and improve the service.</Bullet>
           </ul>
           <p style={{ marginTop: 12 }}>
             We do <strong>not</strong> sell your personal information, and we do not use your contacts
-            for advertising or share them with data brokers. Ever.
+            for advertising or share them with data brokers. Ever. Harbored shows no ads and does not
+            track you across other companies' apps or websites.
           </p>
         </Section>
 
         <Section title="AI processing">
-          Harbored uses Anthropic's Claude to score the significance of news and to extract shared
-          themes in Discovery. When these features run, the relevant text (for example, a headline
-          and the theme it relates to, or conversation text you paste) is sent to Anthropic for
-          processing and returned to you. Anthropic does not train its models on this data. We send
-          only what the feature needs — not your full contact list.
+          To refine the themes you add, score how much each news story matters, and draft messages,
+          Harbored sends the relevant contact's name, company, and role, the theme text, the
+          headlines being scored, and your draft text to Anthropic's API (Claude). When you describe
+          someone to find themes, that text is sent too. Anthropic does not use this data to train
+          its models. Harbored sends only what each request needs and never
+          sends your whole address book; your contacts' email addresses, phone numbers, and
+          birthdays, and your notes, are not sent to Anthropic.
         </Section>
 
         <Section title="Who we share it with">
           We share data only with the service providers that make Harbored work, and only as needed:
           <ul style={{ paddingLeft: 20, margin: '10px 0 0' }}>
-            <Bullet><strong>Supabase</strong> — database and authentication (stores your account, contacts, themes, and results).</Bullet>
-            <Bullet><strong>Anthropic (Claude)</strong> — significance scoring and Discovery, as described above.</Bullet>
+            <Bullet><strong>Supabase</strong> — database and authentication (stores your account, contacts, themes, message history, and results).</Bullet>
+            <Bullet><strong>Anthropic (Claude)</strong> — theme suggestions and refinement, news scoring, and message drafts, as described above.</Bullet>
             <Bullet><strong>Google News</strong> — the public news source we query for theme developments.</Bullet>
             <Bullet><strong>Resend</strong> — delivery of digest and notification emails.</Bullet>
             <Bullet><strong>Apple Push Notification service</strong> — delivery of iOS push notifications (a device token is stored to reach your device).</Bullet>
@@ -107,17 +114,19 @@ export default function Privacy() {
 
         <Section title="Sending messages">
           When you send outreach from Harbored, we open your own email or messaging app with a draft
-          prefilled. The message goes through your app and your account — the content of what you
-          send is not routed through or stored by our servers. Harbored records that a touch
-          happened (who and when) so it can track relationship health, not what you said.
+          prefilled. The message is sent by you, through your app and your account; Harbored never
+          sends anything on your behalf. When you tap to send, Harbored saves a record to your own
+          account history (the text of that draft, who it was for, and when) so the app can show
+          when you last reached out. Removing a person removes their history, and deleting your
+          account deletes all of it.
         </Section>
 
         <Section title="Data retention and your controls">
           <ul style={{ paddingLeft: 20, margin: '4px 0 0' }}>
             <Bullet>You can remove any contact, theme, or note at any time from within the app.</Bullet>
-            <Bullet>Settings includes controls to clear your data.</Bullet>
-            <Bullet>You can ask us to delete your account and all associated data by emailing{' '}
-              <a href={`mailto:${CONTACT_EMAIL}`} style={{ color: TEAL, fontWeight: 500 }}>{CONTACT_EMAIL}</a>. We'll action it promptly.</Bullet>
+            <Bullet>You can delete your account and all of its data (your people, themes, notes, and message history) at any time in the app, under You → Delete account. Deletion is permanent.</Bullet>
+            <Bullet>You can also ask us to delete your account and all associated data by emailing{' '}
+              <a href={`mailto:${CONTACT_EMAIL}`} style={LINK}>{CONTACT_EMAIL}</a>. We'll action it promptly.</Bullet>
             <Bullet>Depending on where you live, you may have rights to access, correct, export, or delete your personal information. Email us and we'll help.</Bullet>
           </ul>
         </Section>
@@ -140,7 +149,7 @@ export default function Privacy() {
 
         <Section title="Contact">
           Questions, requests, or concerns:{' '}
-          <a href={`mailto:${CONTACT_EMAIL}`} style={{ color: TEAL, fontWeight: 500 }}>{CONTACT_EMAIL}</a>.
+          <a href={`mailto:${CONTACT_EMAIL}`} style={LINK}>{CONTACT_EMAIL}</a>.
         </Section>
       </main>
     </div>

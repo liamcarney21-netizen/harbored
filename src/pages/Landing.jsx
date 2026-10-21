@@ -1,19 +1,21 @@
 import { useRef, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDemoStore } from '../store/demoStore';
+import { useAuthStore } from '../store/authStore';
 import { apiUrl } from '../lib/apiBase';
 import AnchorMark from '../components/AnchorMark';
+
+// Harbored is live on the App Store (iPhone, free). Every "get it" CTA points here.
+// rel="noopener" only (no noreferrer) so App Store Connect can still credit the site
+// as a web referrer.
+const APP_STORE_URL = 'https://apps.apple.com/us/app/harbored/id6812816966';
 
 /* ─── Animation helpers ─────────────────────────────────── */
 const ease = [0.22, 1, 0.36, 1];
 const fadeUp = {
   hidden:  { opacity: 0, y: 32 },
   visible: (delay = 0) => ({ opacity: 1, y: 0, transition: { duration: 0.72, ease, delay } }),
-};
-const stagger = {
-  hidden:  {},
-  visible: { transition: { staggerChildren: 0.11 } },
 };
 
 // Scroll-position visibility check instead of IntersectionObserver — IO is
@@ -54,15 +56,6 @@ function Reveal({ children, delay = 0, style = {}, as = 'div' }) {
   );
 }
 
-function RevealGroup({ children, style = {} }) {
-  const [ref, visible] = useRevealed(56);
-  return (
-    <motion.div ref={ref} variants={stagger} initial="hidden" animate={visible ? 'visible' : 'hidden'} style={style}>
-      {children}
-    </motion.div>
-  );
-}
-
 /* ─── Design tokens: Editorial Harbor ───────────────────── */
 const C = {
   navy:      '#0a1628',
@@ -79,7 +72,7 @@ const C = {
   faint:     '#9ca3af',
 };
 
-const SERIF = '"Fraunces", Georgia, serif';
+const SERIF = '"Fraunces Variable", "Fraunces", "Lora", Georgia, serif';
 const SANS = 'Inter, sans-serif';
 
 function Label({ children, light = false }) {
@@ -96,6 +89,42 @@ function Label({ children, light = false }) {
     }}>
       {children}
     </div>
+  );
+}
+
+/* ─── App Store button ──────────────────────────────────── */
+// Built in JSX rather than hotlinking Apple's badge artwork: a black rounded
+// button with the light hairline Apple's own badge carries on dark grounds.
+function AppleMark({ size = 22 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ flexShrink: 0, marginTop: -3 }}>
+      <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701" />
+    </svg>
+  );
+}
+
+function AppStoreButton() {
+  return (
+    <a
+      href={APP_STORE_URL} target="_blank" rel="noopener"
+      aria-label="Download Harbored on the App Store"
+      className="appstore-btn"
+      style={{
+        display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+        minHeight: 52, padding: '8px 22px 8px 18px', boxSizing: 'border-box',
+        background: '#000', color: '#fff', textDecoration: 'none',
+        border: '1px solid #A6A6A6', borderRadius: 10,
+        transition: 'background 0.18s ease',
+      }}
+      onMouseEnter={e => e.currentTarget.style.background = '#1c1c1e'}
+      onMouseLeave={e => e.currentTarget.style.background = '#000'}
+    >
+      <AppleMark size={24} />
+      <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', textAlign: 'left', fontFamily: SANS, lineHeight: 1.05, whiteSpace: 'nowrap' }}>
+        <span style={{ fontSize: 11, fontWeight: 500, letterSpacing: '0.01em' }}>Download on the</span>
+        <span style={{ fontSize: 21, fontWeight: 600, letterSpacing: '-0.015em', marginTop: 1 }}>App Store</span>
+      </span>
+    </a>
   );
 }
 
@@ -238,11 +267,18 @@ function CrewMock() {
   );
 }
 
-/* ─── Waitlist Modal ────────────────────────────────────── */
-function WaitlistModal({ isOpen, onClose, plan }) {
+/* ─── Email updates modal ───────────────────────────────── */
+// For visitors who'd rather hear by email than download today. Still posts to
+// /api/waitlist: the endpoint name predates launch, the payload is unchanged.
+function UpdatesModal({ isOpen, onClose, plan }) {
   const [firstName, setFirstName] = useState('');
   const [email, setEmail]         = useState('');
   const [submitted, setSubmitted] = useState(false);
+
+  const handleClose = () => {
+    onClose();
+    setTimeout(() => { setSubmitted(false); setFirstName(''); setEmail(''); }, 280);
+  };
 
   useEffect(() => {
     if (!isOpen) return;
@@ -264,11 +300,6 @@ function WaitlistModal({ isOpen, onClose, plan }) {
     existing.push({ firstName, email, plan: plan || null, ts: new Date().toISOString() });
     localStorage.setItem('harbored_waitlist', JSON.stringify(existing));
     setSubmitted(true);
-  };
-
-  const handleClose = () => {
-    onClose();
-    setTimeout(() => { setSubmitted(false); setFirstName(''); setEmail(''); }, 280);
   };
 
   const inputStyle = {
@@ -331,10 +362,10 @@ function WaitlistModal({ isOpen, onClose, plan }) {
               {!submitted ? (
                 <motion.div key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }}>
                   <h2 style={{ fontFamily: SERIF, fontSize: 'clamp(22px, 4vw, 28px)', fontWeight: 600, color: C.cream, lineHeight: 1.2, marginBottom: 10 }}>
-                    Be the first to know.
+                    Get updates from Harbored
                   </h2>
                   <p style={{ fontFamily: SANS, fontWeight: 300, fontSize: 14, color: 'rgba(250,248,243,0.48)', lineHeight: 1.65, marginBottom: 28 }}>
-                    Harbored is coming soon. Drop your info and we'll reach out when it's ready{plan === 'pro' ? " — we'll flag you as interested in Pro." : '.'}
+                    Leave your email and we'll write when there's something worth sharing. Nothing more.
                   </p>
                   <form onSubmit={handleSubmit}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 14 }}>
@@ -346,18 +377,18 @@ function WaitlistModal({ isOpen, onClose, plan }) {
                         onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'} />
                     </div>
                     <button type="submit" style={{
-                      width: '100%', padding: '14px', background: C.teal, color: '#fff',
+                      width: '100%', padding: '14px', background: C.brassPale, color: C.navy,
                       fontFamily: SANS, fontWeight: 700, fontSize: 14,
                       border: 'none', borderRadius: 8, cursor: 'pointer',
                       boxShadow: '0 4px 20px rgba(10,22,40,0.4)', transition: 'background 0.18s',
                     }}
-                    onMouseEnter={e => e.currentTarget.style.background = '#1a3558'}
-                    onMouseLeave={e => e.currentTarget.style.background = C.teal}>
-                      Join the Waitlist
+                    onMouseEnter={e => e.currentTarget.style.background = '#C29245'}
+                    onMouseLeave={e => e.currentTarget.style.background = C.brassPale}>
+                      Get updates
                     </button>
                   </form>
-                  <p style={{ fontFamily: SANS, fontSize: 11, color: 'rgba(250,248,243,0.2)', textAlign: 'center', marginTop: 14 }}>
-                    No spam. We'll only reach out when Harbored is ready.
+                  <p style={{ fontFamily: SANS, fontSize: 11, color: 'rgba(250,248,243,0.35)', textAlign: 'center', marginTop: 14 }}>
+                    No spam. Just the occasional update.
                   </p>
                 </motion.div>
               ) : (
@@ -369,10 +400,10 @@ function WaitlistModal({ isOpen, onClose, plan }) {
                     </svg>
                   </div>
                   <h3 style={{ fontFamily: SERIF, fontSize: 'clamp(20px, 3.5vw, 26px)', fontWeight: 600, color: C.cream, marginBottom: 10 }}>
-                    You're on the list.
+                    You're signed up.
                   </h3>
                   <p style={{ fontFamily: SANS, fontWeight: 300, fontSize: 14, color: 'rgba(250,248,243,0.48)', lineHeight: 1.65 }}>
-                    We'll reach out when Harbored is ready.
+                    We'll write when there's something worth sharing.
                   </p>
                 </motion.div>
               )}
@@ -385,7 +416,16 @@ function WaitlistModal({ isOpen, onClose, plan }) {
 }
 
 /* ─── Top nav ─────────────────────────────────────────────── */
-function Nav({ scrolled, openModal }) {
+function Nav({ scrolled, signedIn }) {
+  // Signed-in visitors get a way back into their account; everyone else gets the App Store.
+  const ctaStyle = {
+    display: 'inline-block', padding: '9px 18px', background: 'rgba(211,169,92,0.08)', color: C.cream,
+    fontFamily: SANS, fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap', flexShrink: 0,
+    border: '1px solid rgba(211,169,92,0.55)', borderRadius: 8, textDecoration: 'none',
+    transition: 'background 0.18s, border-color 0.18s',
+  };
+  const ctaOn = e => { e.currentTarget.style.background = 'rgba(211,169,92,0.18)'; e.currentTarget.style.borderColor = C.brassPale; };
+  const ctaOff = e => { e.currentTarget.style.background = 'rgba(211,169,92,0.08)'; e.currentTarget.style.borderColor = 'rgba(211,169,92,0.55)'; };
   return (
     <header style={{
       position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, boxSizing: 'border-box',
@@ -401,21 +441,18 @@ function Nav({ scrolled, openModal }) {
         <span style={{ fontFamily: SERIF, fontSize: 21, fontWeight: 600, color: C.cream }}>Harbored</span>
       </a>
       <nav style={{ display: 'flex', alignItems: 'center', gap: 26 }}>
-        {[['Today', '#today'], ['Just talk', '#talk'], ['Your crew', '#crew'], ['Pricing', '#pricing']].map(([label, href]) => (
+        {[['Today', '#today'], ['Just talk', '#talk'], ['Your crew', '#crew']].map(([label, href]) => (
           <a key={label} href={href} className="nav-link"
             style={{ fontFamily: SANS, fontSize: 13, fontWeight: 500, color: 'rgba(250,248,243,0.62)', textDecoration: 'none', transition: 'color 0.18s', display: 'none' }}
             onMouseEnter={e => e.currentTarget.style.color = C.cream}
             onMouseLeave={e => e.currentTarget.style.color = 'rgba(250,248,243,0.62)'}
           >{label}</a>
         ))}
-        <button onClick={() => openModal()} style={{
-          padding: '9px 20px', background: C.teal, color: '#fff',
-          fontFamily: SANS, fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap', flexShrink: 0,
-          border: 'none', borderRadius: 8, cursor: 'pointer', transition: 'background 0.18s',
-        }}
-        onMouseEnter={e => e.currentTarget.style.background = '#1a3558'}
-        onMouseLeave={e => e.currentTarget.style.background = C.teal}
-        >Get Early Access</button>
+        {signedIn ? (
+          <Link to="/dashboard" style={ctaStyle} onMouseEnter={ctaOn} onMouseLeave={ctaOff}>Open Harbored</Link>
+        ) : (
+          <a href={APP_STORE_URL} target="_blank" rel="noopener" style={ctaStyle} onMouseEnter={ctaOn} onMouseLeave={ctaOff}>Get the app</a>
+        )}
       </nav>
     </header>
   );
@@ -426,7 +463,6 @@ const SUBNAV = [
   ['Today', '#today'],
   ['Just talk', '#talk'],
   ['Your crew', '#crew'],
-  ['Pricing', '#pricing'],
 ];
 
 function SubNav() {
@@ -512,10 +548,11 @@ function FeatureSection({ id, kicker, title, em, body, points = [], flip = false
 export default function Landing() {
   const [scrolled, setScrolled] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalPlan, setModalPlan] = useState(null);
-  const openModal = (plan = null) => { setModalPlan(plan); setIsModalOpen(true); };
+  const openModal = () => setIsModalOpen(true);
   const navigate = useNavigate();
+  const user = useAuthStore(s => s.user);
   const enterDemo = useDemoStore(s => s.enter);
+  // enter() is a no-op for a signed-in user, so "See it live" then just opens their own Harbored.
   const startDemo = () => { enterDemo(); navigate('/dashboard'); };
 
   // Exiting the demo navigates here; clear demo state now that AppLayout (and
@@ -536,7 +573,7 @@ export default function Landing() {
   // native check or a login link here.
   return (
     <div style={{ background: C.cream, color: C.ink }}>
-      <Nav scrolled={scrolled} openModal={openModal} />
+      <Nav scrolled={scrolled} signedIn={!!user} />
 
       {/* ══════════════════ HERO — compact, product-forward ══════════════════ */}
       <section style={{
@@ -560,7 +597,7 @@ export default function Landing() {
               textTransform: 'uppercase', color: C.brassPale, marginBottom: 24,
               animation: 'fadeUp 0.7s 0.05s ease both',
             }}>
-              Harbored — private early access
+              Now on the App Store
             </div>
             <h1 style={{
               fontFamily: SERIF, fontWeight: 600,
@@ -579,19 +616,10 @@ export default function Landing() {
               the clock and flags the moment there's a real reason to reach out &mdash;
               message drafted.
             </p>
-            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 18, animation: 'fadeUp 0.85s 0.4s ease both' }}>
-              <button onClick={() => openModal()} style={{
-                padding: '14px 34px', background: C.brassPale, color: C.navy,
-                fontFamily: SANS, fontWeight: 700, fontSize: 14.5,
-                border: 'none', borderRadius: 8, cursor: 'pointer',
-                transition: 'background 0.18s ease',
-              }}
-              onMouseEnter={e => e.currentTarget.style.background = '#C29245'}
-              onMouseLeave={e => e.currentTarget.style.background = C.brassPale}>
-                Get Early Access
-              </button>
+            <div className="hero-ctas" style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 18, animation: 'fadeUp 0.85s 0.4s ease both' }}>
+              <AppStoreButton />
               <button onClick={startDemo} style={{
-                display: 'inline-flex', alignItems: 'center', gap: 9, padding: '13px 28px',
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 9, padding: '13px 28px',
                 color: C.cream, fontFamily: SANS, fontWeight: 500, fontSize: 14.5,
                 background: 'rgba(169,126,47,0.14)', cursor: 'pointer',
                 border: `1px solid ${C.brassPale}`, borderRadius: 8,
@@ -603,8 +631,8 @@ export default function Landing() {
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'transform 0.18s ease' }}><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
               </button>
             </div>
-            <p style={{ fontFamily: SANS, fontWeight: 300, fontSize: 12, color: 'rgba(250,248,243,0.28)', animation: 'fadeUp 0.85s 0.5s ease both' }}>
-              In private early access — request an invite below.
+            <p style={{ fontFamily: SANS, fontWeight: 300, fontSize: 12.5, color: 'rgba(250,248,243,0.45)', animation: 'fadeUp 0.85s 0.5s ease both' }}>
+              Free for iPhone.
             </p>
           </div>
 
@@ -627,7 +655,7 @@ export default function Landing() {
         body="Tell Harbored what you share with each person — their company, a team, a city, a market. It watches those themes around the clock, and when something genuinely matters, it becomes a reason: the headline, the person, and the message already drafted. No feed, no metrics, no noise."
         points={[
           'Themes across companies, teams, places, markets, and hobbies',
-          'Only what clears the bar reaches you — the rest stays quiet',
+          'Only what genuinely matters reaches you — the rest stays quiet',
           'Every reason arrives with a draft, sent from your own Mail or Messages',
         ]}
         cta="See it live — no signup"
@@ -708,97 +736,36 @@ export default function Landing() {
         </Reveal>
       </section>
 
-      {/* ══════════════════ PRICING ══════════════════ */}
-      <section id="pricing" style={{ padding: 'clamp(64px, 9vw, 120px) clamp(20px, 6vw, 80px)', background: C.sand, borderTop: '1px solid #E5DFCF', scrollMarginTop: 124 }}>
-        <div style={{ maxWidth: 880, margin: '0 auto' }}>
-          <Reveal style={{ marginBottom: 'clamp(36px, 5vw, 56px)' }}>
-            <Label>Pricing</Label>
-            <h2 style={{ fontFamily: SERIF, fontSize: 'clamp(28px, 3.6vw, 44px)', fontWeight: 600, letterSpacing: '-0.02em', lineHeight: 1.12, marginBottom: 12 }}>
-              Simple, honest pricing.
-            </h2>
-            <p style={{ fontFamily: SANS, fontWeight: 300, fontSize: 15.5, color: '#4a5a60' }}>Here's what launch pricing looks like — join the waitlist to lock it in.</p>
-          </Reveal>
-
-          <RevealGroup style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20 }}>
-            <motion.div variants={fadeUp} custom={0}>
-              <div style={{ background: '#fff', border: '1px solid #E0DBCE', borderRadius: 16, padding: 'clamp(28px, 4vw, 40px)', height: '100%', display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }}>
-                <div style={{ marginBottom: 22 }}>
-                  <div style={{ fontFamily: SANS, fontSize: 11, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: C.muted, marginBottom: 10 }}>Free</div>
-                  <div style={{ fontFamily: SERIF, fontSize: 44, fontWeight: 600, color: C.ink, lineHeight: 1 }}>$0<span style={{ fontFamily: SANS, fontWeight: 300, fontSize: 16, color: C.faint }}>/mo</span></div>
-                  <p style={{ fontFamily: SANS, fontWeight: 300, fontSize: 13, color: C.muted, marginTop: 10, lineHeight: 1.5 }}>Keep your inner five close — and see what Harbored can do.</p>
-                </div>
-                <div style={{ borderTop: '1px solid #EBE7DC', paddingTop: 22, flex: 1 }}>
-                  {['A crew of up to 5 people', '2 shared themes per person', 'Drift and birthday reasons', 'Drafts sent from your own apps'].map(f => (
-                    <div key={f} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 12 }}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2E7D5B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}><polyline points="20 6 9 17 4 12"/></svg>
-                      <span style={{ fontFamily: SANS, fontSize: 14, color: '#37444a' }}>{f}</span>
-                    </div>
-                  ))}
-                </div>
-                <button onClick={() => openModal('free')} style={{
-                  display: 'block', marginTop: 26, padding: '13px', textAlign: 'center',
-                  background: 'transparent', border: `1px solid ${C.ink}`, borderRadius: 8,
-                  fontFamily: SANS, fontWeight: 600, fontSize: 14, color: C.ink, cursor: 'pointer', transition: 'background 0.18s, color 0.18s',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.background = C.ink; e.currentTarget.style.color = C.cream; }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = C.ink; }}>
-                  Join Waitlist — Free
-                </button>
-              </div>
-            </motion.div>
-
-            <motion.div variants={fadeUp} custom={0.1}>
-              <div style={{ background: C.navy, border: `2px solid ${C.brass}`, borderRadius: 16, padding: 'clamp(28px, 4vw, 40px)', height: '100%', display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden', boxSizing: 'border-box' }}>
-                <div style={{ position: 'absolute', top: 22, right: 22, padding: '4px 12px', background: `linear-gradient(135deg, ${C.brass}, ${C.brassPale})`, borderRadius: 20, fontFamily: SANS, fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.navy }}>Most Popular</div>
-                <div style={{ marginBottom: 22 }}>
-                  <div style={{ fontFamily: SANS, fontSize: 11, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: C.brassPale, marginBottom: 10 }}>Harbored Pro</div>
-                  <div style={{ fontFamily: SERIF, fontSize: 44, fontWeight: 600, color: C.cream, lineHeight: 1 }}>$9<span style={{ fontFamily: SANS, fontWeight: 300, fontSize: 16, color: 'rgba(250,248,243,0.45)' }}>/mo</span></div>
-                  <p style={{ fontFamily: SANS, fontWeight: 300, fontSize: 13, color: 'rgba(250,248,243,0.5)', marginTop: 10, lineHeight: 1.5 }}>For professionals who want their relationships to keep up with their careers.</p>
-                </div>
-                <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 22, flex: 1 }}>
-                  {['Unlimited crew and themes', 'Just talk — voice-mapped themes', 'A drafted message with every reason', 'Push the moment something clears the bar'].map(f => (
-                    <div key={f} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 12 }}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.brassPale} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}><polyline points="20 6 9 17 4 12"/></svg>
-                      <span style={{ fontFamily: SANS, fontSize: 14, color: 'rgba(250,248,243,0.78)' }}>{f}</span>
-                    </div>
-                  ))}
-                </div>
-                <button onClick={() => openModal('pro')} style={{
-                  display: 'block', marginTop: 26, padding: '14px', textAlign: 'center',
-                  background: C.teal, borderRadius: 8, fontFamily: SANS, fontWeight: 700, fontSize: 14,
-                  color: '#fff', border: 'none', cursor: 'pointer', boxShadow: '0 4px 20px rgba(10,22,40,0.4)', transition: 'background 0.18s',
-                }}
-                onMouseEnter={e => e.currentTarget.style.background = '#1a3558'}
-                onMouseLeave={e => e.currentTarget.style.background = C.teal}>
-                  Join Waitlist — Pro
-                </button>
-              </div>
-            </motion.div>
-          </RevealGroup>
-        </div>
-      </section>
-
       {/* ══════════════════ CTA ══════════════════ */}
       <section style={{ padding: 'clamp(80px, 12vw, 140px) clamp(20px, 6vw, 80px)', background: C.navy, textAlign: 'center' }}>
         <Reveal>
           <h2 style={{ fontFamily: SERIF, fontSize: 'clamp(34px, 5.5vw, 68px)', fontWeight: 600, lineHeight: 1.08, letterSpacing: '-0.02em', color: C.cream, maxWidth: 640, margin: '0 auto 18px' }}>
             Always in your corner.
           </h2>
-          <p style={{ fontFamily: SANS, fontWeight: 300, fontSize: 'clamp(15px, 1.7vw, 18px)', color: 'rgba(250,248,243,0.48)', maxWidth: 380, margin: '0 auto 44px', lineHeight: 1.65 }}>
-            Join the waitlist. Be the first to show up when it counts.
+          <p style={{ fontFamily: SANS, fontWeight: 300, fontSize: 'clamp(15px, 1.7vw, 18px)', color: 'rgba(250,248,243,0.6)', maxWidth: 420, margin: '0 auto 40px', lineHeight: 1.65 }}>
+            Harbored is free on the App Store. Download it and be the first to show up when it counts.
           </p>
-          <button onClick={() => openModal()} style={{
-            padding: '16px 44px', background: C.brassPale, color: C.navy,
-            fontFamily: SANS, fontWeight: 700, fontSize: 15,
-            border: 'none', borderRadius: 8, cursor: 'pointer',
-            boxShadow: '0 6px 28px rgba(211,169,92,0.3)', transition: 'transform 0.18s ease, background 0.18s',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.background = '#C29245'; }}
-          onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.background = C.brassPale; }}>
-            Join the Waitlist
-          </button>
-          <p style={{ fontFamily: SANS, fontSize: 12, color: 'rgba(250,248,243,0.24)', marginTop: 18 }}>
-            No credit card. No spam. We'll email you when it's ready.
+          <div className="cta-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 22, flexWrap: 'wrap' }}>
+            <AppStoreButton />
+            <button onClick={startDemo} style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 4px',
+              background: 'none', border: 'none', cursor: 'pointer',
+              fontFamily: SANS, fontSize: 15, fontWeight: 500, color: 'rgba(250,248,243,0.8)',
+              transition: 'color 0.18s ease',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.color = C.cream; e.currentTarget.style.textDecoration = 'underline'; }}
+            onMouseLeave={e => { e.currentTarget.style.color = 'rgba(250,248,243,0.8)'; e.currentTarget.style.textDecoration = 'none'; }}>
+              or see it live
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </button>
+          </div>
+          <p style={{ fontFamily: SANS, fontSize: 13, fontWeight: 300, color: 'rgba(250,248,243,0.42)', marginTop: 36 }}>
+            Prefer email?{' '}
+            <button onClick={openModal} style={{
+              background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+              fontFamily: SANS, fontSize: 13, fontWeight: 500, color: 'rgba(250,248,243,0.7)',
+              textDecoration: 'underline', textDecorationColor: 'rgba(211,169,92,0.55)', textUnderlineOffset: 3,
+            }}>Get updates</button>
           </p>
         </Reveal>
       </section>
@@ -813,15 +780,16 @@ export default function Landing() {
             </div>
             <div style={{ display: 'flex', gap: 'clamp(28px, 5vw, 72px)', flexWrap: 'wrap' }}>
               {[
-                { heading: 'Platform', links: [['Today', '#today'], ['Just talk', '#talk'], ['Your crew', '#crew']] },
-                { heading: 'Company', links: [['Pricing', '#pricing'], ['Support', '/support']] },
-                { heading: 'Legal',   links: [['Privacy', '/privacy'], ['Terms', '#']] },
+                { heading: 'Platform', links: [['Today', '#today'], ['Just talk', '#talk'], ['Your crew', '#crew'], ['App Store', APP_STORE_URL]] },
+                { heading: 'Company', links: [['Support', '/support']] },
+                { heading: 'Legal',   links: [['Privacy', '/privacy'], ['Terms', '/terms']] },
               ].map(({ heading, links }) => (
                 <div key={heading}>
                   <div style={{ fontFamily: SANS, fontSize: 10, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(250,248,243,0.22)', marginBottom: 16 }}>{heading}</div>
                   {links.map(([l, href]) => (
                     <div key={l} style={{ marginBottom: 10 }}>
-                      <a href={href} style={{ fontFamily: SANS, fontSize: 13, fontWeight: 300, color: 'rgba(250,248,243,0.4)', textDecoration: 'none', transition: 'color 0.18s' }}
+                      <a href={href} {...(href.startsWith('http') ? { target: '_blank', rel: 'noopener' } : {})}
+                        style={{ fontFamily: SANS, fontSize: 13, fontWeight: 300, color: 'rgba(250,248,243,0.4)', textDecoration: 'none', transition: 'color 0.18s' }}
                         onMouseEnter={e => e.currentTarget.style.color = 'rgba(250,248,243,0.8)'}
                         onMouseLeave={e => e.currentTarget.style.color = 'rgba(250,248,243,0.4)'}
                       >{l}</a>
@@ -832,13 +800,13 @@ export default function Landing() {
             </div>
           </div>
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 22, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
-            <span style={{ fontFamily: SANS, fontSize: 12, fontWeight: 300 }}>© 2026 Harbored, Inc. All rights reserved.</span>
+            <span style={{ fontFamily: SANS, fontSize: 12, fontWeight: 300 }}>© 2026 Harbored</span>
             <span style={{ fontFamily: SANS, fontSize: 12, fontWeight: 300, color: 'rgba(250,248,243,0.25)' }}>Built on common ground.</span>
           </div>
         </div>
       </footer>
 
-      <WaitlistModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} plan={modalPlan} />
+      <UpdatesModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
 
       <style>{`
         @media (min-width: 880px) { .nav-link, .nav-login { display: inline !important; } }
@@ -847,6 +815,11 @@ export default function Landing() {
         .platform-subnav-scroll { scrollbar-width: none; }
         ::placeholder { color: rgba(250,248,243,0.28); }
         html { scroll-behavior: smooth; }
+        .appstore-btn:focus-visible { outline: 2px solid ${C.brassPale}; outline-offset: 3px; }
+        @media (max-width: 480px) {
+          .hero-ctas > * { flex: 1 1 100%; }
+          .cta-row { flex-direction: column; }
+        }
       `}</style>
     </div>
   );

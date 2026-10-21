@@ -1,8 +1,6 @@
 import { NavLink } from 'react-router-dom'
 
-// Mobile primary navigation — three tabs, "Alter × Claude" style: blush paper,
-// mono caps labels, vermilion for the active tab only. Digest folds into Today;
-// Settings becomes "You".
+// Primary navigation — three tabs: Today, Crew, You.
 const TABS = [
   { path: '/dashboard',          label: 'Today',  end: true,
     icon: (
@@ -26,7 +24,7 @@ const TABS = [
 ]
 
 const ACCENT = '#D3A95C'
-const MUTED = '#6E7C92'
+const MUTED = '#8C9AAD'
 
 export default function BottomTabBar() {
   return (

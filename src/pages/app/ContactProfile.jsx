@@ -1,17 +1,19 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import { ChevronLeft, Mail, Phone, Send, Check, Plus, X, MessageCircle, Compass, StickyNote, Sparkles, Calendar } from 'lucide-react'
+import { ChevronLeft, Mail, Phone, X, Check, Pencil } from 'lucide-react'
 import WarmAvatar from '../../components/WarmAvatar'
-import DiscoverThemesModal from '../../components/DiscoverThemesModal'
-import { useDataStore, healthFromLastTouch } from '../../store/dataStore'
-import { refineTheme } from '../../services/themes'
-import { openSend } from '../../services/outreach'
-
-const CATEGORIES = ['sports', 'place', 'market', 'hobby', 'industry']
-const categoryColors = {
-  sports: '#8FC7A2', place: '#7FB4BB', market: '#D3A95C', hobby: '#B3A1D6', industry: '#D89B77',
-}
+import ThemeAdder from '../../components/ThemeAdder'
+import ThinkingMark from '../../components/ThinkingMark'
+import { useDataStore } from '../../store/dataStore'
+import { openSend, sendChannelFor } from '../../services/outreach'
+import { haptic } from '../../services/haptics'
+import { statusFor } from '../../lib/status'
+import Card, { Eyebrow } from '../../ui/Card'
+import Button from '../../ui/Button'
+import Sheet from '../../ui/Sheet'
+import { Input, Label, TextArea } from '../../ui/Field'
+import { useToast } from '../../ui/toastStore'
+import { T } from '../../ui/tokens'
 
 function fmtDate(iso) {
   return new Date(iso).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })
@@ -23,326 +25,301 @@ export default function ContactProfile() {
   const contacts = useDataStore(s => s.contacts)
   const themesByContact = useDataStore(s => s.themesByContact)
   const allTouches = useDataStore(s => s.touches)
-  const contact = contacts.find(c => String(c.id) === String(id))
-  const themes = themesByContact[Number(id)] || themesByContact[id] || []
-  const touches = allTouches.filter(t => String(t.contactId) === String(id))
-  const addTheme = useDataStore(s => s.addTheme)
-  const updateTheme = useDataStore(s => s.updateTheme)
   const removeTheme = useDataStore(s => s.removeTheme)
+  const restoreTheme = useDataStore(s => s.restoreTheme)
   const recordTouch = useDataStore(s => s.recordTouch)
   const saveNote = useDataStore(s => s.saveNote)
-  const addMeeting = useDataStore(s => s.addMeeting)
-  const meetings = useDataStore(s => s.meetings)
+  const updateContact = useDataStore(s => s.updateContact)
+  const removeContact = useDataStore(s => s.removeContact)
+  const showToast = useToast(s => s.show)
 
+  const contact = contacts.find(c => String(c.id) === String(id))
+  const themes = (contact && (themesByContact[contact.id] || themesByContact[String(contact.id)])) || []
+  const touches = allTouches.filter(t => String(t.contactId) === String(id))
+
+  const [composing, setComposing] = useState(false)
+  const [draft, setDraft] = useState('')
+  const [editing, setEditing] = useState(false)
+  const [confirmRemove, setConfirmRemove] = useState(false)
+
+  // Notes save themselves, a beat after you stop typing.
   const [noteDraft, setNoteDraft] = useState(contact?.notes ?? '')
-  const [noteSaved, setNoteSaved] = useState(false)
-  const [scheduling, setScheduling] = useState(false)
-  const [mtgTitle, setMtgTitle] = useState('Coffee catch-up')
-  const [mtgWhen, setMtgWhen] = useState('')
-  const [adding, setAdding] = useState(false)
-  const [newLabel, setNewLabel] = useState('')
-  const [newCategory, setNewCategory] = useState('sports')
-  const [showDiscover, setShowDiscover] = useState(false)
+  const [noteFor, setNoteFor] = useState(contact?.id)
+  const [noteState, setNoteState] = useState('idle') // idle | saving | saved
+  const noteTimer = useRef(null)
+  if (contact && contact.id !== noteFor) {
+    // A different person: show their notes, not the previous one's.
+    setNoteFor(contact.id)
+    setNoteDraft(contact.notes ?? '')
+  }
+  function onNoteChange(v) {
+    setNoteDraft(v)
+    setNoteState('saving')
+    clearTimeout(noteTimer.current)
+    noteTimer.current = setTimeout(() => {
+      saveNote(contact.id, v)
+      setNoteState('saved')
+      setTimeout(() => setNoteState(s => (s === 'saved' ? 'idle' : s)), 1600)
+    }, 800)
+  }
 
   if (!contact) {
     return (
-      <div style={{ padding: 'clamp(20px, 4vw, 40px)', fontFamily: 'Inter, sans-serif', color: '#8C9AAD' }}>
-        Contact not found. <button onClick={() => navigate('/dashboard/network')} style={{ color: '#D3A95C', background: 'none', border: 'none', cursor: 'pointer', fontSize: 'inherit', fontFamily: 'inherit' }}>Back to your crew</button>
+      <div style={{ padding: `24px ${T.gutter}px`, color: T.muted, fontSize: 14 }}>
+        That person isn't in your crew anymore.{' '}
+        <button onClick={() => navigate('/dashboard/network')} style={{ color: T.accent, background: 'none', border: 'none', cursor: 'pointer', fontSize: 'inherit', fontFamily: 'inherit', padding: 0 }}>
+          Back to your crew
+        </button>
       </div>
     )
   }
 
-  const health = healthFromLastTouch(contact.lastTouch)
-  // The store's health colors are tuned for the light landing palette —
-  // remap them for the dark app theme.
-  const healthColor = { strong: '#8FC7A2', cooling: '#D3A95C', 'at-risk': '#E8867A' }[health.key] || '#8C9AAD'
   const first = contact.name.split(' ')[0]
+  const status = statusFor(contact)
+  const subtitle = [contact.role, contact.company].filter(Boolean).join(' · ')
+  const channel = sendChannelFor(contact)
 
-  function handleReachOut() {
-    const msg = `${first} — it's been a while! No agenda, just thinking about you. How's everything at ${contact.company}?`
-    const channel = openSend(contact, msg, 'Checking in')
-    recordTouch(contact.id, { channel: channel || 'email', message: msg, trigger: 'Manual reach-out from profile' })
+  function startComposing() {
+    const tail = contact.company ? `How's everything at ${contact.company}?` : "How's everything going?"
+    setDraft(`${first} — it's been a while! No agenda, just thinking about you. ${tail}`)
+    setComposing(true)
   }
 
-  function handleSaveNote() {
-    saveNote(contact.id, noteDraft)
-    setNoteSaved(true)
-    setTimeout(() => setNoteSaved(false), 1800)
+  function handleSend() {
+    const ch = openSend(contact, draft, 'Checking in')
+    if (!ch) return
+    recordTouch(contact.id, { channel: ch, message: draft, trigger: 'Reached out from their profile' })
+    haptic.success()
+    setComposing(false)
   }
 
-  function confirmAdd() {
-    const label = newLabel.trim()
-    if (!label) return
-    // Same refinement the quiz runs, so a theme added here watches a precise
-    // query instead of the raw label. Saved now, patched when the refine lands.
-    const saved = addTheme(contact.id, label, newCategory)
-    refineTheme(label, contact).then(r => { if (r) updateTheme(contact.id, saved.id, r.refinement) })
-    setNewLabel('')
-    setAdding(false)
+  function handleRemoveTheme(t, index) {
+    removeTheme(contact.id, t.id)
+    haptic.soft()
+    showToast(`Stopped watching ${t.label}`, { action: 'Undo', onAction: () => restoreTheme(contact.id, t, index) })
   }
 
-  const card = { borderRadius: '12px', padding: '24px', background: '#0f2040', border: '1px solid rgba(255,255,255,0.08)' }
-  const sectionTitle = { fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600, color: '#8C9AAD', marginBottom: '14px' }
+  function handleRemoveContact() {
+    removeContact(contact.id)
+    setConfirmRemove(false)
+    navigate('/dashboard/network', { replace: true })
+  }
 
   return (
-    <motion.div
-      style={{ minHeight: '100%', padding: 'clamp(20px, 4vw, 40px)', fontFamily: 'Inter, sans-serif', maxWidth: '1000px', width: '100%', margin: '0 auto' }}
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}
-    >
+    <div style={{ width: '100%', padding: `14px ${T.gutter}px 40px` }}>
       <button
+        className="hb-press"
         onClick={() => navigate(-1)}
-        style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#8C9AAD', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif', marginBottom: '20px', padding: 0 }}
+        style={{ display: 'flex', alignItems: 'center', gap: 4, minHeight: 44, marginLeft: -6, background: 'none', border: 'none', cursor: 'pointer', padding: '0 6px', fontSize: 13, color: T.muted, fontFamily: 'inherit' }}
       >
-        <ChevronLeft style={{ width: '15px', height: '15px' }} /> Back
+        <ChevronLeft style={{ width: 16, height: 16 }} /> Your crew
       </button>
 
-      {/* Header card */}
-      <div style={{ ...card, marginBottom: '20px' }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '20px', flexWrap: 'wrap' }}>
-          <WarmAvatar initials={contact.initials} size="xl" />
-          <div style={{ flex: 1, minWidth: '220px' }}>
-            <h1 style={{ fontFamily: '"Lora", Georgia, serif', fontSize: '24px', fontWeight: 600, color: '#F5F4EF', marginBottom: '2px' }}>{contact.name}</h1>
-            <p style={{ fontSize: '13px', color: '#8C9AAD', marginBottom: '10px' }}>{contact.role} · {contact.company}</p>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-              {contact.email && (
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: '#8C9AAD' }}>
-                  <Mail style={{ width: '12px', height: '12px' }} /> {contact.email}
-                </span>
-              )}
-              {contact.phone && (
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: '#8C9AAD' }}>
-                  <Phone style={{ width: '12px', height: '12px' }} /> {contact.phone}
-                </span>
-              )}
-            </div>
-          </div>
-          <div style={{ display: 'flex', gap: '10px', flexShrink: 0, flexWrap: 'wrap' }}>
-            <button
-              onClick={handleReachOut}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '8px',
-                padding: '10px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
-                background: '#D3A95C', color: '#0a1628', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
-              }}
-            >
-              <Send style={{ width: '13px', height: '13px' }} /> Reach out now
-            </button>
-            <button
-              onClick={() => setScheduling(v => !v)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '8px',
-                padding: '10px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 500,
-                background: 'none', color: '#C2CBD8', border: '1px solid rgba(255,255,255,0.2)', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
-              }}
-            >
-              <Calendar style={{ width: '13px', height: '13px' }} /> Schedule catch-up
-            </button>
+      {/* Who */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 10 }}>
+        <WarmAvatar initials={contact.initials} size="xl" />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <h1 className="hb-display" style={{ fontSize: 26, fontWeight: 500, color: T.ink, lineHeight: 1.15, margin: 0 }}>{contact.name}</h1>
+          {subtitle && <div style={{ fontSize: 13, color: T.muted, marginTop: 4 }}>{subtitle}</div>}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, fontSize: 13, fontWeight: status.hot ? 600 : 400, color: status.hot ? T.accent : T.muted }}>
+            {status.hot && <span style={{ width: 6, height: 6, borderRadius: '50%', background: T.accent }} />}
+            {status.text}
           </div>
         </div>
-
-        {/* Schedule mini-form */}
-        {scheduling && (
-          <div style={{ marginTop: '16px', display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center', padding: '14px 16px', borderRadius: '10px', background: 'rgba(211,169,92,0.04)', border: '1px solid rgba(211,169,92,0.2)' }}>
-            <input
-              value={mtgTitle}
-              onChange={e => setMtgTitle(e.target.value)}
-              aria-label="Meeting title"
-              style={{ flex: 1, minWidth: '160px', padding: '9px 12px', borderRadius: '8px', fontSize: '13px', outline: 'none', background: '#0a1628', border: '1px solid rgba(255,255,255,0.15)', color: '#F5F4EF', fontFamily: 'Inter, sans-serif' }}
-            />
-            <input
-              type="datetime-local"
-              value={mtgWhen}
-              onChange={e => setMtgWhen(e.target.value)}
-              aria-label="Meeting date and time"
-              style={{ padding: '8px 12px', borderRadius: '8px', fontSize: '13px', outline: 'none', background: '#0a1628', border: '1px solid rgba(255,255,255,0.15)', color: '#F5F4EF', fontFamily: 'Inter, sans-serif' }}
-            />
-            <button
-              onClick={() => {
-                if (!mtgWhen) return
-                const dt = new Date(mtgWhen)
-                addMeeting(contact.id, { title: mtgTitle.trim() || 'Catch-up', datetime: dt.toISOString() })
-                // Prefilled Google Calendar event — same zero-infra pattern as sending
-                const gcal = (d) => d.toISOString().replace(/[-:]|\.\d{3}/g, '')
-                const end = new Date(dt.getTime() + 3600000)
-                window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(`${mtgTitle} with ${contact.name}`)}&dates=${gcal(dt)}/${gcal(end)}`, '_blank')
-                setScheduling(false)
-              }}
-              disabled={!mtgWhen}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 16px', borderRadius: '8px',
-                fontSize: '13px', fontWeight: 600, border: 'none', fontFamily: 'Inter, sans-serif',
-                background: mtgWhen ? '#D3A95C' : '#C6C0B3', color: '#0a1628', cursor: mtgWhen ? 'pointer' : 'default',
-              }}
-            >
-              <Check style={{ width: '12px', height: '12px' }} /> Save & add to calendar
-            </button>
-          </div>
-        )}
-
-        {/* Upcoming meeting strip */}
-        {(() => {
-          const next = meetings
-            .filter(m => m.contactId === contact.id && new Date(m.datetime) > new Date())
-            .sort((a, b) => new Date(a.datetime) - new Date(b.datetime))[0]
-          return next ? (
-            <div style={{ marginTop: '16px', display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', borderRadius: '10px', background: 'rgba(143,199,162,0.06)', border: '1px solid rgba(143,199,162,0.2)' }}>
-              <Calendar style={{ width: '13px', height: '13px', color: '#8FC7A2', flexShrink: 0 }} />
-              <span style={{ fontSize: '12.5px', color: '#F5F4EF', flex: 1 }}>
-                <strong>{next.title}</strong> · {new Date(next.datetime).toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' })} at {new Date(next.datetime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
-              </span>
-            </div>
-          ) : null
-        })()}
-
-        {/* Health */}
-        <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-            <span style={{ fontSize: '12px', color: '#8C9AAD' }}>Relationship health</span>
-            <span style={{ fontSize: '12px', fontWeight: 600, color: healthColor }}>
-              {health.label} · {contact.lastTouch ? `last touch ${health.days === 0 ? 'today' : `${health.days} day${health.days === 1 ? '' : 's'} ago`}` : 'no touchpoints yet'}
-            </span>
-          </div>
-          <div style={{ height: '5px', borderRadius: '3px', overflow: 'hidden', background: 'rgba(255,255,255,0.12)' }}>
-            <div style={{ width: `${health.pct}%`, height: '100%', borderRadius: '3px', background: healthColor, transition: 'width 0.4s ease' }} />
-          </div>
-        </div>
+        <button className="hb-press" onClick={() => setEditing(true)} aria-label="Edit details" style={{ width: 40, height: 40, borderRadius: 12, background: T.card, border: `1px solid ${T.hairline}`, color: T.muted, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <Pencil style={{ width: 15, height: 15 }} />
+        </button>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
-        {/* Left column: themes + notes */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <div style={card}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Compass style={{ width: '13px', height: '13px', color: '#D3A95C' }} />
-                <span style={{ ...sectionTitle, marginBottom: 0 }}>Common Ground</span>
-              </div>
-              <button
-                onClick={() => setShowDiscover(true)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '5px',
-                  fontSize: '12px', fontWeight: 500, padding: '5px 12px', borderRadius: '8px',
-                  background: 'rgba(211,169,92,0.1)', color: '#D3A95C', border: 'none', cursor: 'pointer',
-                  fontFamily: 'Inter, sans-serif',
-                }}
-              >
-                <Sparkles style={{ width: '11px', height: '11px' }} /> Discover
-              </button>
-            </div>
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-              {themes.map(t => (
-                <span key={t.id} style={{
-                  display: 'inline-flex', alignItems: 'center', gap: '6px',
-                  padding: '5px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 500,
-                  background: `${categoryColors[t.category] || '#8C9AAD'}14`,
-                  color: categoryColors[t.category] || '#8C9AAD',
-                  border: '1px solid rgba(255,255,255,0.12)',
-                }}>
-                  {t.label}
-                  <button onClick={() => removeTheme(contact.id, t.id)} aria-label={`Stop monitoring ${t.label}`}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: 0, display: 'flex', opacity: 0.6 }}>
-                    <X style={{ width: '11px', height: '11px' }} />
-                  </button>
-                </span>
-              ))}
-              {adding ? (
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 8px', borderRadius: '20px', background: '#0a1628', border: '1px solid rgba(211,169,92,0.4)' }}>
-                  <input
-                    autoFocus value={newLabel} onChange={e => setNewLabel(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter') confirmAdd(); if (e.key === 'Escape') setAdding(false) }}
-                    placeholder="New shared theme" aria-label="New shared theme"
-                    style={{ background: 'transparent', border: 'none', outline: 'none', fontSize: '12px', color: '#F5F4EF', width: '150px', fontFamily: 'Inter, sans-serif' }}
-                  />
-                  <select value={newCategory} onChange={e => setNewCategory(e.target.value)} aria-label="Category"
-                    style={{ background: '#0f2040', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '6px', color: '#8C9AAD', fontSize: '11px', padding: '2px 4px', outline: 'none', cursor: 'pointer' }}>
-                    {CATEGORIES.map(c => <option key={c} value={c}>{c[0].toUpperCase() + c.slice(1)}</option>)}
-                  </select>
-                  <button onClick={confirmAdd} aria-label="Confirm theme" style={{ display: 'flex', width: '20px', height: '20px', borderRadius: '50%', background: '#D3A95C', color: '#0a1628', border: 'none', cursor: 'pointer', alignItems: 'center', justifyContent: 'center' }}>
-                    <Check style={{ width: '11px', height: '11px' }} />
-                  </button>
-                </span>
-              ) : (
-                <button onClick={() => setAdding(true)}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '5px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 500, background: 'none', color: '#8C9AAD', border: '1px dashed rgba(255,255,255,0.3)', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
-                  <Plus style={{ width: '11px', height: '11px' }} /> Add
-                </button>
-              )}
-            </div>
-            {themes.length === 0 && !adding && (
-              <p style={{ fontSize: '12px', color: '#8C9AAD', marginTop: '10px' }}>
-                No shared themes yet — add what you two have in common and Harbored will start watching.
-              </p>
-            )}
-          </div>
-
-          <div style={card}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <StickyNote style={{ width: '13px', height: '13px', color: '#D3A95C' }} />
-                <span style={{ ...sectionTitle, marginBottom: 0 }}>Notes</span>
-              </div>
-              <button onClick={handleSaveNote}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '5px',
-                  fontSize: '12px', fontWeight: 500, padding: '5px 12px', borderRadius: '8px',
-                  background: noteSaved ? 'rgba(143,199,162,0.1)' : 'rgba(211,169,92,0.1)',
-                  color: noteSaved ? '#8FC7A2' : '#D3A95C',
-                  border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
-                }}>
-                {noteSaved ? <><Check style={{ width: '11px', height: '11px' }} /> Saved</> : 'Save'}
-              </button>
-            </div>
-            <textarea
-              value={noteDraft}
-              onChange={e => setNoteDraft(e.target.value)}
-              rows={4}
-              placeholder="Kids' names, what you talked about last, what they care about…"
-              aria-label="Contact notes"
-              style={{
-                width: '100%', borderRadius: '10px', padding: '12px 14px', fontSize: '13px', lineHeight: 1.6,
-                resize: 'vertical', outline: 'none', boxSizing: 'border-box',
-                background: '#0a1628', border: '1px solid rgba(255,255,255,0.12)', color: '#F5F4EF', fontFamily: 'Inter, sans-serif',
-              }}
-            />
-          </div>
+      {(contact.email || contact.phone) && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 14 }}>
+          {contact.phone && <Chip href={`sms:${contact.phone.replace(/[^+\d]/g, '')}`} icon={<Phone style={{ width: 12, height: 12 }} />}>{contact.phone}</Chip>}
+          {contact.email && <Chip href={`mailto:${contact.email}`} icon={<Mail style={{ width: 12, height: 12 }} />}>{contact.email}</Chip>}
         </div>
+      )}
 
-        {/* Right column: touch history */}
-        <div style={card}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-            <MessageCircle style={{ width: '13px', height: '13px', color: '#D3A95C' }} />
-            <span style={{ ...sectionTitle, marginBottom: 0 }}>Touchpoint History</span>
+      {channel ? (
+        <Button size="lg" full onClick={startComposing} style={{ marginTop: 18 }}>Reach out to {first}</Button>
+      ) : (
+        <Card style={{ marginTop: 18, padding: '14px 16px' }}>
+          <div style={{ fontSize: 13, color: T.body, lineHeight: 1.55 }}>
+            No phone or email on file, so there's nowhere to send a message yet.
           </div>
-          {touches.length === 0 && (
-            <p style={{ fontSize: '13px', color: '#8C9AAD' }}>
-              No touchpoints recorded yet. When you send through Harbored, it lands here.
-            </p>
-          )}
+          <Button variant="secondary" size="sm" onClick={() => setEditing(true)} style={{ marginTop: 10 }}>Add a phone or email</Button>
+        </Card>
+      )}
+
+      {/* What you share */}
+      <Eyebrow>What you share</Eyebrow>
+      <Card>
+        {themes.length === 0 && (
+          <p style={{ fontSize: 13, color: T.muted, lineHeight: 1.55, margin: '0 0 12px' }}>
+            Nothing yet. Name a team, a city, a company, a market — Harbored watches it for a real reason to reach out.
+          </p>
+        )}
+        {themes.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
+            {themes.map((t, i) => (
+              <div key={t.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px', borderRadius: 12, background: T.ground, border: `1px solid ${T.hairline}` }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: T.ink }}>{t.label}</div>
+                  <div style={{ fontSize: 12, color: T.muted, marginTop: 3, lineHeight: 1.45 }}>
+                    {t.display || (t.query ? 'Watching for significant news.' : <ThinkingMark size={10} label="Working out what to watch…" labelStyle={{ fontSize: 12 }} />)}
+                  </div>
+                </div>
+                <button
+                  className="hb-press"
+                  onClick={() => handleRemoveTheme(t, i)}
+                  aria-label={`Stop watching ${t.label}`}
+                  style={{ width: 36, height: 36, margin: '-6px -8px -6px 0', borderRadius: 10, background: 'none', border: 'none', cursor: 'pointer', color: T.muted, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                >
+                  <X style={{ width: 14, height: 14 }} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+        <ThemeAdder contact={contact} />
+      </Card>
+
+      {/* Notes */}
+      <Eyebrow>Notes</Eyebrow>
+      <Card style={{ padding: 14 }}>
+        <TextArea
+          value={noteDraft}
+          onChange={e => onNoteChange(e.target.value)}
+          rows={4}
+          placeholder="Kids' names, what you talked about last, what they care about…"
+          aria-label="Notes"
+          style={{ background: T.ground, fontSize: 15 }}
+        />
+        <div style={{ height: 18, fontSize: 12, color: T.muted, marginTop: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+          {noteState === 'saving' && 'Saving…'}
+          {noteState === 'saved' && <><Check style={{ width: 12, height: 12, color: T.success }} /> Saved</>}
+        </div>
+      </Card>
+
+      {/* History */}
+      <Eyebrow>History</Eyebrow>
+      <Card>
+        {touches.length === 0 ? (
+          <p style={{ fontSize: 13, color: T.muted, lineHeight: 1.55, margin: 0 }}>
+            Nothing sent through Harbored yet. When you hand {first} a message, it lands here.
+          </p>
+        ) : (
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             {touches.map((t, i) => (
-              <div key={t.id} style={{ display: 'flex', gap: '14px', paddingBottom: i < touches.length - 1 ? '18px' : 0, position: 'relative' }}>
-                {/* Timeline line */}
+              <div key={t.id} style={{ display: 'flex', gap: 14, paddingBottom: i < touches.length - 1 ? 18 : 0, position: 'relative' }}>
                 {i < touches.length - 1 && (
-                  <div style={{ position: 'absolute', left: '5px', top: '14px', bottom: '2px', width: '1px', background: 'rgba(255,255,255,0.12)' }} />
+                  <div style={{ position: 'absolute', left: 5, top: 14, bottom: 2, width: 1, background: T.hairlineStrong }} />
                 )}
-                <div style={{ width: '11px', height: '11px', borderRadius: '50%', background: 'rgba(211,169,92,0.15)', border: '2px solid #D3A95C', flexShrink: 0, marginTop: '3px', boxSizing: 'border-box' }} />
+                <div style={{ width: 11, height: 11, borderRadius: '50%', background: T.accentSoft, border: `2px solid ${T.accent}`, flexShrink: 0, marginTop: 3, boxSizing: 'border-box' }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '8px', marginBottom: '3px' }}>
-                    <span style={{ fontSize: '12px', fontWeight: 600, color: '#F5F4EF' }}>{fmtDate(t.date)}</span>
-                    <span style={{ fontSize: '11px', color: '#8C9AAD', textTransform: 'uppercase' }}>{t.channel}</span>
+                  <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8, marginBottom: 3 }}>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: T.ink }}>{fmtDate(t.date)}</span>
+                    <span style={{ fontSize: 11, color: T.muted }}>{t.channel === 'sms' ? 'Messages' : 'Mail'}</span>
                   </div>
-                  {t.trigger && (
-                    <p style={{ fontSize: '11px', color: '#D3A95C', marginBottom: '4px' }}>{t.trigger}</p>
-                  )}
-                  <p style={{ fontSize: '12px', color: '#8C9AAD', lineHeight: 1.5 }}>{t.message}</p>
+                  {t.trigger && <p style={{ fontSize: 11, color: T.accent, margin: '0 0 4px' }}>{t.trigger}</p>}
+                  <p style={{ fontSize: 12, color: T.muted, lineHeight: 1.5, margin: 0 }}>{t.message}</p>
                 </div>
               </div>
             ))}
           </div>
-        </div>
+        )}
+      </Card>
+
+      <div style={{ marginTop: 28, textAlign: 'center' }}>
+        <Button variant="ghost" size="sm" onClick={() => setConfirmRemove(true)} style={{ color: T.muted }}>Remove {first} from your crew</Button>
       </div>
 
-      <DiscoverThemesModal open={showDiscover} onClose={() => setShowDiscover(false)} contact={contact} />
-    </motion.div>
+      {/* Compose */}
+      <Sheet
+        open={composing}
+        onClose={() => setComposing(false)}
+        title={`To ${first}`}
+        sub="Opens in your own Messages or Mail. Harbored never sends."
+        footer={<>
+          <Button variant="secondary" size="md" onClick={() => setComposing(false)}>Cancel</Button>
+          <Button size="md" onClick={handleSend}>{channel === 'sms' ? 'Open in Messages' : 'Open in Mail'}</Button>
+        </>}
+      >
+        <TextArea value={draft} onChange={e => setDraft(e.target.value)} rows={5} aria-label="Your message" style={{ background: T.ground, fontSize: 15 }} />
+      </Sheet>
+
+      <EditContactSheet open={editing} contact={contact} onClose={() => setEditing(false)} onSave={(patch) => { updateContact(contact.id, patch); setEditing(false) }} />
+
+      <Sheet
+        open={confirmRemove}
+        onClose={() => setConfirmRemove(false)}
+        title={`Remove ${contact.name}?`}
+        sub="Their themes and history go with them. This doesn't touch your phone's contacts."
+        footer={<>
+          <Button variant="secondary" size="md" onClick={() => setConfirmRemove(false)}>Keep</Button>
+          <Button variant="danger" size="md" onClick={handleRemoveContact}>Remove</Button>
+        </>}
+      />
+    </div>
+  )
+}
+
+function Chip({ href, icon, children }) {
+  return (
+    <a href={href} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 11px', borderRadius: 999, fontSize: 12, color: T.body, background: T.card, border: `1px solid ${T.hairline}`, textDecoration: 'none', maxWidth: '100%' }}>
+      <span style={{ color: T.muted, display: 'flex' }}>{icon}</span>
+      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{children}</span>
+    </a>
+  )
+}
+
+function formFrom(contact) {
+  return { name: contact.name, role: contact.role || '', company: contact.company || '', email: contact.email || '', phone: contact.phone || '', birthday: contact.birthday ? `2000-${contact.birthday}` : '' }
+}
+
+function EditContactSheet({ open, contact, onClose, onSave }) {
+  const [form, setForm] = useState(() => formFrom(contact))
+  const [openedFor, setOpenedFor] = useState(false)
+  if (open !== openedFor) {
+    // Fresh values every time the sheet opens.
+    setOpenedFor(open)
+    if (open) setForm(formFrom(contact))
+  }
+  const update = (k, v) => setForm(f => ({ ...f, [k]: v }))
+  const canSave = (form.name || '').trim().length > 1
+  function save() {
+    if (!canSave) return
+    onSave({
+      name: form.name.trim(), role: form.role.trim(), company: form.company.trim(),
+      email: form.email.trim(), phone: form.phone.trim(),
+      birthday: form.birthday ? form.birthday.slice(5) : '',
+      initials: form.name.trim().split(' ').filter(Boolean).map(w => w[0]).join('').slice(0, 2).toUpperCase(),
+    })
+  }
+  const field = (key, label, props = {}) => (
+    <div>
+      <Label htmlFor={`ec-${key}`}>{label}</Label>
+      <Input id={`ec-${key}`} value={form[key] || ''} onChange={e => update(key, e.target.value)} style={{ background: T.ground, padding: '11px 13px' }} {...props} />
+    </div>
+  )
+  return (
+    <Sheet
+      open={open}
+      onClose={onClose}
+      title="Details"
+      footer={<>
+        <Button variant="secondary" size="md" onClick={onClose}>Cancel</Button>
+        <Button size="md" onClick={save} disabled={!canSave}>Save</Button>
+      </>}
+    >
+      <div style={{ display: 'grid', gap: 14 }}>
+        {field('name', 'Name', { autoComplete: 'off' })}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          {field('role', 'Role')}
+          {field('company', 'Company')}
+        </div>
+        {field('phone', 'Phone', { type: 'tel', inputMode: 'tel' })}
+        {field('email', 'Email', { type: 'email', inputMode: 'email' })}
+        {field('birthday', 'Birthday', { type: 'date' })}
+      </div>
+    </Sheet>
   )
 }

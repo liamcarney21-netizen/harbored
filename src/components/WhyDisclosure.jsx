@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { SIGNIFICANCE_THRESHOLD } from '../data/commonGround'
 
-const INK = '#F5F4EF'
 const MUTED = '#8C9AAD'
 const ACCENT = '#D3A95C'
 const HAIRLINE = 'rgba(255,255,255,0.08)'
@@ -17,7 +16,7 @@ export default function WhyDisclosure({ update, kind, style }) {
   if (!update || typeof update.score !== 'number') return null
 
   const above = kind !== 'favor'
-  const label = above ? 'Why this cleared the bar' : 'Why it stayed below the bar'
+  const label = above ? 'Why Harbored flagged this' : 'Why this is just worth passing along'
   const points = above ? update.factors : (update.holdReason ? [update.holdReason] : null)
 
   return (
@@ -59,11 +58,10 @@ export default function WhyDisclosure({ update, kind, style }) {
               {/* Tide line — significance against the reach-out bar */}
               <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '12px' }}>
                 <span style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: MUTED }}>
-                  Significance
+                  How sure Harbored is
                 </span>
                 <span style={{ fontSize: '13px', fontWeight: 600, color: above ? ACCENT : MUTED, fontVariantNumeric: 'tabular-nums' }}>
-                  {update.score}
-                  <span style={{ fontWeight: 400, color: MUTED }}> / bar {SIGNIFICANCE_THRESHOLD}</span>
+                  {update.score >= 85 ? 'Very' : update.score >= SIGNIFICANCE_THRESHOLD ? 'Fairly' : 'Not very'}
                 </span>
               </div>
               <div style={{ position: 'relative', height: '6px', borderRadius: '3px', background: 'rgba(255,255,255,0.09)', marginTop: '9px', overflow: 'visible' }}>

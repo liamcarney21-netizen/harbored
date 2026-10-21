@@ -1,56 +1,81 @@
-// Push notification registration — native (iOS) only. Requests permission,
-// registers with APNs, and stores the resulting device token in Supabase so the
-// server can push to this device. On the web (PWA) this is a no-op: the plugin is
-// only dynamically imported inside the native guard, so it never touches the web
-// bundle's behavior.
+// Push notification registration — native (iOS) only. On the web every call
+// is a no-op: the plugin is only dynamically imported inside the native guard.
 //
-// End-to-end delivery still needs (Liam, in Apple Developer): the Push
-// Notifications capability on the App ID + an APNs auth key. Plus the server-side
-// send service (built next). This half captures + stores the token.
+// Registration is split in two: `registerPushNotifications()` registers
+// silently whenever permission is already granted (every sign-in, every
+// launch), and `registerPushNotifications({ prompt: true })` is the one place
+// the iOS permission prompt is shown — after the person has brought in their
+// first people, when a push means something.
 
 import { supabase } from '../lib/supabase'
 import { useAuthStore } from '../store/authStore'
+import { isNative } from '../lib/platform'
 
-let started = false
+let listening = false
+let lastToken = null
 
-export async function registerPushNotifications() {
-  const isNative = typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.()
-  if (!isNative || started) return
-  started = true
-
-  // Dynamic import keeps @capacitor/push-notifications out of the web bundle.
+async function plugin() {
   const { PushNotifications } = await import('@capacitor/push-notifications')
+  return PushNotifications
+}
 
-  // APNs hands us the device token here — store it against the current user.
-  await PushNotifications.addListener('registration', async (token) => {
-    const user = useAuthStore.getState().user
-    console.log('[push] APNs token received; user?', !!user, 'token?', !!token?.value)
-    if (!user || !token?.value) return
-    const { error } = await supabase.from('device_tokens').upsert(
-      {
-        user_id: user.id,
-        token: token.value,
-        platform: 'ios',
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: 'user_id,token' },
-    )
-    if (error) console.error('[push] device token upsert failed:', error.message)
-    else console.log('[push] device token stored')
-  })
+async function storeToken(token) {
+  const user = useAuthStore.getState().user
+  if (!user || !token) return
+  const { error } = await supabase.from('device_tokens').upsert(
+    { user_id: user.id, token, platform: 'ios', updated_at: new Date().toISOString() },
+    { onConflict: 'user_id,token' },
+  )
+  if (error) console.error('[push] device token upsert failed:', error.message)
+}
 
-  await PushNotifications.addListener('registrationError', (err) => {
-    console.error('[push] registration error:', err?.error)
-  })
+export async function registerPushNotifications({ prompt = false } = {}) {
+  if (!isNative()) return 'web'
+  if (!useAuthStore.getState().user) return 'no-user'
+  const PushNotifications = await plugin()
 
-  // Ask for permission (if not already decided), then register with APNs.
+  if (!listening) {
+    listening = true
+    await PushNotifications.addListener('registration', (token) => {
+      lastToken = token?.value || null
+      storeToken(lastToken)
+    })
+    await PushNotifications.addListener('registrationError', (err) => {
+      console.error('[push] registration error:', err?.error)
+    })
+  }
+
   let perm = await PushNotifications.checkPermissions()
-  if (perm.receive === 'prompt' || perm.receive === 'prompt-with-rationale') {
+  if ((perm.receive === 'prompt' || perm.receive === 'prompt-with-rationale') && prompt) {
     perm = await PushNotifications.requestPermissions()
   }
-  console.log('[push] permission:', perm.receive)
   if (perm.receive === 'granted') {
+    // Re-registering is cheap and re-delivers the token, which re-attaches it
+    // to whoever is signed in now.
     await PushNotifications.register()
-    console.log('[push] register() called — waiting for APNs')
+  }
+  return perm.receive
+}
+
+export async function pushPermissionState() {
+  if (!isNative()) return 'web'
+  const PushNotifications = await plugin()
+  const perm = await PushNotifications.checkPermissions()
+  return perm.receive
+}
+
+// Detach this device from the signed-in account (sign-out, account deletion)
+// so the next account on this phone doesn't receive the previous one's pushes.
+export async function unregisterPushToken() {
+  if (!isNative()) return
+  const user = useAuthStore.getState().user
+  if (!user) return
+  try {
+    let q = supabase.from('device_tokens').delete().eq('user_id', user.id)
+    if (lastToken) q = q.eq('token', lastToken)
+    const { error } = await q
+    if (error) console.error('[push] token removal failed:', error.message)
+  } catch (e) {
+    console.error('[push] token removal failed:', e?.message || e)
   }
 }

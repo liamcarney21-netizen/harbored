@@ -2,7 +2,7 @@
 // An update only becomes a reach-out prompt when its significance score
 // clears SIGNIFICANCE_THRESHOLD; everything else is logged quietly.
 
-export const SIGNIFICANCE_THRESHOLD = 70
+export { SIGNIFICANCE_THRESHOLD } from '../lib/scoring'
 
 export const sharedThemes = [
   {

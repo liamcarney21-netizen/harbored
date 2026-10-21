@@ -1,89 +1,83 @@
-# Harbored — Project Context
+# Harbored — project context
 
-## What is this?
-Harbored is a React + Vite landing page for a network intelligence app. Tagline: "Your network is growing. Don't lose touch." It tracks life events, promotions, and milestones so you can stay connected with your network.
+## What it is
+Harbored is an iPhone app (with a web demo and companion) that keeps you in touch with the
+people you choose, on purpose. For each person you name a few **themes** — things you share:
+a team, a city, a company, a market. A nightly server scan watches the news for those
+themes, scores what it finds with Claude, and when something is genuinely worth a message it
+becomes a **reason**: the headline, the person, and a short draft. Reasons reach you by push
+and show on the Today screen. Drifting relationships (no message in 45+ days) and birthdays
+become reasons too. Harbored never sends anything: every message opens in your own Messages
+or Mail.
+
+The phone app is the product. The website is its demo and a desktop companion. There is one
+layout for every screen (phone-width, centered on desktop); do not add desktop-only layouts.
 
 ## Stack
-- React 19 + Vite 8
-- Tailwind CSS v4
-- Framer Motion (animations)
-- React Router DOM (routing)
-- Zustand (state management)
+- React 19 + Vite, Zustand, framer-motion (fades/slides only), react-router. Capacitor 8
+  wraps the same build for iOS (Swift Package Manager, not CocoaPods). WidgetKit widget in
+  `ios/App/HarboredWidget`.
+- Supabase: auth + Postgres (`user_data` one JSON blob per user, `scan_results`,
+  `device_tokens`, plus the tables in `supabase/migrations/`). Row-level security is on.
+- Vercel: static site + serverless functions in `api/` (handlers in `server/`), crons in
+  `vercel.json` (daily scan at 13:00 UTC with push chained; weekly digest Monday 14:00 UTC).
+- Anthropic API (`server/llm.js`) for scoring, refining themes, drafting, redrafting.
+  Pin a model id explicitly; never fall back to keyword scoring in the cron path.
+- APNs via `server/pushHandler.js`; Resend for the digest and owner alerts.
 
-## Local Development
+## Where things live
+- `src/pages/app/` — the app: `CommonGround.jsx` (Today, the deck of reasons + draft screen
+  + themes manager), `Network.jsx` (Crew), `ContactProfile.jsx`, `Settings.jsx` (You).
+- `src/components/` — shell (`AppLayout`, `BottomTabBar`), `Onboarding`, the import flow
+  (`ImportContactsModal`, `AddContactModal`), the theme quiz (`ThemeComposerModal`),
+  `ThemeAdder` (the one non-quiz way to add a theme), `WhyDisclosure`, `StreamText`.
+- `src/ui/` — tokens (`T`), `Button`, `Card`/`Row`/`Eyebrow`/`PageTitle`, `Field`
+  (`Input`, `TextArea`, `Label`, `Toggle`, `ErrorText`), `Sheet` (the only modal), `toast`.
+  New UI uses these; don't re-declare colors or hand-roll buttons.
+- `src/store/dataStore.js` — the account's data and its sync (see below). `authStore.js`,
+  `demoStore.js` (no-auth demo over seed data; never active for a signed-in user).
+- `src/services/` — `scanResults` (read the server's reasons), `monitoring` (live scan,
+  demo only), `themes` (refine), `outreach` (mailto/sms deep links), `push`, `session`
+  (sign-out that leaves nothing behind), `widget`, `contacts` (native picker), `speech`.
+- `src/pages/` — website: `Landing`, `Privacy`, `Terms`, `Support`, auth pages.
+- `server/` + `api/` — backend; `server/CHANGES.md` documents the latest hardening.
+
+## Data model and sync (read before touching dataStore)
+- One snapshot per user: `contacts`, `themesByContact`, `touches`, `meetings` (legacy),
+  `prefs` (`push`, `digest`), `reasonState` (sent/dismissed per reason key).
+- `hydrate()` renders the cached copy at once, then reconciles with the server. A failed
+  read sets `loadError` and **never writes**. A missing row is created with an insert that
+  cannot overwrite.
+- Writes are debounced, one in flight, conditional on the `updated_at` last seen; on
+  conflict the server copy is fetched, merged by id under the local edits, and retried.
+  Local edits are cached (dirty) so they survive relaunch and offline use.
+- Writes happen only when `ownerId` is the signed-in user, the server has been reconciled
+  (`synced`), and demo is off. Zustand: select stable slices; derive in render.
+
+## Rules
+- Copy: never "track/tracking" for people. No internal scoring vocabulary in the UI ("bar",
+  "significance 70", "giveable"). The trust line is "Drafted for you. Nothing sends itself."
+  Pitch outcomes, not Claude.
+- The push gate is the product: a wrong push is worse than a missed one. Relevance first.
+- Fonts are self-hosted (@fontsource); no third-party CSS imports.
+- Pricing: none yet. The app is free. Don't invent tiers in copy.
+
+## Dev
 ```bash
-cd ~/harbored
-npm run dev
+cd ~/harbored && npm run dev          # http://localhost:5173 (dev middleware mirrors /api)
+npm test                              # vitest
+npm run lint                          # eslint (src + server + api)
+npm run build && npx cap sync ios     # then open ios/App/App.xcodeproj or build via xcodebuild
 ```
-Runs on http://localhost:5178
+`.env.local` holds the production Supabase service-role key: never call `/api/scan` against
+the dev server.
 
-## Project Structure
-- `src/pages/` — Landing (platform-page architecture: compact product-forward hero, sticky "The Platform" sub-nav, one alternating feature section per capability with in-JSX browser-window product mocks, stats band, single large testimonial; LakeScene.jsx is retired/unused), Login, Signup (routed) + legacy Feed/Jobs/Messages/Network/Profile (unrouted)
-- `src/pages/app/` — the app, focused on theme tracking only (2026-07-18 focus decision): CommonGround (home at /dashboard), Network, ContactProfile (/dashboard/contact/:id), Digest (/dashboard/digest), Settings. Retired sections (Overview/Alerts/Messages/Analytics/PrepBrief) were deleted; their old routes redirect to /dashboard. Meeting scheduling (Google Calendar deep link) still lives on ContactProfile.
-- `src/components/` — AppLayout, AppSidebar, Onboarding (first-login walkthrough → hands off to AddContactModal), AddContactModal, Avatar, PlatformBadge, LakeScene
-- `src/store/` — dataStore (Zustand + localStorage persist: contacts, themes, touches, notes; health derived from days-since-last-touch in `healthFromLastTouch`), authStore (legacy)
-- `src/services/` — monitoring (live theme updates: /api/news fetch + heuristic significance scoring + template drafts; swap for a Claude call to go full AI), outreach (mailto/sms deep-link sending), discovery (client for /api/discover)
-- `src/data/` — appData (seed contacts only), commonGround (curated theme updates + SIGNIFICANCE_THRESHOLD)
-- `server/newsHandler.js` — keyless Google News RSS fetcher, shared by vite dev middleware (vite.config.js) and the Vercel function `api/news.js`
-- `server/discoverHandler.js` — Common Ground discovery (POST /api/discover): extracts shared themes from pasted conversation text. Uses the Claude API when ANTHROPIC_API_KEY is set (shell env in dev, Vercel project env in prod; model override via ANTHROPIC_MODEL), otherwise a keyword-taxonomy fallback. UI entry: "Discover" button on contact profiles (DiscoverThemesModal).
-- `server/waitlistHandler.js` — waitlist signups (POST /api/waitlist): emails the owner via Resend when RESEND_API_KEY is set, otherwise logs to function logs. Landing WaitlistModal POSTs here (localStorage kept as client backup).
-- `server/rateLimit.js` — per-IP in-memory rate limiting on the Vercel functions (discover 10/hr, news 120/hr, waitlist 5/hr). Not applied in dev middleware.
-- Sample data: seed contacts are tagged `seed: true` (persist migration v2); Settings has clear/restore controls.
-- `public/` — static assets
-
-## Key Behaviors
-- Sending is real: Send buttons open prefilled mailto:/sms: links and record a touch in the store; touches drive relationship health and appear in Messages + profile timelines.
-- Zustand gotcha: never subscribe with selectors that build new arrays (causes "getSnapshot should be cached" loop) — select stable slices, derive in render.
-
-## Design System — "Editorial Harbor"
-Warm paper canvas #F6F4EF, white cards with warm borders (#E6E2D8 family), deep harbor teal
-accent #0D5C63 (hover #09454B), brass highlight #A97E2F (wordmark anchor, above-bar gauge
-crests), ink text #1C2B33 / #5C6B73. Type: Fraunces (Google Fonts) for display headings,
-wordmark ("Harbored", never all-caps), and stat/score numerals; Inter for UI. Signature: the
-significance gauge is a "tide line" — teal fill cresting into brass past the threshold.
-Health: strong #2E7D5B, cooling #A97E2F, at-risk #B4423A. Do NOT reintroduce LinkedIn blue.
-Common Ground is the product's core feature: per-contact themes (shared, or ground the user is
-deliberately building — e.g. a market they want to break into) → significance scoring
-(threshold 70) → reach-out prompts with drafted messages. Copy frames themes as "what connects
-you," never exclusively as pre-existing commonalities.
-
-Give-first engine: below-the-bar updates that are resourceful/forwardable (detected via
-GIVE_WORDS in services/monitoring.js, or a `giveable`+`giveMessage` flag on curated
-data/commonGround.js updates) surface in a brass "Worth sending" section on Common Ground —
-framed as a no-ask favor. Sending records a touch ("Shared as a favor: …") like any outreach.
-
-## Copy Rules
-- Never use "track/tracked/tracking" for people in UI copy — it reads as surveillance.
-  Use "monitored", "watched", or "kept close" instead.
-- Pricing: Free = taste tier (5 contacts, 2 themes each, weekly digest, manual send);
-  Pro $9/mo = everything (unlimited, discovery, auto-send, all channels).
-
-## Live Deployment
-- **Live URL:** https://harbored-three.vercel.app
-- **Vercel project:** liamcarney21-netizens-projects/harbored
-- **GitHub repo:** https://github.com/liamcarney21-netizen/harbored
-
-## How to Redeploy
-```bash
-cd ~/harbored
-npx vercel --prod
-```
-
-## GitHub Push (when needed)
-The remote is set up but auth was tricky. Use the token-embedded URL:
-```bash
-git remote set-url origin https://liamcarney21-netizen:TOKEN@github.com/liamcarney21-netizen/harbored.git
-git push
-```
-Replace TOKEN with a fresh Personal Access Token from github.com/settings/tokens.
+## Deploy
+Web: `npx vercel --prod` from `main`. iOS: bump `CURRENT_PROJECT_VERSION`/`MARKETING_VERSION`
+in `ios/App/App.xcodeproj/project.pbxproj`, `xcodebuild archive` to `/private/tmp/hb-archiveN`,
+upload through Xcode Organizer (the CLI export can't use the signed-in Apple account).
+Live: https://harbored-three.vercel.app · App Store id 6812816966 · GitHub
+liamcarney21-netizen/harbored (public: keep audits and secrets out).
 
 ## Owner
-Liam Carney — liamcarney21@gmail.com
-
-## Contact import
-Native iOS uses the system contacts picker (services/contacts.js). The web has no bulk
-import by design: the .vcf upload was removed 2026-09-14, and a Google Contacts OAuth
-import was built the same day and then removed at Liam's call (an unverified-app Google
-consent read as sketchy; the web is demo + desktop companion, not the flagship). If it
-ever comes back, see git history for src/services/googleContacts.js — the GCP project
-`harbored` (People API, OAuth client "Harbored web") still exists under Liam's account.
+Liam Carney — liamcarney21@gmail.com · support inbox harboredsupport@gmail.com

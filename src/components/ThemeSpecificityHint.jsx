@@ -8,6 +8,7 @@ import { useState, useEffect } from 'react'
 // Heuristic: no proper noun after the first word and no digit usually means
 // generic ("marathon running") vs. specific ("Sunny Benefits", "Formula 1").
 // Advisory only — it never blocks adding the theme.
+// eslint-disable-next-line react-refresh/only-export-components -- tiny helper shared with the quiz
 export function looksGeneric(label) {
   const words = label.trim().split(/\s+/).filter(Boolean)
   if (words.length === 0 || /\d/.test(label)) return false

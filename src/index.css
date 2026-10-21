@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap');
 @import "tailwindcss";
 
 /* ─── Reset ─────────────────────────────────────────────── */
@@ -6,77 +5,31 @@
 
 html { scroll-behavior: smooth; }
 
+/* The app is navy; the website paints its own cream sections. A navy body
+   means a late paint or a route change never flashes cream inside the app. */
+html { background: #0a1628; }
 body {
   font-family: 'Inter', system-ui, sans-serif;
-  background: #F6F4EF;
-  color: #1C2B33;
+  background: #0a1628;
+  color: #1C2B33; /* pages set their own; the app shell overrides inside .hb-app */
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ─── Design tokens: Editorial Harbor ───────────────────── */
+/* ─── Design tokens: Harbor dark ────────────────────────── */
 :root {
-  --navy:       #0a1628;
-  --navy-mid:   #0f2040;
-  --navy-light: #1a3558;
-  --accent:       #0D5C63;   /* deep harbor teal */
-  --accent-light: #177E8A;
-  --brass:        #A97E2F;   /* brass highlight */
-  --brass-pale:   #D3A95C;
-  --canvas:       #F6F4EF;   /* warm paper */
-  --surface:      #FFFFFF;
-  --border:       #E6E2D8;
-}
-
-/* ─── Sailboat keyframes ─────────────────────────────────── */
-@keyframes sailAcross {
-  0%   { transform: translateX(-160px)        scaleX(1); }
-  47%  { transform: translateX(calc(100vw + 40px)) scaleX(1); }
-  50%  { transform: translateX(calc(100vw + 40px)) scaleX(-1); }
-  97%  { transform: translateX(-160px)        scaleX(-1); }
-  100% { transform: translateX(-160px)        scaleX(1); }
-}
-
-@keyframes boatBob {
-  0%, 100% { transform: translateY(0)   rotate(0deg); }
-  22%       { transform: translateY(-5px) rotate(0.9deg); }
-  55%       { transform: translateY(2px)  rotate(-0.5deg); }
-  78%       { transform: translateY(-3px) rotate(0.7deg); }
-}
-
-/* ─── Water & sky animation ─────────────────────────────── */
-@keyframes waveLeft {
-  from { transform: translateX(0); }
-  to   { transform: translateX(-50%); }
-}
-@keyframes waveRight {
-  from { transform: translateX(-50%); }
-  to   { transform: translateX(0); }
-}
-@keyframes shimmer {
-  0%, 100% { opacity: 0.18; transform: scaleX(1); }
-  50%       { opacity: 0.55; transform: scaleX(1.08); }
-}
-@keyframes twinkle {
-  0%, 100% { opacity: 0.12; }
-  50%       { opacity: 0.75; }
-}
-@keyframes cloudDrift {
-  0%, 100% { transform: translateX(0); }
-  50%       { transform: translateX(14px); }
-}
-@keyframes sunPulse {
-  0%, 100% { opacity: 0.85; filter: blur(0px); }
-  50%       { opacity: 1;    filter: blur(0.5px); }
-}
-@keyframes wakeRipple {
-  0%   { transform: scaleX(1) scaleY(1); opacity: 0.55; }
-  100% { transform: scaleX(3) scaleY(0.25); opacity: 0; }
-}
-@keyframes bobVertical {
-  0%, 100% { transform: translateY(0); }
-  50%       { transform: translateY(-4px); }
+  --hb-ground:   #0a1628;
+  --hb-card:     #0f2040;
+  --hb-raised:   #1a3558;
+  --hb-ink:      #F5F4EF;
+  --hb-body:     #C2CBD8;
+  --hb-muted:    #8C9AAD;
+  --hb-accent:   #D3A95C;
+  --hb-accent-2: #C29245;
+  --hb-danger:   #E8867A;
+  --hb-hairline: rgba(255,255,255,0.08);
+  --hb-radius:   14px;
 }
 
 /* ─── UI animations ─────────────────────────────────────── */
@@ -97,6 +50,12 @@ body {
   font-family: 'Inter', system-ui, sans-serif;
   background-color: #0a1628;
   color: #F5F4EF;
+}
+
+/* The app is one phone-width column everywhere; on a wide screen it sits
+   centered with a quiet edge so it reads as the app, not a stretched page. */
+@media (min-width: 600px) {
+  .hb-column { border-left: 1px solid rgba(255,255,255,0.06); border-right: 1px solid rgba(255,255,255,0.06); }
 }
 
 .hb-display {
@@ -136,5 +95,5 @@ body {
 
 /* ─── Scrollbar ─────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 5px; }
-::-webkit-scrollbar-track { background: #EFEEEB; }
-::-webkit-scrollbar-thumb { background: #B8BEC4; border-radius: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.18); border-radius: 3px; }

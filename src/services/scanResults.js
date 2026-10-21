@@ -45,12 +45,12 @@ export async function fetchStoredUpdates(contacts = []) {
       .order('score', { ascending: false })
     if (res.error) {
       console.error('fetchStoredUpdates:', res.error.message)
-      return []
+      return null // null = couldn't check; [] = checked, nothing there
     }
     data = res.data
   } catch (err) {
     console.error('fetchStoredUpdates:', err)
-    return []
+    return null
   }
 
   // Enrich with the contact's avatar (initials/color) from the live store when
@@ -75,7 +75,11 @@ export async function fetchStoredUpdates(contacts = []) {
 
     return {
       id: `stored-${row.id}`,
+      // Stable across re-scans, so "sent" and "skipped" stick.
+      key: row.content_key || `stored-${row.id}`,
       live: false,
+      publishedAt: row.published_at || null,
+      engine: row.engine || null,
       link: row.link,
       themeLabel: row.theme_label,
       category: row.theme_category,
@@ -85,7 +89,7 @@ export async function fetchStoredUpdates(contacts = []) {
       contactColor: contact?.color || FALLBACK_COLORS[name.length % FALLBACK_COLORS.length],
       headline: row.headline,
       source: row.source,
-      time: relativeTime(row.scanned_at),
+      time: relativeTime(row.published_at || row.scanned_at),
       score: row.score,
       headsUp,
       rationale: rationale || undefined,

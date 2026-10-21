@@ -31,3 +31,6 @@ ios/App/App/public/
 ios/App/build/
 DerivedData/
 *.xcuserstate
+
+# Internal audits (describe unauthenticated endpoints) — keep out of the public repo
+AUDIT*.md

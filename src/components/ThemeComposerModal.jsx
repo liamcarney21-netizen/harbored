@@ -87,7 +87,7 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
   const current = contacts[index]
   const total = contacts.length
   const isLast = index >= total - 1
-  const category = promptIdx !== null ? PROMPTS[promptIdx].category : 'sports'
+  const category = promptIdx !== null ? PROMPTS[promptIdx].category : 'topic'
   const placeholder = promptIdx !== null ? PROMPTS[promptIdx].ph : 'Name the specific thing…'
 
   // State starts fresh per batch because AppLayout keys this modal by the batch,
