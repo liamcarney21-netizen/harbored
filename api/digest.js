@@ -5,7 +5,7 @@
 // it reads all users and (with a Resend key) sends real email, so it must never
 // be publicly callable.
 import { runDigest } from '../server/digestHandler.js'
-import { createServiceClient } from '../server/scanHandler.js'
+import { createServiceClient } from '../server/db.js'
 
 export const config = { maxDuration: 60 }
 

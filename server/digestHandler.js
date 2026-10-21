@@ -1,17 +1,18 @@
 // Weekly digest: Monday recap of the past 7 days' above-bar opportunities per
 // user. Daily push (chained onto the scan cron) owns immediate "this just
-// happened" alerts and the notified_at bookkeeping; this email deliberately
-// re-shows the week regardless of notified state. Reuses the same Resend
-// delivery pattern as waitlistHandler — no key → preview mode (builds the email
-// but never sends), so this is safe to run in dev against real accounts.
+// happened" alerts and the notified bookkeeping; this email deliberately
+// re-shows the week regardless of notified state. No Resend key → preview mode
+// (builds the email but never sends), so this is safe to run in dev.
 //
-// This is also the logic push notifications will reuse in Phase 3: "for each
-// user, here are the new above-bar results worth telling them about."
+// Users who turned the recap off (prefs.digest === false in their saved data)
+// are skipped. Rows that weren't scored by Claude (engine 'unscored', or any
+// keyword-scored row) are never above the bar, so they never reach the email.
+// Logs carry counts only — never addresses or names.
 
 import { SIGNIFICANCE_THRESHOLD } from './scoreHandler.js'
+import { sendEmail } from './email.js'
 
 const APP_URL = 'https://harbored-three.vercel.app'
-const FROM = 'Harbored <onboarding@resend.dev>' // Resend test sender; swap for a verified domain later
 const MAX_ITEMS = 5
 
 function esc(s) {
@@ -22,15 +23,25 @@ function esc(s) {
     .replace(/"/g, '&quot;')
 }
 
-// Editorial Harbor palette, inline (email clients strip <style>).
+// A heads-up (significant upcoming event) is stored as a "[Heads-up · when]"
+// prefix on the rationale; show it as a label instead of raw brackets.
+function splitHeadsUp(rationale) {
+  const m = String(rationale || '').match(/^\[Heads-up · ([^\]]{1,40})\]\s*/)
+  return m ? { headsUp: m[1], rationale: String(rationale).slice(m[0].length) } : { headsUp: null, rationale: rationale || '' }
+}
+
+// Inline styles only (email clients strip <style>).
 export function buildEmailHtml(firstName, items) {
-  const rows = items.map(it => `
+  const rows = items.map(it => {
+    const { headsUp, rationale } = splitHeadsUp(it.rationale)
+    return `
     <tr><td style="padding:18px 0;border-bottom:1px solid #E6E2D8;">
       <div style="font-family:Georgia,serif;font-size:17px;color:#1C2B33;font-weight:bold;">${esc(it.contact_name)}</div>
-      <div style="font-size:11px;color:#A97E2F;text-transform:uppercase;letter-spacing:0.08em;margin:3px 0 8px;">${esc(it.theme_label)}</div>
+      <div style="font-size:11px;color:#A97E2F;text-transform:uppercase;letter-spacing:0.08em;margin:3px 0 8px;">${esc(it.theme_label)}${headsUp ? ` · Heads-up: ${esc(headsUp)}` : ''}</div>
       <div style="font-size:14px;color:#1C2B33;line-height:1.5;margin-bottom:6px;">${esc(it.headline)}</div>
-      ${it.rationale ? `<div style="font-size:13px;color:#5C6B73;line-height:1.5;">${esc(it.rationale)}</div>` : ''}
-    </td></tr>`).join('')
+      ${rationale ? `<div style="font-size:13px;color:#5C6B73;line-height:1.5;">${esc(rationale)}</div>` : ''}
+    </td></tr>`
+  }).join('')
 
   const count = items.length
   return `<!doctype html><html><body style="margin:0;background:#F6F4EF;padding:24px;font-family:Helvetica,Arial,sans-serif;">
@@ -41,35 +52,29 @@ export function buildEmailHtml(firstName, items) {
       </p>
       <table style="width:100%;border-collapse:collapse;">${rows}</table>
       <a href="${APP_URL}/dashboard" style="display:inline-block;margin-top:24px;background:#0D5C63;color:#FFFFFF;text-decoration:none;font-size:14px;font-weight:bold;padding:12px 26px;border-radius:8px;">Open Harbored</a>
-      <p style="font-size:11px;color:#9AA69F;margin-top:22px;line-height:1.5;">You're getting this because you're monitoring shared themes in Harbored. Reach-out threshold: significance ${SIGNIFICANCE_THRESHOLD}+.</p>
+      <p style="font-size:11px;color:#9AA69F;margin-top:22px;line-height:1.5;">You're getting this because you're monitoring shared themes in Harbored. Reach-out threshold: significance ${SIGNIFICANCE_THRESHOLD}+. You can turn this recap off in the app's settings.</p>
     </div>
   </body></html>`
 }
 
-async function sendViaResend(to, subject, html) {
-  const resp = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-    },
-    body: JSON.stringify({ from: FROM, to: [to], subject, html }),
-    signal: AbortSignal.timeout(8000),
-  })
-  if (!resp.ok) throw new Error(`Resend ${resp.status}`)
+function digestWorthy(row) {
+  if (row.above_bar !== true) return false
+  // Rows written since migration 0005 say how they were scored; only Claude
+  // and birthday rows belong in the recap. Legacy rows (no engine) pass.
+  if (row.engine && row.engine !== 'claude' && row.engine !== 'birthday') return false
+  if (row.relevant === false) return false
+  return true
 }
 
 // send=false forces preview mode regardless of key — used in dev so a real key
 // can never fire a live email against real accounts while testing.
-export async function runDigest(supabase, { send = true } = {}) {
+export async function runDigest(supabase, { send = true, now = Date.now } = {}) {
   // Weekly RECAP: every above-bar result from the past 7 days, whether or not
-  // push already alerted it. Daily push (chained onto the scan cron) owns
-  // "new thing just happened" and marks notified_at; the digest is the Monday
-  // review of the week, so it neither filters on nor touches notified_at.
-  const weekAgo = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString()
+  // push already alerted it. It neither filters on nor touches notified_at.
+  const weekAgo = new Date(now() - 7 * 24 * 3600 * 1000).toISOString()
   const { data: rows, error } = await supabase
     .from('scan_results')
-    .select('id, user_id, contact_name, theme_label, headline, rationale, score, above_bar, notified_at')
+    .select('*')
     .eq('above_bar', true)
     .gte('scanned_at', weekAgo)
     .order('score', { ascending: false })
@@ -78,12 +83,26 @@ export async function runDigest(supabase, { send = true } = {}) {
   // Group above-bar results per user, capped.
   const byUser = new Map()
   for (const r of rows || []) {
+    if (!digestWorthy(r)) continue
     const arr = byUser.get(r.user_id) || []
     if (arr.length < MAX_ITEMS) arr.push(r)
     byUser.set(r.user_id, arr)
   }
 
-  const summary = { usersWithOpportunities: byUser.size, usersEmailed: 0, skippedNoEmail: 0, previews: [] }
+  const summary = { usersWithOpportunities: byUser.size, usersEmailed: 0, skippedNoEmail: 0, skippedOptOut: 0, sendFailures: 0, previews: [] }
+  if (byUser.size === 0) return summary
+
+  // Honour the recap toggle. If preferences can't be read, fail closed: no
+  // email is better than one the user switched off.
+  const { data: prefRows, error: prefErr } = await supabase
+    .from('user_data')
+    .select('user_id, data')
+    .in('user_id', [...byUser.keys()])
+  if (prefErr) throw new Error(`read user_data: ${prefErr.message}`)
+  for (const r of prefRows || []) {
+    if (r?.data?.prefs?.digest === false && byUser.delete(r.user_id)) summary.skippedOptOut++
+  }
+  summary.usersWithOpportunities = byUser.size
   if (byUser.size === 0) return summary
 
   // Resolve user emails/names via the admin API (needs the service-role key).
@@ -108,10 +127,11 @@ export async function runDigest(supabase, { send = true } = {}) {
 
     if (send && hasKey) {
       try {
-        await sendViaResend(email, subject, html)
+        await sendEmail({ to: email, subject, html })
         summary.usersEmailed++
       } catch (err) {
-        console.error(`[digest] send failed for ${email}: ${err.message}`)
+        summary.sendFailures++
+        console.error(`[digest] send failed (${summary.sendFailures} so far): ${err.message}`)
       }
     } else {
       // Preview: never sends and never marks. Records enough to verify without

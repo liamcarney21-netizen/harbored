@@ -7,9 +7,21 @@ import { handleRefineRequest } from './server/refineHandler.js'
 import { handleWaitlistRequest } from './server/waitlistHandler.js'
 import { handleScoreRequest } from './server/scoreHandler.js'
 import { handleRedraftRequest } from './server/redraftHandler.js'
-import { runScan, createServiceClient } from './server/scanHandler.js'
+import { createServiceClient } from './server/db.js'
+import { runScheduledScan } from './server/scanRun.js'
 import { runDigest } from './server/digestHandler.js'
 import { runPush } from './server/pushHandler.js'
+import { handleRescanRequest } from './server/rescanHandler.js'
+
+// The cron-style routes (scan, digest, push) run against whatever Supabase the
+// env points at — with .env.local that is PRODUCTION, via the service-role key.
+// So in dev they require CRON_SECRET to be set AND sent as a Bearer header:
+// no secret → nothing runs, and no ?secret= in the URL (it ends up in browser
+// history and logs, and makes a stray click enough to rewrite real data).
+function cronAuthorized(req) {
+  const secret = process.env.CRON_SECRET
+  return !!secret && (req.headers.authorization || '') === `Bearer ${secret}`
+}
 
 // Mirrors the api/ functions so /api/* works under `npm run dev` without Vercel.
 function harboredApi() {
@@ -76,15 +88,12 @@ function harboredApi() {
         res.setHeader('content-type', 'application/json')
         res.end(JSON.stringify(body))
       })
-      // Server-side scan (the cron target). In dev the CRON_SECRET check is only
-      // enforced if the var is set; pass it as ?secret= or a Bearer header. Needs
-      // SUPABASE_SERVICE_ROLE_KEY in .env.local to actually read/write.
+      // Server-side scan (the cron target). Requires CRON_SECRET as a Bearer
+      // header (see cronAuthorized). It writes scan_results for real; push runs
+      // in preview, and dev runs are neither recorded in scan_runs nor alerted.
       server.middlewares.use('/api/scan', async (req, res) => {
         res.setHeader('content-type', 'application/json')
-        const url = new URL(req.url, 'http://localhost')
-        const secret = process.env.CRON_SECRET
-        const provided = (req.headers.authorization || '').replace('Bearer ', '') || url.searchParams.get('secret')
-        if (secret && provided !== secret) {
+        if (!cronAuthorized(req)) {
           res.statusCode = 401
           res.end(JSON.stringify({ error: 'unauthorized' }))
           return
@@ -96,9 +105,9 @@ function harboredApi() {
           return
         }
         try {
-          const summary = await runScan(supabase)
-          res.statusCode = 200
-          res.end(JSON.stringify({ ok: true, ...summary }))
+          const { ok, scan, push, run } = await runScheduledScan(supabase, { push: { send: false }, record: false, notify: false })
+          res.statusCode = ok ? 200 : 500
+          res.end(JSON.stringify({ ok, preview: true, ...(scan || {}), push, run }))
         } catch (err) {
           res.statusCode = 500
           res.end(JSON.stringify({ ok: false, error: String(err.message || err) }))
@@ -108,10 +117,7 @@ function harboredApi() {
       // can never fire a real email at real accounts, even if a Resend key is set.
       server.middlewares.use('/api/digest', async (req, res) => {
         res.setHeader('content-type', 'application/json')
-        const url = new URL(req.url, 'http://localhost')
-        const secret = process.env.CRON_SECRET
-        const provided = (req.headers.authorization || '').replace('Bearer ', '') || url.searchParams.get('secret')
-        if (secret && provided !== secret) {
+        if (!cronAuthorized(req)) {
           res.statusCode = 401
           res.end(JSON.stringify({ error: 'unauthorized' }))
           return
@@ -131,14 +137,25 @@ function harboredApi() {
           res.end(JSON.stringify({ ok: false, error: String(err.message || err) }))
         }
       })
+      // On-demand rescan of the caller's own account ("Check again"). Same
+      // handler as api/rescan.js: the caller's Supabase access token as a
+      // Bearer header, 3 per hour per user.
+      server.middlewares.use('/api/rescan', async (req, res) => {
+        res.setHeader('content-type', 'application/json')
+        if (req.method !== 'POST') {
+          res.statusCode = 405
+          res.end(JSON.stringify({ error: 'POST only' }))
+          return
+        }
+        const { status, body } = await handleRescanRequest(req.headers.authorization)
+        res.statusCode = status
+        res.end(JSON.stringify(body))
+      })
       // Push send (APNs). Dev always runs in preview mode (send: false) so it
       // never attempts a real APNs call while testing.
       server.middlewares.use('/api/push', async (req, res) => {
         res.setHeader('content-type', 'application/json')
-        const url = new URL(req.url, 'http://localhost')
-        const secret = process.env.CRON_SECRET
-        const provided = (req.headers.authorization || '').replace('Bearer ', '') || url.searchParams.get('secret')
-        if (secret && provided !== secret) {
+        if (!cronAuthorized(req)) {
           res.statusCode = 401
           res.end(JSON.stringify({ error: 'unauthorized' }))
           return

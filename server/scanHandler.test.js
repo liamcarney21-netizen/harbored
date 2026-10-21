@@ -59,9 +59,10 @@ describe('shapeResultRows', () => {
     { contact: { id: 1, name: 'Kellan Carney' }, theme: { label: 'Fintech', category: 'industry' }, item: { title: 'Old headline', source: 'X', link: 'http://x' } },
     { contact: { id: 2, name: 'Sarah Chen' }, theme: { label: 'F1', category: 'sports' }, item: { title: 'Fresh headline', source: 'Y', link: 'http://y' } },
   ]
+  // Shape of a scoreItems() result: engine + a separate relevance verdict.
   const scores = new Map([
-    [0, { score: 78, rationale: 'why', draftMessage: 'draft' }], // above the reach-out bar (70)
-    [1, { score: 30 }],                                          // below
+    [0, { engine: 'claude', relevant: true, score: 78, rationale: 'why', draftMessage: 'draft' }], // above the reach-out bar (70)
+    [1, { engine: 'claude', relevant: true, score: 30 }],                                          // below
   ])
 
   it('carries notified_at forward for a re-found headline, null for a new one', () => {
@@ -86,5 +87,47 @@ describe('shapeResultRows', () => {
     const rows = shapeResultRows([found[0]], new Map(), 'u1', new Map(), 'now')
     expect(rows[0].score).toBe(0)
     expect(rows[0].above_bar).toBe(false)
+  })
+})
+
+describe('seeds, story keys and pairs', () => {
+  it('never pairs or birthdays sample (seed) contacts', async () => {
+    const { pairsForUser, hasBirthdayToday } = await import('./scanHandler.js')
+    const now = new Date(2026, 5, 1)
+    const data = {
+      contacts: [
+        { id: 3, name: 'Marcus Webb', seed: true, birthday: '06-01' },
+        { id: 1717000000000, name: 'Real Person', birthday: '06-01' },
+      ],
+      themesByContact: { 3: [{ label: 'Villanova Basketball' }], 1717000000000: [{ label: 'Lakers' }] },
+    }
+    expect(pairsForUser(data).map(p => p.contact.name)).toEqual(['Real Person'])
+    expect(birthdayRowsForUser(data, 'u1', new Map(), 'ts', now).map(r => r.contact_name)).toEqual(['Real Person'])
+    expect(hasBirthdayToday({ contacts: [data.contacts[0]] }, now)).toBe(false)
+  })
+
+  it('keys stories by link (minus tracking params), then guid, then normalized title', async () => {
+    const { storyKeyFor } = await import('./scanHandler.js')
+    const a = storyKeyFor({ link: 'https://news.google.com/rss/articles/ABC?oc=5', title: 'One headline' })
+    expect(a).toMatch(/^[0-9a-f]{40}$/)
+    expect(storyKeyFor({ link: 'https://news.google.com/rss/articles/ABC', title: 'Different headline' })).toBe(a)
+    expect(storyKeyFor({ guid: 'G1', title: 'x' })).toBe(storyKeyFor({ guid: 'G1', title: 'y' }))
+    expect(storyKeyFor({ title: 'Vikings’ QB: "Ready!"' })).toBe(storyKeyFor({ title: 'vikings qb ready' }))
+  })
+
+  it('writes the new row fields and carries notified_at by story key', () => {
+    const scored = new Map([[0, { engine: 'claude', relevant: true, score: 91, eventWhen: 'Saturday night', rationale: 'Big game.' }]])
+    const item = { title: 'Lakers vs Celtics this weekend', link: 'https://n/1', publishedAt: '2026-07-16T00:00:00.000Z', source: 'ESPN' }
+    const rows0 = shapeResultRows([{ contact: { id: 1, name: 'Ann' }, theme: { label: 'Lakers' }, item }], scored, 'u1', new Map(), 'now')
+    expect(rows0[0]).toMatchObject({ engine: 'claude', relevant: true, published_at: '2026-07-16T00:00:00.000Z', rationale: '[Heads-up · Saturday night] Big game.' })
+    const byStory = new Map([[rows0[0].story_key, '2026-07-15T13:00:00Z']])
+    const renamed = shapeResultRows([{ contact: { id: 1, name: 'Ann' }, theme: { label: 'Lakers' }, item: { ...item, title: 'Lakers-Celtics on Saturday' } }], scored, 'u1', new Map(), 'now', { notifiedByStory: byStory })
+    expect(renamed[0].notified_at).toBe('2026-07-15T13:00:00Z')
+  })
+
+  it('keeps a non-Claude or irrelevant result below the bar', () => {
+    const found = [{ contact: { id: 1, name: 'A' }, theme: { label: 'T' }, item: { title: 'h', link: 'l' } }]
+    expect(shapeResultRows(found, new Map([[0, { engine: 'heuristic', relevant: null, score: 95 }]]), 'u1', new Map(), 'now')[0]).toMatchObject({ above_bar: false, score: 0, engine: 'heuristic' })
+    expect(shapeResultRows(found, new Map([[0, { engine: 'claude', relevant: false, score: 90 }]]), 'u1', new Map(), 'now')[0]).toMatchObject({ above_bar: false, relevant: false })
   })
 })

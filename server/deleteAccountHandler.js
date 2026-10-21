@@ -3,6 +3,7 @@
 // server-side row for that user is removed, then the auth user itself.
 // App Store guideline 5.1.1(v) requires this to be reachable in-app.
 import { createClient } from '@supabase/supabase-js'
+import { isMissingTableError } from './db.js'
 
 function adminClient() {
   const url = process.env.VITE_SUPABASE_URL
@@ -22,11 +23,12 @@ export async function handleDeleteAccount(authHeader) {
   const user = data?.user
   if (userErr || !user) return { status: 401, body: { error: 'Invalid or expired session' } }
 
-  for (const table of ['device_tokens', 'scan_results', 'user_data']) {
+  for (const table of ['device_tokens', 'notified_stories', 'scan_results', 'user_data']) {
     const { error } = await admin.from(table).delete().eq('user_id', user.id)
-    // A table that has no row for this user is fine; a real failure is not —
-    // stop rather than orphan data under a deleted auth user.
-    if (error) return { status: 500, body: { error: `Could not remove ${table}` } }
+    // A table that has no row for this user is fine, and so is a table whose
+    // migration hasn't been applied yet (notified_stories, 0006). A real
+    // failure is not — stop rather than orphan data under a deleted auth user.
+    if (error && !isMissingTableError(error)) return { status: 500, body: { error: `Could not remove ${table}` } }
   }
 
   const { error: delErr } = await admin.auth.admin.deleteUser(user.id)

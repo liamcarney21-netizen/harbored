@@ -87,7 +87,7 @@ export default function Network({ onImportContacts }) {
                   <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: status.hot ? T.accent : T.muted, fontWeight: status.hot ? 600 : 400 }}>
                     {status.hot && <span style={{ width: 6, height: 6, borderRadius: '50%', background: T.accent, flexShrink: 0 }} />}
                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {status.text}{themeCount > 0 ? ` · ${themeCount} theme${themeCount === 1 ? '' : 's'}` : ' · no themes yet'}
+                      {status.text}{themeCount > 0 ? ` · ${themeCount} theme${themeCount === 1 ? '' : 's'}` : ' · no themes'}
                     </span>
                   </span>
                 </div>

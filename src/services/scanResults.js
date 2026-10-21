@@ -57,7 +57,9 @@ export async function fetchStoredUpdates(contacts = []) {
   // the contact still exists; otherwise derive sensible fallbacks from the name.
   const byId = new Map(contacts.map(c => [String(c.id), c]))
 
-  return (data || []).map(row => {
+  // Rows for people who have since been removed from the crew don't become
+  // reasons; the next scan drops them server-side.
+  return (data || []).filter(row => byId.has(String(row.contact_id))).map(row => {
     const contact = byId.get(String(row.contact_id))
     const name = row.contact_name || contact?.name || 'Someone'
     const first = name.split(' ')[0]

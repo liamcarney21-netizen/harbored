@@ -3,10 +3,10 @@
 // visitor clicked — lets us segment interest before anything is billable.
 //
 // Delivery: emails each signup to the owner via Resend when RESEND_API_KEY is
-// set (resend.com — free tier covers 100/day; the same key later powers
-// digest emails). Without a key the signup is logged to the function logs so
-// it's at least visible in the Vercel dashboard, and the response tells the
-// client delivery wasn't durable.
+// set (resend.com — free tier covers 100/day; the same key powers the digest
+// and the scan alerts). Without a key the signup is NOT stored anywhere (logs
+// carry no personal data), and the response tells the client delivery wasn't
+// durable (delivered: false).
 
 const OWNER_EMAIL = 'harboredsupport@gmail.com'
 
@@ -18,7 +18,8 @@ export async function handleWaitlistRequest({ firstName, email, plan }) {
   const name = String(firstName || '').trim().slice(0, 80)
   const cleanPlan = ['free', 'pro'].includes(plan) ? plan : null
 
-  console.log(`[waitlist] signup: ${name || '(no name)'} <${cleanEmail}> plan=${cleanPlan || 'unspecified'} at ${new Date().toISOString()}`)
+  // Counts only: the address and name go to the owner by email, never into logs.
+  console.log(`[waitlist] signup received plan=${cleanPlan || 'unspecified'}`)
 
   if (!process.env.RESEND_API_KEY) {
     return { status: 200, body: { ok: true, delivered: false } }
