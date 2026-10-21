@@ -726,9 +726,10 @@ export default function Landing() {
             Why we're building this
           </div>
           <blockquote style={{ fontFamily: SERIF, fontSize: 'clamp(22px, 3vw, 34px)', fontWeight: 500, fontStyle: 'italic', lineHeight: 1.4, color: C.ink, margin: '0 0 30px' }}>
-            I once sat across from someone in an industry I wanted to break into, and had nothing to
-            say. Everyone tells you to "stay in touch" — no one tells you how, when you can't see
-            what's happening in someone's world. That's the whole problem I set out to solve.
+            I once met someone in an industry I wanted to break into. The conversation was easy.
+            It was afterward, trying to stay in touch, that I had nothing to say. Everyone tells
+            you to "stay in touch" — no one tells you how, when you can't see what's happening in
+            someone's world. That's the whole problem I set out to solve.
           </blockquote>
           <div style={{ fontFamily: SANS, fontWeight: 600, fontSize: 14.5, color: C.ink }}>
             Liam Carney <span style={{ fontWeight: 300, color: C.muted }}>· Founder</span>
