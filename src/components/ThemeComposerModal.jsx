@@ -66,6 +66,24 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
     if (el) el.scrollTop = el.scrollHeight
   }, [transcript])
 
+  // On the phone the keyboard shrinks the web view (Capacitor Keyboard,
+  // native resize), and the quiz body is the part that gives — so the focused
+  // input can end up scrolled out of sight below the prompt cards. Whenever
+  // the viewport changes while the field has focus, bring it back into view.
+  function revealInput() {
+    const el = inputRef.current
+    if (el && document.activeElement === el) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+  }
+  useEffect(() => {
+    const onResize = () => setTimeout(revealInput, 50)
+    window.addEventListener('resize', onResize)
+    window.visualViewport?.addEventListener('resize', onResize)
+    return () => {
+      window.removeEventListener('resize', onResize)
+      window.visualViewport?.removeEventListener('resize', onResize)
+    }
+  }, [])
+
   const current = contacts[index]
   const total = contacts.length
   const isLast = index >= total - 1
@@ -319,6 +337,7 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
                     value={voiceMode === 'idle' ? label : transcriptTail}
                     readOnly={voiceMode !== 'idle'}
                     onChange={e => setLabel(e.target.value)}
+                    onFocus={() => setTimeout(revealInput, 350)}
                     onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addChip() } }}
                     placeholder={
                       voiceMode === 'listening' ? `Listening — talk about ${first}…`
