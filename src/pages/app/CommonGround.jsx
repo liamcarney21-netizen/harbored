@@ -13,7 +13,7 @@ import { useDataStore, selectNudges } from '../../store/dataStore'
 import { useDemoStore } from '../../store/demoStore'
 import { useAuthStore } from '../../store/authStore'
 import { fetchLiveUpdates } from '../../services/monitoring'
-import { fetchStoredUpdates } from '../../services/scanResults'
+import { fetchStoredUpdates, REASONS_STALE_EVENT } from '../../services/scanResults'
 import { openSend, sendChannelFor } from '../../services/outreach'
 import { publishWidget } from '../../services/widget'
 import { haptic } from '../../services/haptics'
@@ -27,6 +27,8 @@ import { useToast } from '../../ui/toastStore'
 import { T } from '../../ui/tokens'
 
 const TRUST_LINE = 'Drafted for you. Nothing sends itself.'
+// Coming back to the app after this long re-reads the stored reasons.
+const RELOAD_AFTER_MS = 5 * 60000
 
 // The asterisk mark — doubles as the scanning spinner.
 function AsteriskMark({ size = 30, spinning = false }) {
@@ -147,17 +149,22 @@ export default function CommonGround({ onImportContacts }) {
   const [angleIdx, setAngleIdx] = useState(0)
 
   // ── Loading reasons ──────────────────────────────────────────────────
-  async function loadStored() {
-    setScanning(true)
-    setCheckError(false)
+  // `quiet` re-reads in the background (resume, push tap): no narration, and
+  // a failed read keeps the deck already on screen.
+  const lastLoadRef = useRef(0)
+  async function loadStored({ quiet = false } = {}) {
+    if (!quiet) { setScanning(true); setCheckError(false) }
     try {
-      const stored = await fetchStoredUpdates(contacts)
-      if (stored === null) { setCheckError(true); return }
+      // The crew as it is now, not as it was when this screen mounted.
+      const stored = await fetchStoredUpdates(useDataStore.getState().contacts)
+      if (stored === null) { if (!quiet) setCheckError(true); return }
+      lastLoadRef.current = Date.now()
+      setCheckError(false)
       setUpdates(stored)
       setNeverScanned(stored.length === 0)
       setCheckedAt(new Date())
     } finally {
-      setScanning(false)
+      if (!quiet) setScanning(false)
     }
   }
 
@@ -200,6 +207,23 @@ export default function CommonGround({ onImportContacts }) {
     if (useStored) loadStored()
     else scanLive()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // The scan lands once a morning, while the app may sit open in the
+  // background for days: re-read when a push is tapped and when the app comes
+  // back after a while, so Today never opens on yesterday's deck.
+  useEffect(() => {
+    if (!useStored) return
+    const reload = () => loadStored({ quiet: true })
+    const onVisible = () => {
+      if (document.visibilityState === 'visible' && Date.now() - lastLoadRef.current > RELOAD_AFTER_MS) reload()
+    }
+    window.addEventListener(REASONS_STALE_EVENT, reload)
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      window.removeEventListener(REASONS_STALE_EVENT, reload)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
+  }, [useStored])
 
   // ── The queue ────────────────────────────────────────────────────────
   const allUpdates = useMemo(
@@ -688,7 +712,7 @@ function EmptyState({ contacts, scanning, checkError, neverScanned, themeCount, 
       ) : neverScanned ? (
         <>
           {title('The watch has begun')}
-          {body(`Harbored is now watching ${themeCount} theme${themeCount === 1 ? '' : 's'} across your ${contacts.length} ${contacts.length === 1 ? 'person' : 'people'}, around the clock. First reasons usually land within a day — you'll get a push the moment something real turns up.`)}
+          {body(`Harbored is now watching ${themeCount} theme${themeCount === 1 ? '' : 's'} across your ${contacts.length} ${contacts.length === 1 ? 'person' : 'people'}. It checks the news every morning and sends a push when something real turns up.`)}
         </>
       ) : (
         <>

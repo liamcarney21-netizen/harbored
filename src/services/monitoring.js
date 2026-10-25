@@ -6,17 +6,6 @@
 import { SIGNIFICANCE_THRESHOLD } from '../data/commonGround'
 import { apiUrl } from '../lib/apiBase'
 
-const GIVE_WORDS = [
-  'guide', 'how to', 'tips', 'ranking', 'ranked', 'best ', 'top ', 'list of',
-  'report', 'study', 'analysis', 'breakdown', 'deep dive', 'primer', 'explained',
-  'review', 'roundup', 'schedule', 'dates', 'calendar', 'forecast', 'opens', 'registration',
-]
-
-export function isGiveable(title) {
-  const t = title.toLowerCase()
-  return GIVE_WORDS.some(w => t.includes(w))
-}
-
 // Kept as a fallback for when /api/score itself is unreachable (network
 // error) — the endpoint already falls back to the same heuristic server-side
 // when no ANTHROPIC_API_KEY is set, so this only matters if the request
@@ -114,7 +103,9 @@ export async function fetchLiveUpdates(contacts, themesByContact, { maxThemes = 
     const score = scored?.score ?? fallbackScore(item.title, item.pubDate)
     const above = score >= SIGNIFICANCE_THRESHOLD
     const first = contact.name.split(' ')[0]
-    const giveable = !above && isGiveable(item.title)
+    // Favors come from the scorer (a relevant story worth forwarding, with its
+    // own note), never from keywords in the headline.
+    const giveable = !above && !!scored?.passAlong
     return {
       id: `live-${contact.id}-${theme.id}-${hash(item.title)}`,
       live: true,
@@ -137,12 +128,12 @@ export async function fetchLiveUpdates(contacts, themesByContact, { maxThemes = 
         ? [
             'Fresh coverage detected across news sources',
             `Directly on your shared theme with ${first}: ${theme.label}`,
-            score >= 85 ? 'High-signal language — major development' : 'Clears the reach-out bar',
+            score >= 85 ? 'High-signal language — major development' : 'A clear reason to reach out',
           ]
         : undefined,
-      draftMessage: above ? (scored?.draftMessage || `${first} — did you see this? "${item.title}" Immediately thought of you.`) : undefined,
+      draftMessage: above ? (scored?.draftMessage || `Hey ${first}, this made me think of you. How are you doing?`) : undefined,
       giveable,
-      giveMessage: giveable ? `${first} — saw this and thought of you: "${item.title}". No agenda, just figured you'd want it.` : undefined,
+      giveMessage: giveable ? scored.passAlong : undefined,
       holdReason: above ? undefined : (scored?.holdReason || holdReasonFor(score)),
     }
   })

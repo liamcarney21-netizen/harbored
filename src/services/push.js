@@ -57,6 +57,17 @@ export async function registerPushNotifications({ prompt = false } = {}) {
   return perm.receive
 }
 
+// A tapped notification should open Today on fresh reasons, not on the deck
+// the app last loaded. The plugin holds a tap that launched the app until a
+// listener exists, so registering after sign-in still catches it.
+let tapListening = false
+export async function listenForPushTaps(onTap) {
+  if (!isNative() || tapListening) return
+  tapListening = true
+  const PushNotifications = await plugin()
+  await PushNotifications.addListener('pushNotificationActionPerformed', () => onTap())
+}
+
 export async function pushPermissionState() {
   if (!isNative()) return 'web'
   const PushNotifications = await plugin()

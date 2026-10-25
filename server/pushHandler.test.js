@@ -104,6 +104,35 @@ describe('push gate (test f)', () => {
   })
 })
 
+describe('broad themes', () => {
+  it('never pushes from a theme that resolved to a broad topic; birthdays are exempt', () => {
+    const broadPairs = new Set(['1|Lakers'])
+    expect(pushGateReason(row(), NOW, { broadPairs })).toBe('broad-theme')
+    expect(pushGateReason(row({ theme_label: 'Celtics' }), NOW, { broadPairs })).toBe(null)
+    expect(pushGateReason(row({ theme_category: 'birthday', theme_label: 'Lakers' }), NOW, { broadPairs })).toBe(null)
+  })
+
+  it("reads the user's themes when the scan didn't hand them over", async () => {
+    const broad = row({ theme_label: 'Fintech startup', score: 95 })
+    const specific = row({ contact_id: '2', theme_label: 'Villanova', score: 85 })
+    const supabase = createFakeSupabase({
+      tables: {
+        scan_results: [broad, specific],
+        device_tokens: [{ user_id: 'u1', token: 't' }],
+        user_data: [{ user_id: 'u1', data: { contacts: [{ id: 1, name: 'Ann Lee' }, { id: 2, name: 'Bo' }], themesByContact: {
+          1: [{ id: 'a', label: 'Fintech startup', entityType: 'topic' }],
+          2: [{ id: 'b', label: 'Villanova', entityType: 'team' }],
+        } } }],
+      },
+    })
+    const transport = transportWith()
+    const summary = await runPush(supabase, { now: () => NOW, since: iso(NOW - H), transport })
+    expect(summary.gated).toMatchObject({ 'broad-theme': 1 })
+    expect(transport.sends).toHaveLength(1)
+    expect(transport.sends[0].payload.aps.alert.body).toBe(specific.headline)
+  })
+})
+
 describe('runPush (live, fake APNs)', () => {
   it('pushes once per user with a per-day collapse id, records the story and marks the rows', async () => {
     const r = row()

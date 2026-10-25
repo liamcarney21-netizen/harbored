@@ -6,6 +6,8 @@
 // the worst outcome):
 //  - engine 'claude' (never keyword-scored), relevant === true,
 //    score (significance) >= PUSH_THRESHOLD (80), published within 72 hours;
+//  - never from a theme that resolved to a broad topic (entityType 'topic' in
+//    the user's saved themes): those rows can show on Today but don't push;
 //  - birthdays (theme_category 'birthday') are always eligible on the day;
 //  - at most MAX_STORIES_PER_USER_PER_DAY stories per user per rolling 24h and
 //    one story per contact per CONTACT_COOLDOWN_DAYS (birthdays exempt);
@@ -33,6 +35,7 @@ import http2 from 'node:http2'
 import jwt from 'jsonwebtoken'
 import { PUSH_THRESHOLD } from './scoreHandler.js'
 import { FRESH_HOURS } from './newsHandler.js'
+import { broadThemePairs, pairKey } from './scanHandler.js'
 import { isDuplicateKeyError, isMissingTableError, shortId } from './db.js'
 
 export const MAX_STORIES_PER_USER_PER_DAY = 2
@@ -81,10 +84,12 @@ export function rowStoryKey(row) {
 // migration 0005 (engine, relevant, published_at) are checked whenever they
 // exist on the row; before 0005 is applied, freshness and Claude-only scoring
 // are guaranteed by the scan itself and push only reads the current run's rows.
-export function pushGateReason(row, nowMs = Date.now()) {
+// `broadPairs` holds the user's broad-topic themes (scanHandler.broadThemePairs).
+export function pushGateReason(row, nowMs = Date.now(), { broadPairs } = {}) {
   if (!row || row.above_bar !== true) return 'below-bar'
   if (row.notified_at) return 'already-notified'
   if (isBirthdayRow(row)) return null
+  if (broadPairs?.has(pairKey(row.contact_id, row.theme_label))) return 'broad-theme'
   const has = (k) => Object.prototype.hasOwnProperty.call(row, k)
   if (has('engine') && row.engine !== 'claude') return 'not-claude'
   if (has('relevant') && row.relevant !== true) return 'not-relevant'
@@ -121,6 +126,7 @@ export function selectStoriesToPush(rows, history, {
   nowMs = Date.now(),
   maxPerDay = MAX_STORIES_PER_USER_PER_DAY,
   cooldownDays = CONTACT_COOLDOWN_DAYS,
+  broadPairs,
 } = {}) {
   const h = history || historyFor([])
   const sorted = [...rows].sort((a, b) =>
@@ -133,7 +139,7 @@ export function selectStoriesToPush(rows, history, {
   const contactsThisRun = new Set()
 
   for (const row of sorted) {
-    const reason = pushGateReason(row, nowMs)
+    const reason = pushGateReason(row, nowMs, { broadPairs })
     if (reason) { counts.gated[reason] = (counts.gated[reason] || 0) + 1; continue }
     const key = rowStoryKey(row)
     if (h.stories.has(key)) {
@@ -261,12 +267,17 @@ async function loadCandidates(supabase, { since, userIds }) {
   return data || []
 }
 
-async function loadPrefs(supabase, userIds) {
+// What the gate needs from each user's saved data: prefs and broad themes.
+async function loadUserContext(supabase, userIds) {
   const { data, error } = await supabase.from('user_data').select('user_id, data').in('user_id', userIds)
   if (error) throw new Error(`read user_data: ${error.message}`)
   const prefs = new Map()
-  for (const r of data || []) prefs.set(r.user_id, r?.data?.prefs && typeof r.data.prefs === 'object' ? r.data.prefs : {})
-  return prefs
+  const broadPairs = new Map()
+  for (const r of data || []) {
+    prefs.set(r.user_id, r?.data?.prefs && typeof r.data.prefs === 'object' ? r.data.prefs : {})
+    broadPairs.set(r.user_id, broadThemePairs(r?.data))
+  }
+  return { prefs, broadPairs }
 }
 
 async function loadHistory(supabase, userIds, nowMs) {
@@ -331,6 +342,7 @@ export async function runPush(supabase, {
   userIds,
   excludeUserIds = [],
   prefsByUser,
+  broadPairsByUser,
   now = Date.now,
   deadline,
   transport,
@@ -367,7 +379,11 @@ export async function runPush(supabase, {
   if (byUser.size === 0) return summary
 
   const users = [...byUser.keys()]
-  const prefs = prefsByUser instanceof Map ? prefsByUser : await loadPrefs(supabase, users)
+  // The scan hands over what it already read; a standalone run reads it.
+  const context = prefsByUser instanceof Map && broadPairsByUser instanceof Map
+    ? { prefs: prefsByUser, broadPairs: broadPairsByUser }
+    : await loadUserContext(supabase, users)
+  const prefs = context.prefs
   const { mode, rows: historyRows } = await loadHistory(supabase, users, nowMs)
   summary.dedupe = mode
   const historyByUser = new Map()
@@ -381,7 +397,9 @@ export async function runPush(supabase, {
   const plans = []
   for (const userId of users) {
     if (prefs.get(userId)?.push === false) { summary.users_prefs_off++; continue }
-    const plan = selectStoriesToPush(byUser.get(userId), historyFor(historyByUser.get(userId)), { nowMs, maxPerDay, cooldownDays })
+    const plan = selectStoriesToPush(byUser.get(userId), historyFor(historyByUser.get(userId)), {
+      nowMs, maxPerDay, cooldownDays, broadPairs: context.broadPairs.get(userId),
+    })
     for (const [reason, n] of Object.entries(plan.counts.gated)) summary.gated[reason] = (summary.gated[reason] || 0) + n
     summary.deduped += plan.counts.deduped
     summary.capped_daily += plan.counts.capped_daily

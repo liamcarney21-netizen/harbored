@@ -3,7 +3,7 @@
 ## What it is
 Harbored is an iPhone app (with a web demo and companion) that keeps you in touch with the
 people you choose, on purpose. For each person you name a few **themes** — things you share:
-a team, a city, a company, a market. A nightly server scan watches the news for those
+a team, a city, a company, a market. A server scan every morning (13:00 UTC) reads the news for those
 themes, scores what it finds with Claude, and when something is genuinely worth a message it
 becomes a **reason**: the headline, the person, and a short draft. Reasons reach you by push
 and show on the Today screen. Drifting relationships (no message in 45+ days) and birthdays

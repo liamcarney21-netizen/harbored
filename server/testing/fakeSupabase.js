@@ -84,7 +84,7 @@ export function createFakeSupabase({
     insert(rows) { this.op = 'insert'; this.payload = Array.isArray(rows) ? rows : [rows]; return this }
     upsert(rows, opts = {}) { this.op = 'upsert'; this.payload = Array.isArray(rows) ? rows : [rows]; this.upsertOpts = opts; return this }
     update(patch) { this.op = 'update'; this.payload = patch; return this }
-    delete() { this.op = 'delete'; return this }
+    delete({ count } = {}) { this.op = 'delete'; this.countMode = count || null; return this }
     eq(col, v) { this.filters.push({ col, kind: 'eq', v }); return this }
     neq(col, v) { this.filters.push({ col, kind: 'neq', v }); return this }
     is(col, v) { this.filters.push({ col, kind: 'is', v }); return this }
@@ -213,7 +213,7 @@ export function createFakeSupabase({
         const removed = []
         for (const r of table) (this.matches(r) ? removed : keep).push(r)
         db[this.table] = keep
-        return { data: this.returning ? clone(removed) : null, error: null }
+        return { data: this.returning ? clone(removed) : null, error: null, ...(this.countMode ? { count: removed.length } : {}) }
       }
 
       // select

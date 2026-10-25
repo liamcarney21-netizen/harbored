@@ -11,9 +11,6 @@
     "CapacitorHttp": {
       "enabled": true
     },
-    "Preferences": {
-      "group": "group.app.harbored"
-    },
     "Keyboard": {
       "resize": "native",
       "resizeOnFullScreen": true

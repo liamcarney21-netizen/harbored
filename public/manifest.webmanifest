@@ -1,7 +1,7 @@
 {
   "name": "Harbored",
   "short_name": "Harbored",
-  "description": "Shared themes, watched around the clock — Harbored tells you the moment there's a real reason to reconnect.",
+  "description": "Shared themes, checked every morning — Harbored tells you when there's a real reason to reconnect.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

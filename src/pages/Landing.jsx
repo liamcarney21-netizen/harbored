@@ -612,8 +612,8 @@ export default function Landing() {
               color: 'rgba(250,248,243,0.55)', maxWidth: 520, lineHeight: 1.7, marginBottom: 34,
               animation: 'fadeUp 0.85s 0.28s ease both',
             }}>
-              Tell Harbored what you share with the people who matter. It watches around
-              the clock and flags the moment there's a real reason to reach out &mdash;
+              Tell Harbored what you share with the people who matter. Every morning it
+              reads the news for you and flags when there's a real reason to reach out &mdash;
               message drafted.
             </p>
             <div className="hero-ctas" style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 18, animation: 'fadeUp 0.85s 0.4s ease both' }}>
@@ -652,7 +652,7 @@ export default function Landing() {
         kicker="Today"
         title="One reason at a time,"
         em="like a front page about your people."
-        body="Tell Harbored what you share with each person — their company, a team, a city, a market. It watches those themes around the clock, and when something genuinely matters, it becomes a reason: the headline, the person, and the message already drafted. No feed, no metrics, no noise."
+        body="Tell Harbored what you share with each person — their company, a team, a city, a market. Every morning it checks those themes in the news, and when something genuinely matters, it becomes a reason: the headline, the person, and the message already drafted. No feed, no metrics, no noise."
         points={[
           'Themes across companies, teams, places, markets, and hobbies',
           'Only what genuinely matters reaches you — the rest stays quiet',
@@ -670,7 +670,7 @@ export default function Landing() {
         kicker="Just talk"
         title="Met someone worth knowing?"
         em="Just say what you share."
-        body="Right after you meet someone, tap the mic and describe them in your own words — where you met, what they're into, what they're building. Harbored maps what you said into watchable themes and starts paying attention the moment you approve them. Prefer typing? A six-prompt quiz does the thinking for you."
+        body="Right after you meet someone, tap the mic and describe them in your own words — where you met, what they're into, what they're building. Harbored maps what you said into watchable themes and starts watching them the next morning. Prefer typing? A six-prompt quiz does the thinking for you."
         points={[
           'Speak it or tap it — never fill out a form',
           'Their company comes pre-filled from your contacts',

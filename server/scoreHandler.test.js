@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { scoreItems, handleScoreRequest, toScore, subjectFor, draftHasForeignUrl, IRRELEVANT_MAX } from './scoreHandler.js'
+import { scoreItems, handleScoreRequest, toScore, subjectFor, draftHasForeignUrl, IRRELEVANT_MAX, PUSH_THRESHOLD, SENSITIVE_PUSH_THRESHOLD } from './scoreHandler.js'
 import { callClaude } from './llm.js'
 import { installGuards, removeGuards, fakeClaudeFetch, noSleep } from './testing/guards.js'
 
@@ -155,5 +155,35 @@ describe('input clamps (public /api/score)', () => {
     expect(toScore(-3)).toBe(0)
     expect(toScore('high')).toBe(null)
     expect(toScore(NaN)).toBe(null)
+  })
+})
+
+describe('bad news and pass-along notes', () => {
+  it('keeps bad news under the push bar unless it is very significant, and keeps its check-in draft', async () => {
+    const text = JSON.stringify({ results: [
+      { id: '0', relevant: true, significance: 85, sensitive: true, rationale: 'Layoffs at their company.', draftMessage: 'Kellan, saw the news about the layoffs. How are you doing?' },
+      { id: '1', relevant: true, significance: 94, sensitive: true, rationale: 'Their company is shutting down.', draftMessage: 'Kellan, thinking of you. Here if you want to talk.' },
+      { id: '2', relevant: true, significance: 85, rationale: 'Funding round.', draftMessage: 'Congrats!' },
+    ] })
+    const items = [item({ headline: 'Sunny Benefits cuts 30% of staff' }), item({ headline: 'Sunny Benefits shuts down' }), item()]
+    const out = await scoreItems(items, { allowFallback: false, llm: rawLlm(text), now: () => NOW })
+    expect(out.results[0]).toMatchObject({ sensitive: true, score: PUSH_THRESHOLD - 1, draftMessage: 'Kellan, saw the news about the layoffs. How are you doing?' })
+    expect(out.results[1]).toMatchObject({ sensitive: true, score: 94 })
+    expect(out.results[1].score).toBeGreaterThanOrEqual(SENSITIVE_PUSH_THRESHOLD)
+    expect(out.results[2]).toMatchObject({ score: 85 })
+    expect(out.results[2].sensitive).toBeUndefined()
+  })
+
+  it('keeps a pass-along note only for a relevant, non-sensitive story below the bar, without a link', async () => {
+    const text = JSON.stringify({ results: [
+      { id: '0', relevant: true, significance: 40, passAlong: 'Kellan, figured you would want this one.' },
+      { id: '1', relevant: false, significance: 10, passAlong: 'Kellan, look at this.' },
+      { id: '2', relevant: true, significance: 88, draftMessage: 'Congrats!', passAlong: 'Kellan, here.' },
+      { id: '3', relevant: true, significance: 40, sensitive: true, passAlong: 'Kellan, sad news.' },
+      { id: '4', relevant: true, significance: 40, passAlong: 'Kellan, read it at evil.example.biz' },
+    ] })
+    const items = [0, 1, 2, 3, 4].map(i => item({ headline: `Story ${i}` }))
+    const out = await scoreItems(items, { allowFallback: false, llm: rawLlm(text), now: () => NOW })
+    expect(out.results.map(r => r.passAlong)).toEqual(['Kellan, figured you would want this one.', undefined, undefined, undefined, undefined])
   })
 })

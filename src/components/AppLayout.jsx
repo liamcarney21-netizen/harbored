@@ -17,7 +17,8 @@ import Settings from '../pages/app/Settings'
 import { ToastHost } from '../ui/toast'
 import Button from '../ui/Button'
 import { T } from '../ui/tokens'
-import { registerPushNotifications } from '../services/push'
+import { registerPushNotifications, listenForPushTaps } from '../services/push'
+import { markReasonsStale } from '../services/scanResults'
 import { refineMissingThemes } from '../services/themes'
 import { hideSplash } from '../lib/splash'
 import { isNative } from '../lib/platform'
@@ -53,6 +54,15 @@ export default function AppLayout() {
   // (a new phone is not a new user), and never in the demo.
   const showOnboarding = initialized && !loading && !demoActive && !!user && !tourDismissed
     && contacts.length === 0 && !tourSeen(user.id)
+
+  // A tapped push opens Today on what the morning's scan just found.
+  useEffect(() => {
+    if (!user || demoActive) return
+    listenForPushTaps(() => {
+      navigate('/dashboard')
+      markReasonsStale()
+    })
+  }, [user, demoActive]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Themes that never got a refined query (the refine service was down when
   // they were added) get one quietly, a few at a time.

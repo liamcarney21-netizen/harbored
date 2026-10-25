@@ -147,6 +147,7 @@ export async function runScheduledScan(supabase, {
         since: scan.started_at,
         excludeUserIds: scan.internal?.erroredUserIds || [],
         prefsByUser: scan.internal?.prefsByUser,
+        broadPairsByUser: scan.internal?.broadPairsByUser,
         deadline: startMs + PUSH_DEADLINE_MS,
         ...pushOptions,
       })
@@ -165,7 +166,9 @@ export async function runScheduledScan(supabase, {
     detail: scan ? {
       ordered_by: scan.ordered_by,
       users_idle: scan.users_idle,
+      pairs_waiting: scan.pairs_waiting,
       rows_written: scan.rows_written,
+      rows_expired: scan.rows_expired,
       news_failed: scan.news_failed,
       cleanup_errors: scan.cleanup_errors,
     } : null,

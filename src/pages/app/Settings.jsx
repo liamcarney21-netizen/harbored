@@ -16,6 +16,11 @@ import Button from '../../ui/Button'
 import { Toggle } from '../../ui/Field'
 import { T } from '../../ui/tokens'
 
+// The weekly recap sends from Resend's test address, which only delivers to
+// the account owner, so the toggle stays hidden until a sending domain is
+// verified (server/email.js). The pref and the Monday cron are unchanged.
+const RECAP_EMAIL_READY = false
+
 export default function Settings() {
   const navigate = useNavigate()
   const contacts = useDataStore(s => s.contacts)
@@ -126,18 +131,21 @@ export default function Settings() {
           title="Push notifications"
           sub={pushSub}
           control={<Toggle checked={!!prefs.push} onChange={togglePush} label="Push notifications" />}
+          last={!RECAP_EMAIL_READY}
         />
         {isNative() && osPush === 'denied' && prefs.push && (
           <div style={{ padding: '0 18px 14px' }}>
             <Button variant="secondary" size="sm" onClick={openContactSettings}>Open iOS Settings</Button>
           </div>
         )}
-        <Row
-          title="Weekly recap"
-          sub={email ? `Monday mornings to ${email}` : 'A Monday-morning summary by email'}
-          control={<Toggle checked={!!prefs.digest} onChange={v => setPref('digest', v)} label="Weekly recap email" />}
-          last
-        />
+        {RECAP_EMAIL_READY && (
+          <Row
+            title="Weekly recap"
+            sub={email ? `Monday mornings to ${email}` : 'A Monday-morning summary by email'}
+            control={<Toggle checked={!!prefs.digest} onChange={v => setPref('digest', v)} label="Weekly recap email" />}
+            last
+          />
+        )}
       </Card>
 
       <Eyebrow>Your data</Eyebrow>

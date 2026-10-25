@@ -51,24 +51,22 @@ network,contacts,relationships,keep in touch,networking,CRM,reminders,follow up,
 > **How it works**
 >
 > Tell Harbored the themes you share with each person — the team you both follow, the city
-> they moved to, the market they work in, the hobby you have in common. Those themes become
-> standing reasons to talk. Harbored watches them across live news, around the clock, and
-> scores each development for significance. When something clears the bar, it tells you — and
-> hands you a message already drafted, ready to review and send.
+> they moved to, the company they work at, the market they're in. Every morning Harbored reads
+> the news on those themes and judges what it finds. Most of it is routine, and you never hear
+> about it. When something genuinely matters to that person, it becomes a reason: the
+> headline, the person, and a message already drafted for you to review and send.
 >
 > **What you get**
 >
-> • **Common Ground** — per-person shared themes, monitored continuously and scored so you're
->   only interrupted when something genuinely matters.
-> • **Drafted outreach** — a message written for the moment, sent through your own email or
->   Messages. You review every one; nothing goes out without you.
-> • **Push when it counts** — a notification the moment an update clears your reach-out bar,
->   not a firehose of noise.
-> • **Weekly digest** — a quiet roundup of everyone worth reaching out to this week.
-> • **Discovery** — just met someone? Tell Harbored what you talked about and it surfaces the
->   themes worth watching.
-> • **Worth sending** — Harbored also flags things worth forwarding as a no-ask favor, so you
->   show up useful, not needy.
+> • **Today** — one reason at a time, like a front page about your people.
+> • **A draft for every reason** — written for that person and that news, opened in your own
+>   Messages or Mail. You review every one; nothing sends itself.
+> • **A push only when it counts** — Harbored stays quiet unless something is worth a message.
+> • **Check-ins when it's been a while** — a nudge and a short draft for people going quiet.
+> • **Birthdays** — a reminder on the day, with a note ready.
+> • **Worth passing along** — articles a friend would want to read, with a note to send them.
+> • **Just talk** — describe someone in your own words and Harbored turns it into themes.
+> • **A home-screen widget** — today's best reason, at a glance.
 >
 > **Import in seconds**
 >
@@ -78,17 +76,20 @@ network,contacts,relationships,keep in touch,networking,CRM,reminders,follow up,
 > **Private by design**
 >
 > Harbored never sells your data and never uses your contacts for advertising. You choose who
-> to import, you control what's stored, and you can clear it anytime. The messages you send go
-> through your own apps — their content never touches our servers. Read the full policy at
-> harbored-three.vercel.app/privacy.
+> to import, and you can delete your account and everything in it at any time. Messages are
+> sent by you, from your own apps; Harbored keeps the text of what you sent in your history so
+> it knows when you last talked. Read the full policy at harbored-three.vercel.app/privacy.
 >
 > Your network is your most valuable asset. Harbored makes sure you never let it drift.
 
-## What's New (for this version)
+## What's New (1.0.2)
 
-> • Import contacts directly from your iPhone — pick who you want in a single tap.
-> • Push notifications when an update clears your reach-out bar.
-> • Faster, calmer, and more private than ever.
+> • Your home-screen widget now shows today's best reason to reach out.
+> • Tapping a notification opens Today with the latest reasons.
+> • Edits made offline or on two devices no longer get lost or come back after you remove them.
+> • Bad news gets a gentle check-in draft, never an upbeat one.
+> • Every theme gets watched, however many you have.
+> • A calmer, faster app throughout, and the icon badge clears when you open it.
 
 ---
 
@@ -100,7 +101,8 @@ Declare these. **Nothing is used for tracking; nothing is sold.** Match this to 
 |---|---|---|---|---|
 | Contacts (name, email, phone, company) | Yes | Yes | No | App Functionality |
 | Contact Info — your email address | Yes | Yes | No | App Functionality (account) |
-| User Content — themes, notes | Yes | Yes | No | App Functionality |
+| Contact Info — your name | Yes | Yes | No | App Functionality (account) |
+| User Content — themes, notes, text of messages you sent (Other User Content) | Yes | Yes | No | App Functionality |
 | Identifiers — push device token | Yes | Yes | No | App Functionality (notifications) |
 | Usage / Diagnostics | No | — | — | — |
 

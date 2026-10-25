@@ -18,6 +18,10 @@ import { callClaude } from './llm.js'
 
 export const SIGNIFICANCE_THRESHOLD = 70 // display bar: above_bar, drafts
 export const PUSH_THRESHOLD = 80         // push bar (pushHandler); stricter than display
+// Bad news (a death, a disaster, layoffs) can be worth a check-in, but it only
+// interrupts anyone when it's this significant; below it, the score is held
+// under the push bar so it can show on Today and never push.
+export const SENSITIVE_PUSH_THRESHOLD = 90
 export const IRRELEVANT_MAX = 20         // significance ceiling when relevant is false
 export const MAX_ITEMS = 20
 export const MAX_FIELD_CHARS = 500
@@ -210,12 +214,14 @@ function scoringSystemPrompt(now) {
     '',
     'Always include "rationale": one plain sentence under 140 characters explaining the judgment, specific to this headline and stating only facts you were given.',
     `If relevant is true and significance is ${SIGNIFICANCE_THRESHOLD} or more, include "draftMessage": a short, warm, specific text the user could send as-is. Use the contact's first name, refer to the actual news, and sound like a friend texting, not a greeting card. Never include links, URLs, web addresses or phone numbers. Otherwise include "holdReason": one short sentence under 100 characters on why it isn't worth an interruption.`,
+    `Bad news needs care. When the headline is about a death, violence, a disaster, a serious illness, layoffs or job cuts, a crime or a scandal, set "sensitive": true. Ordinary setbacks (a team losing, a player injury, a stock dipping) are not sensitive. A sensitive item is a reason to reach out only when a caring check-in would be welcome, and its draftMessage is that check-in: brief and gentle, asking how they are, never upbeat, never treating the news as exciting or as small talk, and never opening with "did you see this". If any message would intrude, score it below ${SIGNIFICANCE_THRESHOLD} and give a holdReason.`,
+    `If relevant is true, significance is below ${SIGNIFICANCE_THRESHOLD} and the item is not sensitive, but the article itself is something the contact would want to read (a guide, a ranking, a schedule, a report or a deep dive on the subject, not routine news), include "passAlong": a short note under 140 characters the user could send along with the link, using the contact's first name, with no link in it. Otherwise omit passAlong.`,
     'When the headline\'s main subject is a significant event that has not happened yet, include "eventWhen": when it happens, the way a person would say it in a text (e.g. "Saturday night", "this weekend", "Nov 12"), under 25 characters, and write any draft looking forward to it rather than as if it already happened. Omit eventWhen for anything already past.',
     '',
     `Today's date is ${date}.`,
     '',
     "Respond with JSON only, no prose and no code fences, in exactly this shape, with one result per item using each item's id:",
-    '{"results":[{"id":"0","relevant":true,"significance":0,"rationale":"...","draftMessage":"...","holdReason":"...","eventWhen":"..."}]}',
+    '{"results":[{"id":"0","relevant":true,"significance":0,"rationale":"...","draftMessage":"...","holdReason":"...","eventWhen":"...","sensitive":false,"passAlong":"..."}]}',
   ].join('\n')
 }
 
@@ -277,9 +283,12 @@ export function draftHasForeignUrl(draft, item = {}) {
 
 function shapeClaudeResult(item, r, significanceRaw) {
   let relevant = toBool(r.relevant) === true // missing or garbled verdict = not relevant
+  const sensitive = toBool(r.sensitive) === true
   let significance = relevant ? significanceRaw : Math.min(significanceRaw, IRRELEVANT_MAX)
+  if (sensitive && significance < SENSITIVE_PUSH_THRESHOLD) significance = Math.min(significance, PUSH_THRESHOLD - 1)
   let draft = typeof r.draftMessage === 'string' ? r.draftMessage.trim() : ''
   let holdReason = typeof r.holdReason === 'string' ? r.holdReason.trim() : ''
+  let passAlong = typeof r.passAlong === 'string' ? r.passAlong.trim() : ''
   let draftRejected = false
 
   if (relevant && significance >= SIGNIFICANCE_THRESHOLD && draft && draftHasForeignUrl(draft, item)) {
@@ -293,6 +302,9 @@ function shapeClaudeResult(item, r, significanceRaw) {
   }
 
   const above = relevant && significance >= SIGNIFICANCE_THRESHOLD
+  // A favor is a relevant story below the bar that's worth forwarding as-is.
+  // Never for bad news, and never with a link the user didn't choose.
+  if (!relevant || above || sensitive || draftHasForeignUrl(passAlong, item)) passAlong = ''
   const rationale = typeof r.rationale === 'string' && r.rationale.trim() ? truncate(r.rationale.trim(), 200) : undefined
   const eventWhen = typeof r.eventWhen === 'string' && r.eventWhen.trim() ? truncate(r.eventWhen.trim(), 24) : undefined
 
@@ -306,6 +318,8 @@ function shapeClaudeResult(item, r, significanceRaw) {
     draftMessage: above && draft ? truncate(draft, 400) : undefined,
     holdReason: above ? undefined : (holdReason ? truncate(holdReason, 200) : heuristicHoldReason(significance)),
     eventWhen,
+    sensitive: sensitive || undefined,
+    passAlong: passAlong ? truncate(passAlong, 200) : undefined,
     draftRejected: draftRejected || undefined,
   }
 }

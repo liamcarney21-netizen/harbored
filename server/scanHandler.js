@@ -6,9 +6,10 @@
 //
 // Failure rules (the September 2026 outage was a silent keyword fallback):
 //  - Scoring never falls back to the keyword heuristic here. If the Claude call
-//    fails for a user, that user's stored rows are left exactly as they were
-//    (yesterday's results and notified_at memory survive), nothing is pushed
-//    for them, and the run counts them as errored. Items the model omitted are
+//    fails for a user, that user's stored rows are left as they were
+//    (yesterday's results and notified_at memory survive; only the end-of-run
+//    sweep of rows past the 72h window touches them), nothing is pushed for
+//    them, and the run counts them as errored. Items the model omitted are
 //    written as engine 'unscored' (above_bar false, score 0).
 //  - Each user is processed inside its own try/catch; one user's failure never
 //    stops the others or the push that follows.
@@ -28,11 +29,14 @@ export { createServiceClient } from './db.js'
 // push and record the run afterwards. Users are visited least-recently-scanned
 // first (user_data.last_scanned_at), so the cap rotates instead of starving
 // the same users every day; whoever doesn't fit is reported as users_skipped.
+// Within a user, themes beyond MAX_PAIRS_PER_USER take turns by day (see
+// pairsForUser), so every theme is watched.
 export const MAX_PAIRS_PER_USER = 6
 export const MAX_PAIRS_TOTAL = 40
 export const NEWS_ITEMS_PER_THEME = 8
 export const SCAN_BUDGET_MS = 34000 // no new user is started after this (leaves ≥12s before the Claude deadline)
 export const LLM_DEADLINE_MS = 46000 // no Claude attempt or retry starts after this
+const DAY_MS = 86400000
 
 // Fields added by migration 0005. If they aren't there yet, rows are written
 // without them (old behaviour) and the run logs it once.
@@ -71,8 +75,31 @@ export function livePairs(data) {
   return pairs
 }
 
-export function pairsForUser(data, maxPerUser = MAX_PAIRS_PER_USER) {
-  return livePairs(data).slice(0, maxPerUser)
+// The pairs to scan today. Up to the cap, that's all of them. Past it, a
+// window of `maxPerUser` pairs moves forward by its own length each day and
+// wraps, so n pairs are all scanned within ceil(n / maxPerUser) days instead
+// of the same first few forever. Day 0 is the first window.
+export function pairsForUser(data, maxPerUser = MAX_PAIRS_PER_USER, { day = 0 } = {}) {
+  const all = livePairs(data)
+  if (all.length <= maxPerUser) return all
+  const start = (Math.max(0, Math.floor(day)) * maxPerUser) % all.length
+  return Array.from({ length: maxPerUser }, (_, i) => all[(start + i) % all.length])
+}
+
+export function scanDay(nowMs) {
+  return Math.floor(nowMs / DAY_MS)
+}
+
+// Themes that resolved to a broad topic rather than a specific team, company,
+// person or place ("fintech startup" for a contact with no company). Their
+// rows can show on Today, but they never push: only the model's judgment
+// would stand between a generic headline and a notification.
+export function broadThemePairs(data) {
+  const broad = new Set()
+  for (const { contact, theme } of livePairs(data)) {
+    if (theme.entityType === 'topic') broad.add(pairKey(contact.id, theme.label))
+  }
+  return broad
 }
 
 // content_key is the stable identity of a result — the same headline for the
@@ -218,7 +245,9 @@ export function shapeResultRows(found, scoreById, userId, notifiedByKey, scanned
       link: item.link || null,
       score,
       rationale,
-      draft_message: above ? (scored.draftMessage ?? null) : null,
+      // Above the bar: the reach-out draft. Below it: the scorer's note for
+      // passing a relevant story along (a favor), when it judged one fits.
+      draft_message: above ? (scored.draftMessage ?? null) : (relevant ? (scored.passAlong ?? null) : null),
       above_bar: above,
       content_key: key,
       notified_at: notifiedByKey.get(key) ?? notifiedByStory.get(storyKey) ?? null,
@@ -427,6 +456,7 @@ export async function runScan(supabase, {
   fetchNews,
 } = {}) {
   const startMs = startedAt ? new Date(startedAt).getTime() : now()
+  const day = scanDay(startMs)
   const state = {}
   const users = await loadUsers(supabase, state)
 
@@ -439,12 +469,14 @@ export async function runScan(supabase, {
     users_skipped: 0,
     users_errored: 0,
     users_idle: 0,
+    pairs_waiting: 0, // themes past the per-user cap, scanned on another day
     items_claude: 0,
     items_fallback: 0, // items not scored by Claude (omitted by the model); never keyword-scored
     above_bar: 0,
     rows_written: 0,
     news_failed: 0,
     cleanup_errors: 0,
+    rows_expired: 0,
     errors: [],
     // Original response keys, kept for existing callers.
     usersScanned: 0,
@@ -454,14 +486,17 @@ export async function runScan(supabase, {
   const erroredUserIds = []
   const processedUserIds = []
   const prefsByUser = new Map()
+  const broadPairsByUser = new Map()
   let totalPairs = 0
 
   for (const row of users) {
     const data = row?.data && typeof row.data === 'object' ? row.data : {}
     prefsByUser.set(row.user_id, data.prefs && typeof data.prefs === 'object' ? data.prefs : {})
-    const all = pairsForUser(data, maxPairsPerUser)
+    broadPairsByUser.set(row.user_id, broadThemePairs(data))
+    const all = pairsForUser(data, maxPairsPerUser, { day })
     const birthday = hasBirthdayToday(data, new Date(now()))
     if (all.length === 0 && !birthday) { summary.users_idle++; continue }
+    summary.pairs_waiting += Math.max(0, livePairs(data).length - all.length)
 
     if (now() - startMs > budgetMs) { summary.users_skipped++; continue }
     const pairs = all.slice(0, Math.max(0, maxPairsTotal - totalPairs))
@@ -496,13 +531,28 @@ export async function runScan(supabase, {
     }
   }
 
+  // Rows past the freshness window can never be shown or pushed again.
+  // Scanned users lose theirs above; this sweep covers everyone else (idle
+  // accounts with no themes left, users skipped or errored this run), whose
+  // rows would otherwise sit there for good.
+  const expireBefore = new Date(now() - FRESH_HOURS * 3600000).toISOString()
+  const { error: expireErr, count: expired } = await supabase
+    .from('scan_results').delete({ count: 'exact' }).lt('scanned_at', expireBefore)
+  if (expireErr) {
+    summary.cleanup_errors++
+    summary.errors.push({ user: 'all', stage: 'expire', message: String(expireErr.message).slice(0, 300) })
+    console.error(`[scan] could not remove expired rows: ${expireErr.message}`)
+  } else {
+    summary.rows_expired = expired || 0
+  }
+
   summary.usersScanned = processedUserIds.length
   summary.resultsWritten = summary.rows_written
   summary.finished_at = new Date(now()).toISOString()
   // Internal hand-off to the push step; non-enumerable so it never lands in a
   // JSON response or log line.
   Object.defineProperty(summary, 'internal', {
-    value: { erroredUserIds, processedUserIds, prefsByUser },
+    value: { erroredUserIds, processedUserIds, prefsByUser, broadPairsByUser },
     enumerable: false,
   })
   return summary
@@ -517,7 +567,7 @@ export async function rescanUser(supabase, userId, { now = Date.now, score, fetc
   const { data: row, error } = await supabase.from('user_data').select('user_id, data').eq('user_id', userId).maybeSingle()
   if (error) throw new UserScanError('read', error.message)
   const data = row?.data && typeof row.data === 'object' ? row.data : {}
-  const pairs = pairsForUser(data, maxPairsPerUser)
+  const pairs = pairsForUser(data, maxPairsPerUser, { day: scanDay(now()) })
   if (pairs.length === 0 && !hasBirthdayToday(data, new Date(now()))) {
     return { status: 'idle', themes: 0, news_ok: 0, news_failed: 0, items_found: 0, items_claude: 0, items_unscored: 0, above_bar: 0, rows_written: 0, rows_deleted: 0, cleanup_error: null }
   }

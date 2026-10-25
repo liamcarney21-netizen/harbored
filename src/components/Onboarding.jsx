@@ -23,7 +23,7 @@ const STEPS = [
     icon: Waves,
     kicker: 'Step two',
     title: 'Harbored keeps watch.',
-    body: "It follows your themes in the news around the clock. Routine coverage stays quiet. Only the few things genuinely worth a message reach you — as a front page written about your people.",
+    body: "Every morning it reads the news on your themes. Routine coverage stays quiet. Only the few things genuinely worth a message reach you — as a front page written about your people.",
     visual: 'quiet',
   },
   {

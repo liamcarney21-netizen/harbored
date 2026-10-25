@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { contentKeyFor, notifiedKeyMap, shapeResultRows, birthdayRowsForUser } from './scanHandler.js'
+import { contentKeyFor, notifiedKeyMap, shapeResultRows, birthdayRowsForUser, pairsForUser, broadThemePairs, pairKey } from './scanHandler.js'
 
 describe('birthdayRowsForUser', () => {
   const now = new Date(2026, 5, 1) // Jun 1, 2026
@@ -129,5 +129,50 @@ describe('seeds, story keys and pairs', () => {
     const found = [{ contact: { id: 1, name: 'A' }, theme: { label: 'T' }, item: { title: 'h', link: 'l' } }]
     expect(shapeResultRows(found, new Map([[0, { engine: 'heuristic', relevant: null, score: 95 }]]), 'u1', new Map(), 'now')[0]).toMatchObject({ above_bar: false, score: 0, engine: 'heuristic' })
     expect(shapeResultRows(found, new Map([[0, { engine: 'claude', relevant: false, score: 90 }]]), 'u1', new Map(), 'now')[0]).toMatchObject({ above_bar: false, relevant: false })
+  })
+})
+
+describe('theme rotation and broad themes', () => {
+  // Four people with two themes each: eight pairs, newest person first.
+  const data = {
+    contacts: [1, 2, 3, 4].map(i => ({ id: 1700000000000 + i, name: `P${i}` })),
+    themesByContact: Object.fromEntries([1, 2, 3, 4].map(i => [1700000000000 + i, [{ id: `a${i}`, label: `A${i}` }, { id: `b${i}`, label: `B${i}` }]])),
+  }
+  const labels = (pairs) => pairs.map(p => p.theme.label)
+
+  it('scans everything when under the cap, whatever the day', () => {
+    expect(pairsForUser(data, 8, { day: 5 })).toHaveLength(8)
+    expect(labels(pairsForUser(data, 10, { day: 3 }))).toEqual(labels(pairsForUser(data, 10)))
+  })
+
+  it('moves a window of cap-many pairs forward each day, so every pair gets its turn', () => {
+    expect(labels(pairsForUser(data, 3))).toEqual(['A4', 'B4', 'A3']) // day 0: the first window, as before
+    expect(labels(pairsForUser(data, 3, { day: 1 }))).toEqual(['B3', 'A2', 'B2'])
+    expect(labels(pairsForUser(data, 3, { day: 2 }))).toEqual(['A1', 'B1', 'A4']) // wraps
+    const seen = new Set([0, 1, 2].flatMap(day => labels(pairsForUser(data, 3, { day }))))
+    expect(seen.size).toBe(8) // ceil(8 / 3) = 3 days covers all of them
+  })
+
+  it("marks only themes that resolved to a broad topic, never a sample person's", () => {
+    const d = {
+      contacts: [{ id: 1, name: 'Kellan' }, { id: 2, name: 'Sample', seed: true }],
+      themesByContact: {
+        1: [{ label: 'Fintech startup', entityType: 'topic' }, { label: 'Villanova', entityType: 'team' }, { label: 'Unrefined' }],
+        2: [{ label: 'Real estate', entityType: 'topic' }],
+      },
+    }
+    expect([...broadThemePairs(d)]).toEqual([pairKey(1, 'Fintech startup')])
+    expect(broadThemePairs(null).size).toBe(0)
+  })
+})
+
+describe('pass-along notes', () => {
+  const found = [{ contact: { id: 1, name: 'Ann' }, theme: { label: 'F1' }, item: { title: '2027 F1 calendar released', link: 'https://n/f1' } }]
+
+  it('stores the scorer\'s note on a relevant row below the bar, and nothing on an irrelevant one', () => {
+    const relevant = new Map([[0, { engine: 'claude', relevant: true, score: 45, passAlong: 'Ann, the 2027 calendar is out.' }]])
+    expect(shapeResultRows(found, relevant, 'u1', new Map(), 'now')[0]).toMatchObject({ above_bar: false, draft_message: 'Ann, the 2027 calendar is out.' })
+    const irrelevant = new Map([[0, { engine: 'claude', relevant: false, score: 15, passAlong: 'Ann, look.' }]])
+    expect(shapeResultRows(found, irrelevant, 'u1', new Map(), 'now')[0].draft_message).toBe(null)
   })
 })

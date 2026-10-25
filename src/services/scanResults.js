@@ -8,9 +8,28 @@
 
 import { supabase } from '../lib/supabase'
 import { useAuthStore } from '../store/authStore'
-import { isGiveable, holdReasonFor } from './monitoring'
+import { daysUntilBirthday } from '../lib/birthday'
+import { holdReasonFor } from './monitoring'
 
 const FALLBACK_COLORS = ['#1e3a5f', '#1a2e4a', '#1c3554', '#172b45']
+// The scan only keeps news published in the last 72 hours (FRESH_HOURS on the
+// server); anything older is past news even if a row for it is still stored.
+const FRESH_MS = 72 * 3600000
+
+// Fired when the stored reasons are known to have changed (a push was
+// tapped), so Today re-reads them instead of showing the deck it last loaded.
+export const REASONS_STALE_EVENT = 'harbored:reasons-stale'
+export function markReasonsStale() {
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event(REASONS_STALE_EVENT))
+}
+
+// A birthday row says "today", so it shows only on the day itself (the
+// contact's birthday in this device's calendar). News rows show while fresh.
+function isCurrent(row, contact, now = Date.now()) {
+  if (row.theme_category === 'birthday') return daysUntilBirthday(contact?.birthday, new Date(now)) === 0
+  const t = Date.parse(row.published_at || row.scanned_at || '')
+  return Number.isFinite(t) && now - t < FRESH_MS
+}
 
 function initialsFrom(name) {
   return (name || '')
@@ -59,7 +78,7 @@ export async function fetchStoredUpdates(contacts = []) {
 
   // Rows for people who have since been removed from the crew don't become
   // reasons; the next scan drops them server-side.
-  return (data || []).filter(row => byId.has(String(row.contact_id))).map(row => {
+  return (data || []).filter(row => byId.has(String(row.contact_id)) && isCurrent(row, byId.get(String(row.contact_id)))).map(row => {
     const contact = byId.get(String(row.contact_id))
     const name = row.contact_name || contact?.name || 'Someone'
     const first = name.split(' ')[0]
@@ -69,7 +88,9 @@ export async function fetchStoredUpdates(contacts = []) {
     const headsUpMatch = (row.rationale || '').match(/^\[Heads-up · (.{1,30}?)\]\s*/)
     const headsUp = headsUpMatch ? headsUpMatch[1] : undefined
     const rationale = headsUpMatch ? (row.rationale || '').slice(headsUpMatch[0].length) : row.rationale
-    const giveable = !above && isGiveable(row.headline || '')
+    // Below the bar, a row is a favor only when the scorer judged it relevant
+    // and worth forwarding, in which case it wrote the note to send with it.
+    const giveable = !above && row.relevant !== false && !!row.draft_message
     // Match the live store's numeric ids so navigation/send handlers resolve
     // the contact; fall back to the raw value if it isn't numeric.
     const numeric = Number(row.contact_id)
@@ -95,13 +116,12 @@ export async function fetchStoredUpdates(contacts = []) {
       score: row.score,
       headsUp,
       rationale: rationale || undefined,
-      draftMessage: above
-        ? (row.draft_message || `${first} — did you see this? "${row.headline}" Immediately thought of you.`)
-        : undefined,
+      // The scorer always writes a draft for a reason; if one is ever missing,
+      // the stand-in is a plain check-in that reads right whatever the news
+      // was (bad news included) and never quotes the headline.
+      draftMessage: above ? (row.draft_message || `Hey ${first}, this made me think of you. How are you doing?`) : undefined,
       giveable,
-      giveMessage: giveable
-        ? `${first} — saw this and thought of you: "${row.headline}". No agenda, just figured you'd want it.`
-        : undefined,
+      giveMessage: giveable ? row.draft_message : undefined,
       holdReason: above ? undefined : holdReasonFor(row.score),
     }
   })

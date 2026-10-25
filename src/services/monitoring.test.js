@@ -1,18 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { isGiveable, holdReasonFor } from './monitoring'
-
-describe('isGiveable', () => {
-  it('flags forwardable / resource-y headlines (a "give first" favor)', () => {
-    expect(isGiveable('The best guide to Charleston real estate')).toBe(true)
-    expect(isGiveable('2027 F1 schedule released')).toBe(true)
-    expect(isGiveable('New report: downtown retail trends')).toBe(true)
-  })
-
-  it('does not flag hard-news headlines', () => {
-    expect(isGiveable('Company acquires rival in $2B deal')).toBe(false)
-    expect(isGiveable('Villanova lands five-star transfer guard')).toBe(false)
-  })
-})
+import { holdReasonFor } from './monitoring'
 
 describe('holdReasonFor', () => {
   it('explains near-miss scores as close to the bar', () => {

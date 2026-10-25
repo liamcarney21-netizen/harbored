@@ -340,3 +340,35 @@ describe('before the migrations are applied', () => {
     expect(again.push.stories_pushed || 0).toBe(0)
   })
 })
+
+describe('expired rows and theme rotation', () => {
+  it('sweeps rows past the 72h window for every account, including ones with nothing to scan', async () => {
+    const base = { user_id: 'idle', contact_id: '5', contact_name: 'Pat', theme_label: 'Lakers', source: 'Wire', link: null }
+    const old = { ...base, id: 'gone', headline: 'Old', score: 85, above_bar: true, scanned_at: new Date(DAY0 - 80 * H).toISOString() }
+    const recent = { ...base, id: 'kept', headline: 'Recent', score: 40, above_bar: false, scanned_at: new Date(DAY0 - 30 * H).toISOString() }
+    const supabase = createFakeSupabase({ tables: { user_data: [{ user_id: 'idle', data: { contacts: [], themesByContact: {} } }], scan_results: [old, recent] } })
+    const h = harness({ feed: () => [] })
+    const out = await runScheduledScan(supabase, h.options(DAY0))
+    expect(supabase.rows('scan_results').map(r => r.id)).toEqual(['kept'])
+    expect(out.scan).toMatchObject({ users_idle: 1, rows_expired: 1, cleanup_errors: 0 })
+    expect(out.run.healthy).toBe(true)
+  })
+
+  it('scans a window of themes past the per-user cap and counts the rest as waiting', async () => {
+    const supabase = createFakeSupabase({
+      tables: { user_data: [user('u1', [{ id: 1001, name: 'Diego Alvarez', themes: ['Vikings', 'Twins', 'Wild'] }])], scan_results: [] },
+    })
+    const queries = []
+    const h = harness({ feed: (q) => { queries.push(q); return [] } })
+    const opts = h.options(DAY0)
+    const out = await runScheduledScan(supabase, { ...opts, scan: { ...opts.scan, maxPairsPerUser: 2 } })
+    expect(queries).toHaveLength(2)
+    expect(out.scan.pairs_waiting).toBe(1)
+    // The next day's window starts where this one ended.
+    const next = []
+    const h2 = harness({ feed: (q) => { next.push(q); return [] } })
+    const opts2 = h2.options(DAY0 + 24 * H)
+    await runScheduledScan(supabase, { ...opts2, scan: { ...opts2.scan, maxPairsPerUser: 2 } })
+    expect(new Set([...queries, ...next])).toEqual(new Set(['Vikings', 'Twins', 'Wild']))
+  })
+})

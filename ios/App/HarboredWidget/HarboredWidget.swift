@@ -1,6 +1,7 @@
 // Harbored home-screen widget: today's lead reason as a front-page card.
 // Data arrives via the shared app group — the app writes `widget_today`
-// (JSON: kicker, headline, name, updatedAt) through Capacitor Preferences.
+// (JSON: kicker, headline, name, updatedAt in ms) through its WidgetBridge
+// plugin, which also reloads this timeline.
 import WidgetKit
 import SwiftUI
 
@@ -23,12 +24,18 @@ let placeholderReason = LeadReason(
     updatedAt: nil
 )
 
+// The app rewrites this whenever Today shows. A reason it wrote more than
+// three days ago is old news, so the quiet state shows instead.
+let staleAfter: TimeInterval = 3 * 24 * 3600
+
 func readLeadReason() -> LeadReason? {
     guard let defaults = UserDefaults(suiteName: "group.app.harbored"),
           let raw = defaults.string(forKey: "widget_today"),
-          let data = raw.data(using: .utf8)
+          let data = raw.data(using: .utf8),
+          let reason = try? JSONDecoder().decode(LeadReason.self, from: data)
     else { return nil }
-    return try? JSONDecoder().decode(LeadReason.self, from: data)
+    if let ms = reason.updatedAt, Date().timeIntervalSince1970 - ms / 1000 > staleAfter { return nil }
+    return reason
 }
 
 struct Provider: TimelineProvider {
@@ -86,7 +93,7 @@ struct HarboredWidgetView: View {
                         .tracking(0.8)
                         .foregroundColor(muted)
                 }
-                Text("The watch has begun")
+                Text("All quiet")
                     .font(.system(size: 16, weight: .medium, design: .serif))
                     .foregroundColor(cream)
                 Spacer(minLength: 0)
