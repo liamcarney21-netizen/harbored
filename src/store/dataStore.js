@@ -4,9 +4,13 @@ import { sharedThemes as seedThemes } from '../data/commonGround'
 import { supabase } from '../lib/supabase'
 import { useAuthStore } from './authStore'
 import { daysUntilBirthday } from '../lib/birthday'
+import {
+  DEFAULT_PREFS, SNAPSHOT_KEYS, emptySnapshot, initialsOf,
+  normalizeSnapshot, repairSnapshot, mergeSnapshots,
+} from './snapshot'
 
 // Re-exported so existing importers (Common Ground, tests) keep their path.
-export { daysUntilBirthday }
+export { daysUntilBirthday, normalizeSnapshot, repairSnapshot, mergeSnapshots }
 
 const DAY = 86400000
 const daysAgo = n => new Date(Date.now() - n * DAY).toISOString()
@@ -84,51 +88,13 @@ function seedSnapshot() {
   }
 }
 
-// ── Snapshot shape ──────────────────────────────────────────────────────────
+// The App Review sign-in. Its account starts with the sample people and keeps
+// them; every other account has them removed on load. Add the new address
+// here before moving the review login to it.
+const REVIEW_EMAILS = ['review@harbored.app']
 
-const DEFAULT_PREFS = { push: true, digest: true }
-const SNAPSHOT_KEYS = ['contacts', 'themesByContact', 'touches', 'meetings', 'prefs', 'reasonState']
-
-function emptySnapshot() {
-  return { contacts: [], themesByContact: {}, touches: [], meetings: [], prefs: { ...DEFAULT_PREFS }, reasonState: {} }
-}
-
-// Whatever comes back from the server or the local cache is treated as
-// untrusted: one malformed record used to be enough to blank the whole app.
-export function normalizeSnapshot(raw) {
-  const s = raw && typeof raw === 'object' ? raw : {}
-  const contacts = (Array.isArray(s.contacts) ? s.contacts : [])
-    .filter(c => c && typeof c.name === 'string' && c.name.trim() && c.id != null)
-    .map(c => ({
-      ...c,
-      name: c.name.trim(),
-      initials: c.initials || initialsOf(c.name),
-      email: typeof c.email === 'string' ? c.email : '',
-      phone: typeof c.phone === 'string' ? c.phone : '',
-      role: typeof c.role === 'string' ? c.role : '',
-      company: typeof c.company === 'string' ? c.company : '',
-      birthday: typeof c.birthday === 'string' ? c.birthday : '',
-      notes: typeof c.notes === 'string' ? c.notes : '',
-      lastTouch: c.lastTouch || null,
-    }))
-  const themesByContact = {}
-  if (s.themesByContact && typeof s.themesByContact === 'object') {
-    for (const [cid, list] of Object.entries(s.themesByContact)) {
-      if (Array.isArray(list)) themesByContact[cid] = list.filter(t => t && typeof t.label === 'string' && t.id != null)
-    }
-  }
-  return {
-    contacts,
-    themesByContact,
-    touches: (Array.isArray(s.touches) ? s.touches : []).filter(t => t && t.id != null && t.date),
-    meetings: Array.isArray(s.meetings) ? s.meetings : [],
-    prefs: { ...DEFAULT_PREFS, ...(s.prefs && typeof s.prefs === 'object' ? s.prefs : {}) },
-    reasonState: s.reasonState && typeof s.reasonState === 'object' ? s.reasonState : {},
-  }
-}
-
-function initialsOf(name = '') {
-  return name.split(' ').filter(Boolean).map(w => w[0]).join('').slice(0, 2).toUpperCase() || '?'
+function isReviewAccount(user) {
+  return REVIEW_EMAILS.includes((user?.email || '').toLowerCase())
 }
 
 function snapshotOf(state) {
@@ -137,57 +103,12 @@ function snapshotOf(state) {
   return out
 }
 
-// Two snapshots of the same account, merged by id. Used when another device
-// saved in between (the server copy wins the race, local edits are layered on
-// top) and when a dirty local copy is found at launch. Union everywhere: a
-// contact present in either copy survives, and for a record present in both
-// the local version wins.
-export function mergeSnapshots(base, local) {
-  const b = normalizeSnapshot(base)
-  const l = normalizeSnapshot(local)
-  const byId = (list) => new Map(list.map(x => [String(x.id), x]))
-
-  const contacts = byId(b.contacts)
-  for (const c of l.contacts) contacts.set(String(c.id), c)
-
-  const themesByContact = {}
-  const cids = new Set([...Object.keys(b.themesByContact), ...Object.keys(l.themesByContact)])
-  for (const cid of cids) {
-    const m = byId(b.themesByContact[cid] || [])
-    for (const t of l.themesByContact[cid] || []) m.set(String(t.id), t)
-    themesByContact[cid] = [...m.values()]
-  }
-
-  const touches = byId(b.touches)
-  for (const t of l.touches) touches.set(String(t.id), t)
-  const meetings = byId(b.meetings)
-  for (const m of l.meetings) meetings.set(String(m.id), m)
-
-  // lastTouch is derived from touches on both sides; keep the latest.
-  const latestTouch = {}
-  for (const t of touches.values()) {
-    const k = String(t.contactId)
-    if (!latestTouch[k] || t.date > latestTouch[k]) latestTouch[k] = t.date
-  }
-  const mergedContacts = [...contacts.values()].map(c => {
-    const lt = latestTouch[String(c.id)]
-    return lt && (!c.lastTouch || lt > c.lastTouch) ? { ...c, lastTouch: lt } : c
-  })
-
-  return {
-    contacts: mergedContacts,
-    themesByContact,
-    touches: [...touches.values()].sort((a, c) => (a.date < c.date ? 1 : -1)),
-    meetings: [...meetings.values()],
-    prefs: { ...b.prefs, ...l.prefs },
-    reasonState: { ...b.reasonState, ...l.reasonState },
-  }
-}
-
 // ── Local cache / outbox ────────────────────────────────────────────────────
 // The last known snapshot per account lives in localStorage so the app can
 // render instantly on launch and so edits made offline survive a relaunch.
-// `dirty` means the local copy has changes the server hasn't confirmed.
+// `dirty` means the local copy has changes the server hasn't confirmed; a
+// dirty copy also keeps `base`, the copy the server last confirmed, which the
+// three-way merge needs to tell a removal here from an addition there.
 
 const cacheKey = uid => `harbored_snapshot_${uid}`
 
@@ -196,16 +117,29 @@ function readCache(uid) {
     const raw = localStorage.getItem(cacheKey(uid))
     if (!raw) return null
     const parsed = JSON.parse(raw)
-    return { snap: normalizeSnapshot(parsed.snap), dirty: !!parsed.dirty, savedAt: parsed.savedAt }
+    return {
+      snap: normalizeSnapshot(parsed.snap),
+      dirty: !!parsed.dirty,
+      base: parsed.base ? normalizeSnapshot(parsed.base) : null,
+      savedAt: parsed.savedAt,
+    }
   } catch {
     return null
   }
 }
 
-function writeCache(uid, snap, dirty) {
+function writeCache(uid, snap, dirty, base = null) {
+  const entry = { snap, dirty, savedAt: Date.now() }
+  if (dirty && base) entry.base = base
   try {
-    localStorage.setItem(cacheKey(uid), JSON.stringify({ snap, dirty, savedAt: Date.now() }))
-  } catch { /* quota or private mode — the server copy is still the source of truth */ }
+    localStorage.setItem(cacheKey(uid), JSON.stringify(entry))
+  } catch {
+    // Quota or private mode. Without the base the edits still survive; the
+    // server copy is the source of truth either way.
+    if (!entry.base) return
+    delete entry.base
+    try { localStorage.setItem(cacheKey(uid), JSON.stringify(entry)) } catch { /* ignore */ }
+  }
 }
 
 function clearCache(uid) {
@@ -242,6 +176,9 @@ export const useDataStore = create((set, get) => {
   let inFlight = null
   let writeAgain = false
   let lastLoadAt = 0
+  let cacheQueued = false
+  // The copy the server last confirmed for the account in memory: the merge base.
+  let confirmed = null
 
   function currentUserId() {
     return useAuthStore.getState().user?.id ?? null
@@ -255,16 +192,20 @@ export const useDataStore = create((set, get) => {
     return !!uid && s.ownerId === uid && s.synced && !s.loading && !s.loadError && !s.demo
   }
 
+  // The account in memory changed hands while a request was out (sign-out,
+  // account switch): whatever came back belongs to nobody on screen.
+  const stillOwner = (uid) => currentUserId() === uid && get().ownerId === uid
+
   // One write at a time; if more changes land while one is in flight, exactly
   // one more write follows. Each write is conditional on the server row still
   // carrying the updated_at we last saw. If another device saved in between,
-  // the server copy is fetched, merged under the local edits, and the write
-  // is retried once.
+  // the server copy is fetched, three-way merged with what is on screen now,
+  // and the write is retried.
   async function writeNow() {
     if (inFlight) { writeAgain = true; return inFlight }
     inFlight = (async () => {
-      for (let attempt = 0; attempt < 2; attempt++) {
-        if (!canWrite()) return
+      for (let attempt = 0; attempt < 3; attempt++) {
+        if (!canWrite() || !get().dirty) return
         const s = get()
         const uid = s.ownerId
         const snap = snapshotOf(s)
@@ -272,33 +213,47 @@ export const useDataStore = create((set, get) => {
         let q = supabase.from('user_data').update({ data: snap, updated_at: now }).eq('user_id', uid)
         if (s.loadedAt) q = q.eq('updated_at', s.loadedAt)
         const { data, error } = await q.select('updated_at')
+        if (!stillOwner(uid)) return
         if (error) {
           console.error('Save failed:', error.message)
           set({ syncError: error.message })
           return // the local cache stays dirty; retried on the next change, resume, or launch
         }
         if (data && data.length > 0) {
-          set({ loadedAt: data[0].updated_at, syncError: null, dirty: false })
-          writeCache(uid, snap, false)
+          confirmed = snap
+          // An edit made while the request was out is not in `snap`: it stays
+          // dirty (and cached as such) until its own scheduled write lands.
+          const unchanged = SNAPSHOT_KEYS.every(k => get()[k] === snap[k])
+          set({ loadedAt: data[0].updated_at, syncError: null, dirty: !unchanged })
+          if (unchanged) writeCache(uid, snap, false)
+          else writeCache(uid, snapshotOf(get()), true, snap)
           return
         }
         // No row matched: someone else saved first, or the row is missing.
         const { data: row, error: e2 } = await supabase
           .from('user_data').select('data, updated_at').eq('user_id', uid).maybeSingle()
+        if (!stillOwner(uid)) return
         if (e2) { console.error('Save conflict check failed:', e2.message); set({ syncError: e2.message }); return }
         if (!row) {
           const { error: e3 } = await supabase
             .from('user_data')
             .upsert({ user_id: uid, data: snap, updated_at: now }, { onConflict: 'user_id', ignoreDuplicates: true })
+          if (!stillOwner(uid)) return
           if (e3) { console.error('Save (create) failed:', e3.message); set({ syncError: e3.message }); return }
           set({ loadedAt: null }) // next attempt writes unconditionally
           continue
         }
-        if (currentUserId() !== uid) return
-        const merged = mergeSnapshots(row.data, snap)
+        // Merge what is on screen now, including edits made during this round trip.
+        const server = normalizeSnapshot(row.data)
+        const merged = mergeSnapshots(confirmed, server, snapshotOf(get()))
+        confirmed = server
         set({ ...merged, loadedAt: row.updated_at })
+        writeCache(uid, merged, true, server)
         // loop: retry the conditional write with the server's updated_at
       }
+      // Still racing another device after three tries. The copy stays dirty and
+      // the next change, resume or launch tries again; say so meanwhile.
+      if (get().dirty) set({ syncError: 'Another device kept saving at the same time.' })
     })().finally(() => {
       inFlight = null
       if (writeAgain) { writeAgain = false; writeNow() }
@@ -306,13 +261,24 @@ export const useDataStore = create((set, get) => {
     return inFlight
   }
 
+  // Local first, always: the cached copy is what survives a relaunch. Written
+  // once per burst of changes (a bulk import adds hundreds of people in one
+  // loop) rather than once per change.
+  function queueCacheWrite() {
+    if (cacheQueued) return
+    cacheQueued = true
+    queueMicrotask(() => {
+      cacheQueued = false
+      const s = get()
+      if (s.ownerId && !s.demo && s.dirty) writeCache(s.ownerId, snapshotOf(s), true, confirmed)
+    })
+  }
+
   function scheduleSync() {
     const s = get()
-    const uid = s.ownerId
-    if (uid && !s.demo) {
-      // Local first, always: this is what survives a relaunch.
-      writeCache(uid, snapshotOf(s), true)
+    if (s.ownerId && !s.demo) {
       if (!s.dirty) set({ dirty: true })
+      queueCacheWrite()
     }
     if (!canWrite()) return
     clearTimeout(syncTimer)
@@ -359,10 +325,14 @@ export const useDataStore = create((set, get) => {
       const user = useAuthStore.getState().user
       if (!user) { set({ loading: false }); return }
       const uid = user.id
+      const keepSamples = isReviewAccount(user)
       cancelSync()
       const cached = readCache(uid)
+      // A dirty cache from a build before the merge base existed has none; the
+      // merge then keeps everything either side has.
+      confirmed = cached ? (cached.dirty ? cached.base : cached.snap) : null
       set({
-        ...(cached ? cached.snap : emptySnapshot()),
+        ...(cached ? repairSnapshot(cached.snap, { keepSamples }).snap : emptySnapshot()),
         ownerId: uid, loading: !cached, loadError: null, fromCache: !!cached,
         dirty: !!cached?.dirty, synced: false, demo: false,
       })
@@ -372,7 +342,7 @@ export const useDataStore = create((set, get) => {
         .select('data, updated_at')
         .eq('user_id', uid)
         .maybeSingle()
-      if (currentUserId() !== uid || get().ownerId !== uid) return // signed out or switched meanwhile
+      if (!stillOwner(uid)) return // signed out or switched meanwhile
 
       if (error) {
         console.error('Failed to load data from Supabase:', error.message)
@@ -382,23 +352,29 @@ export const useDataStore = create((set, get) => {
       lastLoadAt = Date.now()
 
       // Anything edited locally (a dirty cache, or taps made while this load
-      // ran) is layered over the server copy, never thrown away.
+      // ran) is merged with the server copy, never thrown away.
       const localDirty = get().dirty ? snapshotOf(get()) : null
 
       if (data?.data) {
-        let snap = normalizeSnapshot(data.data)
-        if (localDirty) snap = mergeSnapshots(snap, localDirty)
-        set({ ...snap, loading: false, loadError: null, fromCache: false, loadedAt: data.updated_at, synced: true, dirty: !!localDirty })
-        writeCache(uid, snap, !!localDirty)
-        if (localDirty) scheduleSync()
+        const server = normalizeSnapshot(data.data)
+        // Repairs to the server's own copy (see repairSnapshot) are saved like an edit.
+        const repaired = repairSnapshot(data.data, { keepSamples })
+        const snap = localDirty
+          ? repairSnapshot(mergeSnapshots(confirmed, server, localDirty), { keepSamples }).snap
+          : repaired.snap
+        const dirty = !!localDirty || repaired.changed
+        confirmed = server
+        set({ ...snap, loading: false, loadError: null, fromCache: false, loadedAt: data.updated_at, synced: true, dirty })
+        writeCache(uid, snap, dirty, server)
+        if (dirty) scheduleSync()
         return
       }
 
       // No row: a genuinely new account (the read succeeded and found nothing).
-      const isReview = (user.email || '').toLowerCase() === 'review@harbored.app'
-      const snap = localDirty || (isReview ? seedSnapshot() : emptySnapshot())
+      const snap = localDirty || (keepSamples ? seedSnapshot() : emptySnapshot())
       const loadedAt = await createRow(uid, snap)
-      if (currentUserId() !== uid || get().ownerId !== uid) return
+      if (!stillOwner(uid)) return
+      confirmed = snap
       set({ ...snap, loading: false, loadError: null, fromCache: false, loadedAt, synced: true, dirty: false })
       writeCache(uid, snap, false)
     },
@@ -427,6 +403,7 @@ export const useDataStore = create((set, get) => {
     // cancelled (callers flush first when they want them kept).
     reset: () => {
       cancelSync()
+      confirmed = null
       set({ ...emptySnapshot(), ownerId: null, loading: true, loadError: null, syncError: null, dirty: false, fromCache: false, synced: false, demo: false })
     },
 
@@ -435,6 +412,7 @@ export const useDataStore = create((set, get) => {
     // No-auth "See it live" demo: the sample network, never written anywhere.
     loadDemo: () => {
       cancelSync()
+      confirmed = null
       set({ ...seedSnapshot(), ownerId: null, loading: false, loadError: null, dirty: false, fromCache: false, synced: false, demo: true })
     },
     setDemo: (active) => set({ demo: !!active }),

@@ -76,10 +76,10 @@ describe('normalizeSnapshot', () => {
 })
 
 describe('mergeSnapshots', () => {
-  it('keeps people from both sides and lets local edits win per record', () => {
+  it('without a base, keeps people from both sides and lets local edits win per record', () => {
     const server = { contacts: [{ id: 1, name: 'Kate', notes: 'server' }, { id: 2, name: 'Dan' }], themesByContact: { 1: [{ id: 'a', label: 'Nova' }] }, touches: [], meetings: [] }
     const local = { contacts: [{ id: 1, name: 'Kate', notes: 'local' }, { id: 3, name: 'Anna' }], themesByContact: { 1: [{ id: 'b', label: 'Charleston' }] }, touches: [{ id: 'x', contactId: 1, date: '2026-10-21T00:00:00Z' }], meetings: [] }
-    const m = mergeSnapshots(server, local)
+    const m = mergeSnapshots(null, server, local)
     expect(m.contacts.map(c => c.id).sort()).toEqual([1, 2, 3])
     expect(m.contacts.find(c => c.id === 1).notes).toBe('local')
     expect(m.contacts.find(c => c.id === 1).lastTouch).toBe('2026-10-21T00:00:00Z')

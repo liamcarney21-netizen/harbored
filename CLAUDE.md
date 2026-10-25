@@ -34,8 +34,10 @@ layout for every screen (phone-width, centered on desktop); do not add desktop-o
 - `src/ui/` — tokens (`T`), `Button`, `Card`/`Row`/`Eyebrow`/`PageTitle`, `Field`
   (`Input`, `TextArea`, `Label`, `Toggle`, `ErrorText`), `Sheet` (the only modal), `toast`.
   New UI uses these; don't re-declare colors or hand-roll buttons.
-- `src/store/dataStore.js` — the account's data and its sync (see below). `authStore.js`,
-  `demoStore.js` (no-auth demo over seed data; never active for a signed-in user).
+- `src/store/dataStore.js` — the account's data and its sync (see below). `snapshot.js` —
+  the pure snapshot helpers it uses (shape, repairs, three-way merge), importable from
+  scripts. `authStore.js`, `demoStore.js` (no-auth demo over seed data; never active for a
+  signed-in user).
 - `src/services/` — `scanResults` (read the server's reasons), `monitoring` (live scan,
   demo only), `themes` (refine), `outreach` (mailto/sms deep links), `push`, `session`
   (sign-out that leaves nothing behind), `widget`, `contacts` (native picker), `speech`.
@@ -48,9 +50,16 @@ layout for every screen (phone-width, centered on desktop); do not add desktop-o
 - `hydrate()` renders the cached copy at once, then reconciles with the server. A failed
   read sets `loadError` and **never writes**. A missing row is created with an insert that
   cannot overwrite.
-- Writes are debounced, one in flight, conditional on the `updated_at` last seen; on
-  conflict the server copy is fetched, merged by id under the local edits, and retried.
-  Local edits are cached (dirty) so they survive relaunch and offline use.
+- Writes are debounced, one in flight, conditional on the `updated_at` last seen. On a
+  conflict (or a dirty cache at launch) the server copy is three-way merged against the
+  copy the server last confirmed: a removal on either side sticks, and a field changed on
+  this device keeps this device's value. An edit made while a save is out stays dirty until
+  its own write lands. Local edits are cached (dirty, with that base) so they survive
+  relaunch and offline use.
+- Every load runs `repairSnapshot`: theme ids made unique per person (`id~2`, `id~3`;
+  update, remove and merge all address themes by id, so never mint one from `Date.now()`
+  alone), sample people (`seed: true`) removed outside the App Review account
+  (`REVIEW_EMAILS`), made-up `@example.com` emails blanked. A repair is saved like an edit.
 - Writes happen only when `ownerId` is the signed-in user, the server has been reconciled
   (`synced`), and demo is off. Zustand: select stable slices; derive in render.
 
