@@ -216,7 +216,7 @@ function scoringSystemPrompt(now) {
     `If relevant is true and significance is ${SIGNIFICANCE_THRESHOLD} or more, include "draftMessage": a short, warm, specific text the user could send as-is. Use the contact's first name, refer to the actual news, and sound like a friend texting, not a greeting card. Never include links, URLs, web addresses or phone numbers. Otherwise include "holdReason": one short sentence under 100 characters on why it isn't worth an interruption.`,
     `Bad news needs care. When the headline is about a death, violence, a disaster, a serious illness, layoffs or job cuts, a crime or a scandal, set "sensitive": true. Ordinary setbacks (a team losing, a player injury, a stock dipping) are not sensitive. A sensitive item is a reason to reach out only when a caring check-in would be welcome, and its draftMessage is that check-in: brief and gentle, asking how they are, never upbeat, never treating the news as exciting or as small talk, and never opening with "did you see this". If any message would intrude, score it below ${SIGNIFICANCE_THRESHOLD} and give a holdReason.`,
     `If relevant is true, significance is below ${SIGNIFICANCE_THRESHOLD} and the item is not sensitive, but the article itself is something the contact would want to read (a guide, a ranking, a schedule, a report or a deep dive on the subject, not routine news), include "passAlong": a short note under 140 characters the user could send along with the link, using the contact's first name, with no link in it. Otherwise omit passAlong.`,
-    'When the headline\'s main subject is a significant event that has not happened yet, include "eventWhen": when it happens, the way a person would say it in a text (e.g. "Saturday night", "this weekend", "Nov 12"), under 25 characters, and write any draft looking forward to it rather than as if it already happened. Omit eventWhen for anything already past.',
+    'When the headline\'s main subject is a significant event that has not happened yet, include "eventWhen": when it happens, the way a person would say it in a text (e.g. "Saturday night", "this weekend", "Nov 12"), under 25 characters, and write any draft looking forward to it rather than as if it already happened. Omit eventWhen for anything that has already happened, including news that broke today.',
     '',
     `Today's date is ${date}.`,
     '',
@@ -281,6 +281,11 @@ export function draftHasForeignUrl(draft, item = {}) {
   })
 }
 
+// eventWhen labels something still ahead ("Saturday night"). One that names
+// the past or the present moment ("just now", "yesterday") would show as a
+// bogus heads-up, so it's dropped.
+const NOT_AHEAD = /\b(?:just now|right now|now|recently|earlier|yesterday|ago|last|already)\b/i
+
 function shapeClaudeResult(item, r, significanceRaw) {
   let relevant = toBool(r.relevant) === true // missing or garbled verdict = not relevant
   const sensitive = toBool(r.sensitive) === true
@@ -306,7 +311,8 @@ function shapeClaudeResult(item, r, significanceRaw) {
   // Never for bad news, and never with a link the user didn't choose.
   if (!relevant || above || sensitive || draftHasForeignUrl(passAlong, item)) passAlong = ''
   const rationale = typeof r.rationale === 'string' && r.rationale.trim() ? truncate(r.rationale.trim(), 200) : undefined
-  const eventWhen = typeof r.eventWhen === 'string' && r.eventWhen.trim() ? truncate(r.eventWhen.trim(), 24) : undefined
+  const when = typeof r.eventWhen === 'string' ? r.eventWhen.trim() : ''
+  const eventWhen = when && !NOT_AHEAD.test(when) ? truncate(when, 24) : undefined
 
   return {
     id: item.id,

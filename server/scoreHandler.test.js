@@ -187,3 +187,12 @@ describe('bad news and pass-along notes', () => {
     expect(out.results.map(r => r.passAlong)).toEqual(['Kellan, figured you would want this one.', undefined, undefined, undefined, undefined])
   })
 })
+
+describe('heads-up timing', () => {
+  it('keeps an eventWhen that is still ahead and drops one that names the past or now', async () => {
+    const whens = ['Saturday night', 'tonight', 'Nov 12', 'just now', 'yesterday', 'last night', 'earlier today']
+    const text = JSON.stringify({ results: whens.map((eventWhen, i) => ({ id: String(i), relevant: true, significance: 82, draftMessage: 'Kellan!', eventWhen })) })
+    const out = await scoreItems(whens.map(w => item({ headline: `Story ${w}` })), { allowFallback: false, llm: rawLlm(text), now: () => NOW })
+    expect(out.results.map(r => r.eventWhen)).toEqual(['Saturday night', 'tonight', 'Nov 12', undefined, undefined, undefined, undefined])
+  })
+})
