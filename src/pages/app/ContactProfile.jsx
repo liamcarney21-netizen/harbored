@@ -3,11 +3,11 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { ChevronLeft, Mail, Phone, X, Check, Pencil } from 'lucide-react'
 import WarmAvatar from '../../components/WarmAvatar'
 import ThemeAdder from '../../components/ThemeAdder'
-import ThinkingMark from '../../components/ThinkingMark'
+import ThemeWatchLine from '../../components/ThemeWatchLine'
 import { useDataStore } from '../../store/dataStore'
 import { openSend, sendChannelFor } from '../../services/outreach'
 import { haptic } from '../../services/haptics'
-import { statusFor, themeRefining } from '../../lib/status'
+import { statusFor } from '../../lib/status'
 import Card, { Eyebrow } from '../../ui/Card'
 import Button from '../../ui/Button'
 import Sheet from '../../ui/Sheet'
@@ -163,9 +163,7 @@ export default function ContactProfile() {
               <div key={t.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px', borderRadius: 12, background: T.ground, border: `1px solid ${T.hairline}` }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 14, fontWeight: 600, color: T.ink }}>{t.label}</div>
-                  <div style={{ fontSize: 12, color: T.muted, marginTop: 3, lineHeight: 1.45 }}>
-                    {t.display || (themeRefining(t) ? <ThinkingMark size={10} label="Working out what to watch…" labelStyle={{ fontSize: 12 }} /> : 'Watching for significant news.')}
-                  </div>
+                  <ThemeWatchLine theme={t} />
                 </div>
                 <button
                   className="hb-press"

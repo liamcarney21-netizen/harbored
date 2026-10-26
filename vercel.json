@@ -4,7 +4,6 @@
     { "src": "/.*", "dest": "/index.html" }
   ],
   "crons": [
-    { "path": "/api/scan", "schedule": "0 13 * * *" },
-    { "path": "/api/digest", "schedule": "0 14 * * 1" }
+    { "path": "/api/scan", "schedule": "0 16 * * *" }
   ]
 }

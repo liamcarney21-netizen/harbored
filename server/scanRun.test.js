@@ -372,3 +372,43 @@ describe('expired rows and theme rotation', () => {
     expect(new Set([...queries, ...next])).toEqual(new Set(['Vikings', 'Twins', 'Wild']))
   })
 })
+
+describe('scoring several fresh stories per theme', () => {
+  it('scores the freshest three, stores only the best one, and can push it', async () => {
+    const supabase = createFakeSupabase({
+      tables: {
+        user_data: [user('u1', [{ id: 1001, name: 'Diego Alvarez', themes: ['Vikings'] }])],
+        scan_results: [],
+        device_tokens: [{ user_id: 'u1', token: 'tok-u1' }],
+      },
+    })
+    const feed = () => [
+      newsItem('a', 'Vikings practice report', DAY0 - 1 * H),
+      newsItem('b', 'Vikings trade for a star receiver', DAY0 - 5 * H),
+      newsItem('c', 'Vikings injury notes', DAY0 - 9 * H),
+      newsItem('d', 'Week-old Vikings column', DAY0 - 7 * 24 * H),
+    ]
+    const judge = (item) => /trade/.test(item.headline)
+      ? { relevant: true, significance: 91, rationale: 'A real trade.', draftMessage: 'Diego, did you see the trade?' }
+      : { relevant: true, significance: 30, rationale: 'Routine.' }
+    const h = harness({ judge, feed })
+    const out = await runScheduledScan(supabase, h.options(DAY0))
+    const scored = JSON.parse(h.claude.requests[0].messages[0].content.split('<items>')[1].split('</items>')[0])
+    expect(scored.map(i => i.headline)).toEqual(['Vikings practice report', 'Vikings trade for a star receiver', 'Vikings injury notes'])
+    const rows = supabase.rows('scan_results')
+    expect(rows.map(r => r.headline)).toEqual(['Vikings trade for a star receiver'])
+    expect(rows[0]).toMatchObject({ above_bar: true, score: 91 })
+    expect(out.push.stories_pushed).toBe(1)
+  })
+})
+
+describe('a held run', () => {
+  it('is unhealthy, so the owner is alerted, when the breaker holds pushes', async () => {
+    const { buildRunRecord } = await import('./scanRun.js')
+    const scan = { users_total: 6, users_scanned: 6, users_skipped: 0, users_errored: 0, items_claude: 6, items_fallback: 0, above_bar: 6, cleanup_errors: 0, errors: [] }
+    const push = { held_by_breaker: 6, pushes_attempted: 0, pushes_ok: 0, pushes_failed: 0, users_errored: 0, errors: [{ user: 'all', message: 'breaker held 6 pushes (6 people have a device)' }] }
+    const run = buildRunRecord({ startedAt: 'a', finishedAt: 'b', scan, push })
+    expect(run.healthy).toBe(false)
+    expect(run.error).toMatch(/breaker held 6 pushes/)
+  })
+})

@@ -65,7 +65,7 @@ describe('runDigest (preview)', () => {
           digestRow({ id: 'r3', scanned_at: iso(NOW - 9 * 86400000) }),          // older than a week
           digestRow({ id: 'r4', engine: 'unscored' }),                           // not scored by Claude
         ],
-        user_data: [{ user_id: 'u1', data: { prefs: { digest: true } } }],
+        user_data: [{ user_id: 'u1', data: { prefs: { recap: true } } }],
       },
       users,
     })
@@ -78,7 +78,7 @@ describe('runDigest (preview)', () => {
 
   it('skips users whose email cannot be resolved', async () => {
     const supabase = createFakeSupabase({
-      tables: { scan_results: [digestRow({ contact_name: 'X', theme_label: 't', headline: 'h', rationale: '' })], user_data: [] },
+      tables: { scan_results: [digestRow({ contact_name: 'X', theme_label: 't', headline: 'h', rationale: '' })], user_data: [{ user_id: 'u1', data: { prefs: { recap: true } } }] },
       users: [], // no users → no email
     })
     const summary = await runDigest(supabase, { send: false, now: () => NOW })
@@ -86,13 +86,20 @@ describe('runDigest (preview)', () => {
     expect(summary.previews).toHaveLength(0)
   })
 
-  it('skips users who turned the weekly recap off', async () => {
+  it('emails only people who opted in themselves: never by default, never on the old digest flag', async () => {
     const supabase = createFakeSupabase({
-      tables: { scan_results: [digestRow()], user_data: [{ user_id: 'u1', data: { prefs: { digest: false } } }] },
+      tables: {
+        scan_results: [digestRow(), digestRow({ id: 'r5', user_id: 'u2' }), digestRow({ id: 'r6', user_id: 'u3' })],
+        user_data: [
+          { user_id: 'u1', data: { prefs: { digest: true } } }, // the old default-on flag
+          { user_id: 'u2', data: {} },                            // never chose anything
+          { user_id: 'u3', data: { prefs: { recap: false } } },  // switched it off
+        ],
+      },
       users,
     })
     const summary = await runDigest(supabase, { send: false, now: () => NOW })
-    expect(summary.skippedOptOut).toBe(1)
+    expect(summary.skippedOptOut).toBe(3)
     expect(summary.previews).toHaveLength(0)
   })
 
@@ -100,7 +107,7 @@ describe('runDigest (preview)', () => {
     vi.stubEnv('RESEND_API_KEY', 're_test')
     vi.stubGlobal('fetch', vi.fn(async () => new Response('{}', { status: 422 })))
     const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
-    const supabase = createFakeSupabase({ tables: { scan_results: [digestRow()], user_data: [{ user_id: 'u1', data: {} }] }, users })
+    const supabase = createFakeSupabase({ tables: { scan_results: [digestRow()], user_data: [{ user_id: 'u1', data: { prefs: { recap: true } } }] }, users })
     const summary = await runDigest(supabase, { now: () => NOW })
     expect(summary.sendFailures).toBe(1)
     expect(spy.mock.calls.flat().join(' ')).not.toContain('kellan@')

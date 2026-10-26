@@ -59,6 +59,11 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
   // saved theme lives, so the refinement can be patched in when it arrives
   // instead of being thrown away with the quiz screen.
   const committedRef = useRef(new Map())
+  // A company filled in from the contact card, as long as nobody has edited
+  // it: picking another card replaces it instead of typing onto the end of it.
+  const prefillRef = useRef('')
+  // What this quiz saved, reported to onClose.
+  const savedRef = useRef({ themes: 0, people: 0 })
 
   // The live transcript panel follows the newest words as they stream in.
   useEffect(() => {
@@ -96,14 +101,19 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
     recognizerRef.current?.stop()
     recognizerRef.current = null
     transcriptRef.current = ''
+    prefillRef.current = ''
     setThemes([]); setLabel(''); setPromptIdx(null)
     setVoiceMode('idle'); setTranscript(''); setVoiceError(''); setMapSummary('')
   }
 
   function pickPrompt(i) {
     setPromptIdx(i)
-    const prefill = PROMPTS[i].prefill?.(current)
-    if (prefill && !label.trim()) setLabel(prefill)
+    const prefill = PROMPTS[i].prefill?.(current) || ''
+    const untouched = !label.trim() || (prefillRef.current && label === prefillRef.current)
+    if (untouched) {
+      setLabel(prefill)
+      prefillRef.current = prefill
+    }
     inputRef.current?.focus()
   }
 
@@ -134,6 +144,7 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
     if (!l) return
     addThemeWithRefine(l, category)
     setLabel('')
+    prefillRef.current = ''
     setPromptIdx(null)
     inputRef.current?.focus()
   }
@@ -199,8 +210,9 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
     }
   }
 
-  // Persist the current contact's themes (plus any text left un-added in the field).
-  function commitCurrent() {
+  // Persist the current contact's themes, plus any text left un-added in the
+  // field unless the quiz is being closed (half-typed text isn't an answer).
+  function commitCurrent({ includePending = true } = {}) {
     if (!current) return
     const contactId = current.id
     themes.forEach(t => {
@@ -208,11 +220,13 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
       if (t.refining) committedRef.current.set(t.cid, { contactId, themeId: saved.id })
     })
     // Text left in the field counts too — saved now, refined in the background.
-    const pending = label.trim()
+    const pending = includePending ? label.trim() : ''
     if (pending) {
       const saved = addTheme(contactId, pending, category)
       refineTheme(pending, current).then(r => { if (r) updateTheme(contactId, saved.id, r.refinement) })
     }
+    const count = themes.length + (pending ? 1 : 0)
+    if (count) savedRef.current = { themes: savedRef.current.themes + count, people: savedRef.current.people + 1 }
   }
 
   function advance() {
@@ -223,11 +237,14 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
 
   function handleSaveNext() { commitCurrent(); advance() }
   function handleSkip() { advance() }
+  // Closing keeps what was already added for this person; it used to throw
+  // their themes away without asking.
+  function handleClose() { commitCurrent({ includePending: false }); closeAll() }
 
   function closeAll() {
     recognizerRef.current?.stop()
     recognizerRef.current = null
-    onClose()
+    onClose(savedRef.current)
   }
 
   if (!open || !current) return null
@@ -277,7 +294,7 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
               ) : <span style={{ flex: 1 }} />}
               <button
                 className="hb-press"
-                onClick={closeAll}
+                onClick={handleClose}
                 aria-label="Close"
                 style={{
                   width: '44px', height: '44px', marginRight: '-12px', flexShrink: 0,

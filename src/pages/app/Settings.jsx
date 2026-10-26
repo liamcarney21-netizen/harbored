@@ -11,6 +11,7 @@ import { isNative } from '../../lib/platform'
 import { signOutEverywhereLocal, forgetThisDevice } from '../../services/session'
 import { pushPermissionState, registerPushNotifications } from '../../services/push'
 import { openContactSettings } from '../../services/contacts'
+import { track } from '../../services/events'
 import Card, { Eyebrow, PageTitle, Row } from '../../ui/Card'
 import Button from '../../ui/Button'
 import { Toggle } from '../../ui/Field'
@@ -18,7 +19,8 @@ import { T } from '../../ui/tokens'
 
 // The weekly recap sends from Resend's test address, which only delivers to
 // the account owner, so the toggle stays hidden until a sending domain is
-// verified (server/email.js). The pref and the Monday cron are unchanged.
+// verified (server/email.js). It's opt-in: the toggle writes prefs.recap, the
+// only flag the digest honours, and the Monday cron is off until then.
 const RECAP_EMAIL_READY = false
 
 export default function Settings() {
@@ -42,6 +44,7 @@ export default function Settings() {
 
   async function togglePush(on) {
     setPref('push', on)
+    track(on ? 'push_turned_on' : 'push_turned_off')
     if (on && isNative() && osPush !== 'granted') {
       const state = await registerPushNotifications({ prompt: true })
       setOsPush(state)
@@ -102,7 +105,7 @@ export default function Settings() {
     ? 'Off — nothing reaches your phone'
     : isNative() && osPush === 'denied'
       ? 'Turned off in iOS Settings'
-      : 'Only when Harbored finds a real reason'
+      : 'At most one a day and three a week, between 8 AM and 9 PM. Never a buzz.'
 
   return (
     <div style={{ width: '100%', padding: `18px ${T.gutter}px 32px` }}>
@@ -142,7 +145,7 @@ export default function Settings() {
           <Row
             title="Weekly recap"
             sub={email ? `Monday mornings to ${email}` : 'A Monday-morning summary by email'}
-            control={<Toggle checked={!!prefs.digest} onChange={v => setPref('digest', v)} label="Weekly recap email" />}
+            control={<Toggle checked={!!prefs.recap} onChange={v => setPref('recap', v)} label="Weekly recap email" />}
             last
           />
         )}

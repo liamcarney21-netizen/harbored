@@ -4,10 +4,13 @@
 // re-shows the week regardless of notified state. No Resend key → preview mode
 // (builds the email but never sends), so this is safe to run in dev.
 //
-// Users who turned the recap off (prefs.digest === false in their saved data)
-// are skipped. Rows that weren't scored by Claude (engine 'unscored', or any
-// keyword-scored row) are never above the bar, so they never reach the email.
-// Logs carry counts only — never addresses or names.
+// The recap is opt-in: only people who switched it on themselves get it
+// (prefs.recap === true, set by the You-tab toggle once a sending domain
+// exists). The old prefs.digest flag was on by default without anyone
+// choosing it, so it no longer counts. The Monday cron is off until then; run
+// it by hand with the cron secret. Rows that weren't scored by Claude (engine
+// 'unscored', or any keyword-scored row) are never above the bar, so they
+// never reach the email. Logs carry counts only — never addresses or names.
 
 import { SIGNIFICANCE_THRESHOLD } from './scoreHandler.js'
 import { sendEmail } from './email.js'
@@ -92,15 +95,17 @@ export async function runDigest(supabase, { send = true, now = Date.now } = {}) 
   const summary = { usersWithOpportunities: byUser.size, usersEmailed: 0, skippedNoEmail: 0, skippedOptOut: 0, sendFailures: 0, previews: [] }
   if (byUser.size === 0) return summary
 
-  // Honour the recap toggle. If preferences can't be read, fail closed: no
-  // email is better than one the user switched off.
+  // Only people who opted in. If preferences can't be read, fail closed: no
+  // email is better than one nobody asked for. (skippedOptOut counts everyone
+  // who hasn't opted in.)
   const { data: prefRows, error: prefErr } = await supabase
     .from('user_data')
     .select('user_id, data')
     .in('user_id', [...byUser.keys()])
   if (prefErr) throw new Error(`read user_data: ${prefErr.message}`)
-  for (const r of prefRows || []) {
-    if (r?.data?.prefs?.digest === false && byUser.delete(r.user_id)) summary.skippedOptOut++
+  const optedIn = new Set((prefRows || []).filter(r => r?.data?.prefs?.recap === true).map(r => r.user_id))
+  for (const userId of [...byUser.keys()]) {
+    if (!optedIn.has(userId) && byUser.delete(userId)) summary.skippedOptOut++
   }
   summary.usersWithOpportunities = byUser.size
   if (byUser.size === 0) return summary

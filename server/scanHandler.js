@@ -1,8 +1,8 @@
 // Server-side theme scan (api/scan.js via Vercel Cron, and api/rescan.js for one
 // user). For each user it reads their saved themes, fetches recent news per
-// theme, keeps the freshest item published in the last 72 hours, scores the
-// batch with Claude and writes the results to scan_results. Push and the
-// weekly digest read from there.
+// theme, scores the freshest few published in the last 72 hours with Claude,
+// keeps the best story per theme and writes the results to scan_results. Push
+// and the weekly digest read from there.
 //
 // Failure rules (the September 2026 outage was a silent keyword fallback):
 //  - Scoring never falls back to the keyword heuristic here. If the Claude call
@@ -18,7 +18,7 @@
 
 import { createHash } from 'node:crypto'
 import { fetchThemeNews, filterFresh, FRESH_HOURS } from './newsHandler.js'
-import { scoreItems, SIGNIFICANCE_THRESHOLD } from './scoreHandler.js'
+import { scoreItems, SIGNIFICANCE_THRESHOLD, MAX_ITEMS as MAX_SCORED_ITEMS } from './scoreHandler.js'
 import { daysUntilBirthday } from '../src/lib/birthday.js'
 import { isMissingColumnError, shortId } from './db.js'
 
@@ -34,6 +34,10 @@ export { createServiceClient } from './db.js'
 export const MAX_PAIRS_PER_USER = 6
 export const MAX_PAIRS_TOTAL = 40
 export const NEWS_ITEMS_PER_THEME = 8
+// Fresh stories scored per theme. Scoring only the newest let this morning's
+// preview beat yesterday's trade; scoring a few lets the best story win. The
+// whole user still goes in one Claude call (at most MAX_SCORED_ITEMS items).
+export const ITEMS_SCORED_PER_THEME = 3
 export const SCAN_BUDGET_MS = 34000 // no new user is started after this (leaves ≥12s before the Claude deadline)
 export const LLM_DEADLINE_MS = 46000 // no Claude attempt or retry starts after this
 const DAY_MS = 86400000
@@ -217,6 +221,37 @@ function clampScore(v) {
   return Math.max(0, Math.min(100, Math.round(Number(v))))
 }
 
+function storyRank(scored = {}, item = {}) {
+  const usable = scored.engine === 'claude' && Number.isFinite(Number(scored.score)) && scored.score !== null
+  const tier = usable ? (scored.relevant === true ? 2 : 1) : 0
+  const published = Date.parse(item.publishedAt || '') || 0
+  return [tier, usable ? Number(scored.score) : -1, published]
+}
+
+function outranks(a, b) {
+  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return a[i] > b[i]
+  return false
+}
+
+// One story per theme: the relevant one with the highest score, newest on a
+// tie; if none is relevant, the strongest of the rest, so "what Harbored
+// checked" still has a headline and a verdict to show. Returns the chosen
+// candidates and their scores re-indexed to match (shapeResultRows' input).
+export function pickBestPerPair(candidates, scoreById) {
+  const best = new Map()
+  candidates.forEach((c, i) => {
+    const scored = scoreById.get(i) || {}
+    const rank = storyRank(scored, c.item)
+    const prev = best.get(c.pairIndex)
+    if (!prev || outranks(rank, prev.rank)) best.set(c.pairIndex, { c, scored, rank })
+  })
+  const chosen = [...best.entries()].sort((a, b) => a[0] - b[0]).map(([, v]) => v)
+  return {
+    found: chosen.map(({ c }) => ({ contact: c.contact, theme: c.theme, item: c.item })),
+    scoreById: new Map(chosen.map(({ scored }, i) => [i, scored])),
+  }
+}
+
 // Shape scored news into storage rows, carrying notified_at forward for any
 // story the user was already alerted to. Only Claude-scored, relevant items
 // can be above the bar; everything else is stored as below-bar context.
@@ -315,30 +350,33 @@ export async function scanUser(supabase, userId, data, {
   }
 
   // 1. News: up to 8 recent items per theme (the query carries when:3d), keep
-  // the freshest one published in the last 72 hours. Cost stays one scored
-  // item per theme.
+  // the freshest few published in the last 72 hours, sized so the whole user
+  // fits one scoring call.
   const refreshed = new Set()
-  const found = []
+  const candidates = []
+  const perTheme = Math.max(1, Math.min(ITEMS_SCORED_PER_THEME, Math.floor(MAX_SCORED_ITEMS / Math.max(1, pairs.length))))
   if (pairs.length) {
     const settled = await Promise.allSettled(pairs.map(async ({ theme }) => {
       // Search with the refined query when the theme has one, else the label.
       const items = await fetchNews(theme.query || theme.label, NEWS_ITEMS_PER_THEME)
-      return filterFresh(items || [], { now: nowMs })[0] || null
+      return filterFresh(items || [], { now: nowMs }).slice(0, perTheme)
     }))
     settled.forEach((r, i) => {
       if (r.status !== 'fulfilled') { stats.news_failed++; return }
       stats.news_ok++
       refreshed.add(pairKey(pairs[i].contact.id, pairs[i].theme.label))
-      if (r.value) found.push({ ...pairs[i], item: r.value })
+      for (const item of r.value) candidates.push({ ...pairs[i], pairIndex: i, item })
     })
     if (stats.news_ok === 0) throw new UserScanError('news', `all ${pairs.length} news fetches failed`)
   }
-  stats.items_found = found.length
+  stats.items_found = candidates.length
 
-  // 2. Score with Claude — no keyword fallback on this path.
+  // 2. Score with Claude — no keyword fallback on this path — then keep the
+  // best story per theme.
+  let found = []
   let scoreById = new Map()
-  if (found.length) {
-    const items = found.map((f, i) => ({
+  if (candidates.length) {
+    const items = candidates.map((f, i) => ({
       id: i,
       headline: f.item.title,
       source: f.item.source,
@@ -355,7 +393,7 @@ export async function scanUser(supabase, userId, data, {
     }))
     const res = await score(items, { deadline, now })
     if (!res || !res.ok) throw new UserScanError('score', res?.error || 'scoring failed')
-    scoreById = new Map((res.results || []).map(r => [r.id, r]))
+    ;({ found, scoreById } = pickBestPerPair(candidates, new Map((res.results || []).map(r => [r.id, r]))))
   }
 
   // 3. Existing rows: notified_at carry-forward and cleanup. A failed read

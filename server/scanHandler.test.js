@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { contentKeyFor, notifiedKeyMap, shapeResultRows, birthdayRowsForUser, pairsForUser, broadThemePairs, pairKey } from './scanHandler.js'
+import { contentKeyFor, notifiedKeyMap, shapeResultRows, birthdayRowsForUser, pairsForUser, broadThemePairs, pairKey, pickBestPerPair } from './scanHandler.js'
 
 describe('birthdayRowsForUser', () => {
   const now = new Date(2026, 5, 1) // Jun 1, 2026
@@ -174,5 +174,38 @@ describe('pass-along notes', () => {
     expect(shapeResultRows(found, relevant, 'u1', new Map(), 'now')[0]).toMatchObject({ above_bar: false, draft_message: 'Ann, the 2027 calendar is out.' })
     const irrelevant = new Map([[0, { engine: 'claude', relevant: false, score: 15, passAlong: 'Ann, look.' }]])
     expect(shapeResultRows(found, irrelevant, 'u1', new Map(), 'now')[0].draft_message).toBe(null)
+  })
+})
+
+describe('best story per theme', () => {
+  const ann = { contact: { id: 1, name: 'Ann' }, theme: { label: 'Lakers' }, pairIndex: 0 }
+  const bo = { contact: { id: 2, name: 'Bo' }, theme: { label: 'Twins' }, pairIndex: 1 }
+  const at = (h) => `2026-10-25T${String(h).padStart(2, '0')}:00:00.000Z`
+
+  it('keeps the relevant story with the highest score, the newer one on a tie', () => {
+    const candidates = [
+      { ...ann, item: { title: 'Older big story', publishedAt: at(1) } },
+      { ...ann, item: { title: 'Newer big story', publishedAt: at(5) } },
+      { ...ann, item: { title: 'Different team, bigger news', publishedAt: at(6) } },
+      { ...bo, item: { title: 'Only an off-topic story', publishedAt: at(2) } },
+    ]
+    const scores = new Map([
+      [0, { engine: 'claude', relevant: true, score: 82 }],
+      [1, { engine: 'claude', relevant: true, score: 82 }],
+      [2, { engine: 'claude', relevant: false, score: 20 }],
+      [3, { engine: 'claude', relevant: false, score: 15 }],
+    ])
+    const { found, scoreById } = pickBestPerPair(candidates, scores)
+    expect(found.map(f => f.item.title)).toEqual(['Newer big story', 'Only an off-topic story'])
+    expect([scoreById.get(0).score, scoreById.get(1).relevant]).toEqual([82, false])
+  })
+
+  it('prefers any Claude-scored story over one the model left out', () => {
+    const candidates = [
+      { ...ann, item: { title: 'Left out', publishedAt: at(9) } },
+      { ...ann, item: { title: 'Scored low', publishedAt: at(1) } },
+    ]
+    const scores = new Map([[1, { engine: 'claude', relevant: false, score: 10 }]])
+    expect(pickBestPerPair(candidates, scores).found[0].item.title).toBe('Scored low')
   })
 })

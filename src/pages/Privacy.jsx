@@ -8,7 +8,7 @@ const MUTE = '#5C6B73'
 const NAVY = '#0a1628'
 const LINK = { color: NAVY, fontWeight: 500, textDecoration: 'underline', textDecorationColor: 'rgba(169,126,47,0.6)', textUnderlineOffset: 3 }
 
-const EFFECTIVE = 'October 21, 2026'
+const EFFECTIVE = 'October 26, 2026'
 const CONTACT_EMAIL = 'harboredsupport@gmail.com'
 
 // Substantive privacy policy — Harbored imports contacts and stores personal data,
@@ -67,6 +67,7 @@ export default function Privacy() {
             <Bullet><strong>Birthdays.</strong> If a contact you choose to import has a birthday saved (or you add one yourself), Harbored keeps only the month and day, and uses it only for birthday reminders.</Bullet>
             <Bullet><strong>Themes and notes.</strong> The shared themes, notes, and reminders you add for each contact — these are the basis of what Harbored watches for you.</Bullet>
             <Bullet><strong>Messages you send.</strong> When you send a drafted message, Harbored saves its text to your account history. See "Sending messages" below.</Bullet>
+            <Bullet><strong>How you use the app.</strong> A few moments are recorded with your account and the time: finishing setup, how many people you imported and themes you added, your first scan and first reason, opening or sending a draft, and whether you allowed notifications. These records never include anyone's name or contact details, headlines, or message text, and they're deleted with your account.</Bullet>
             <Bullet><strong>What you tell Harbored about someone.</strong> When you describe a person to find shared themes, out loud or by typing, that text is sent for analysis (see "AI processing" below) and is not stored after the themes are returned. If you use the mic, your device's built-in speech recognition turns your voice into text; Harbored only ever receives the text, never audio.</Bullet>
             <Bullet><strong>Email updates.</strong> If you sign up for updates on our website, we use your first name and email address only to send you those updates.</Bullet>
           </ul>
@@ -75,8 +76,9 @@ export default function Privacy() {
         <Section title="How we use it">
           <ul style={{ paddingLeft: 20, margin: '4px 0 0' }}>
             <Bullet>To watch public news sources for meaningful developments related to the themes you've saved, and to score how significant each one is.</Bullet>
-            <Bullet>To draft outreach messages you can review and send, and to send you a periodic digest of what's worth reaching out about.</Bullet>
+            <Bullet>To draft outreach messages you can review and send, and, only if you turn it on, to email you a weekly recap of what's worth reaching out about.</Bullet>
             <Bullet>To send push notifications when something is worth reaching out about (iOS only, and only if you allow notifications).</Bullet>
+            <Bullet>To see where Harbored helps and where people get stuck, from the usage records above.</Bullet>
             <Bullet>To operate, secure, and improve the service.</Bullet>
           </ul>
           <p style={{ marginTop: 12 }}>

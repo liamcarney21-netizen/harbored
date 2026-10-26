@@ -8,18 +8,20 @@ import StreamText from '../../components/StreamText'
 import WhyDisclosure from '../../components/WhyDisclosure'
 import ScanNarration from '../../components/ScanNarration'
 import ThinkingMark from '../../components/ThinkingMark'
+import ThemeWatchLine from '../../components/ThemeWatchLine'
 import { themeUpdates, SIGNIFICANCE_THRESHOLD } from '../../data/commonGround'
 import { useDataStore, selectNudges } from '../../store/dataStore'
 import { useDemoStore } from '../../store/demoStore'
 import { useAuthStore } from '../../store/authStore'
 import { fetchLiveUpdates } from '../../services/monitoring'
-import { fetchStoredUpdates, REASONS_STALE_EVENT } from '../../services/scanResults'
+import { fetchStoredUpdates, REASONS_STALE_EVENT, SCAN_NOW_EVENT, takeScanRequest } from '../../services/scanResults'
+import { track, trackOnce } from '../../services/events'
 import { openSend, sendChannelFor } from '../../services/outreach'
 import { publishWidget } from '../../services/widget'
 import { haptic } from '../../services/haptics'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { apiUrl } from '../../lib/apiBase'
-import { themeRefining } from '../../lib/status'
+import { themeRefining, themeWatch } from '../../lib/status'
 import { supabase } from '../../lib/supabase'
 import Button from '../../ui/Button'
 import Card, { PageTitle } from '../../ui/Card'
@@ -29,6 +31,19 @@ import { T } from '../../ui/tokens'
 const TRUST_LINE = 'Drafted for you. Nothing sends itself.'
 // Coming back to the app after this long re-reads the stored reasons.
 const RELOAD_AFTER_MS = 5 * 60000
+const sleep = (ms) => new Promise(r => setTimeout(r, ms))
+
+// The first scan has to see the themes just added: wait (briefly) for their
+// refinements to land, then for the save that carries them to the server.
+async function readyToScan() {
+  const refining = () => Object.values(useDataStore.getState().themesByContact).flat().some(themeRefining)
+  for (let waited = 0; refining() && waited < 10000; waited += 400) await sleep(400)
+  for (let i = 0; i < 6; i++) {
+    await useDataStore.getState().flushSync()
+    if (!useDataStore.getState().dirty) break
+    await sleep(400)
+  }
+}
 
 // The asterisk mark — doubles as the scanning spinner.
 function AsteriskMark({ size = 30, spinning = false }) {
@@ -110,7 +125,7 @@ function reasonView(r, contactsById) {
   }
 }
 
-export default function CommonGround({ onImportContacts }) {
+export default function CommonGround({ onImportContacts, onFirstScanDone }) {
   const navigate = useNavigate()
   const isMobile = useIsMobile()
   const demoActive = useDemoStore(s => s.active)
@@ -136,6 +151,7 @@ export default function CommonGround({ onImportContacts }) {
   const [checkError, setCheckError] = useState(false)
   const [checkedAt, setCheckedAt] = useState(null)
   const [neverScanned, setNeverScanned] = useState(false)
+  const [justScanned, setJustScanned] = useState(false)
   const [activeIdx, setActiveIdx] = useState(0)
   const [showSwipeHint, setShowSwipeHint] = useState(() => {
     try { return localStorage.getItem('harbored_swiped') !== 'true' } catch { return false }
@@ -152,6 +168,9 @@ export default function CommonGround({ onImportContacts }) {
   // `quiet` re-reads in the background (resume, push tap): no narration, and
   // a failed read keeps the deck already on screen.
   const lastLoadRef = useRef(0)
+  // While a narrated scan is running it owns the progress state; a load that
+  // started before it mustn't switch the narration off when it finishes.
+  const narratingRef = useRef(false)
   async function loadStored({ quiet = false } = {}) {
     if (!quiet) { setScanning(true); setCheckError(false) }
     try {
@@ -164,7 +183,7 @@ export default function CommonGround({ onImportContacts }) {
       setNeverScanned(stored.length === 0)
       setCheckedAt(new Date())
     } finally {
-      if (!quiet) setScanning(false)
+      if (!quiet && !narratingRef.current) setScanning(false)
     }
   }
 
@@ -181,25 +200,35 @@ export default function CommonGround({ onImportContacts }) {
     }
   }
 
-  // "Check again": ask the server to scan this account now, then re-read.
+  // "Check again", and the first scan at the end of onboarding: ask the server
+  // to scan this account now, then re-read. `narrate` keeps the narration on
+  // screen for the whole scan, when there's nothing else to look at yet.
+  // Resolves to the scan's summary, or null if it couldn't run.
   const [rescanning, setRescanning] = useState(false)
-  async function rescan() {
-    if (rescanning) return
+  async function rescan({ narrate = false } = {}) {
+    if (rescanning) return null
     setRescanning(true)
-    haptic.tick()
+    if (narrate) { narratingRef.current = true; setScanning(true); setCheckError(false) }
+    else haptic.tick()
+    let result = null
     try {
+      if (narrate) await readyToScan()
       const { data } = await supabase.auth.getSession()
       const token = data?.session?.access_token
       const resp = await fetch(apiUrl('/api/rescan'), { method: 'POST', headers: { Authorization: `Bearer ${token}` } })
+      result = await resp.json().catch(() => null)
       if (resp.status === 429) showToast('Checked recently. Try again in a little while.')
       else if (resp.status === 404) showToast('Checking on demand is coming in the next update.')
       else if (!resp.ok) showToast("Couldn't check right now.")
-      await loadStored()
+      await loadStored({ quiet: narrate })
+      setJustScanned(true)
     } catch {
       showToast("Couldn't check right now.")
     } finally {
+      if (narrate) { narratingRef.current = false; setScanning(false) }
       setRescanning(false)
     }
+    return result
   }
 
   useEffect(() => {
@@ -207,6 +236,21 @@ export default function CommonGround({ onImportContacts }) {
     if (useStored) loadStored()
     else scanLive()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // The end of onboarding asks for a scan (AppLayout → requestScanNow), so the
+  // first session ends on what Harbored found instead of a promise.
+  useEffect(() => {
+    if (!useStored) return
+    const run = async () => {
+      if (!takeScanRequest()) return
+      const result = await rescan({ narrate: true })
+      track('first_scan', { status: result?.status || 'failed', reasons: Number(result?.above_bar) || 0, themes: Number(result?.themes) || 0 })
+      onFirstScanDone?.()
+    }
+    run()
+    window.addEventListener(SCAN_NOW_EVENT, run)
+    return () => window.removeEventListener(SCAN_NOW_EVENT, run)
+  }, [useStored]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // The scan lands once a morning, while the app may sit open in the
   // background for days: re-read when a push is tapped and when the app comes
@@ -244,6 +288,36 @@ export default function CommonGround({ onImportContacts }) {
   }, [allUpdates, reasonState, nudges]) // eslint-disable-line react-hooks/exhaustive-deps
   const themeCount = Object.values(themesByContact).reduce((n, t) => n + t.length, 0)
 
+  // When nothing is worth a message, show what Harbored looked at instead:
+  // for each theme, the story the scorer saw and its verdict, then the themes
+  // that turned up nothing. It proves the watching works and shows which
+  // themes are too vague to find anything.
+  const checked = useMemo(() => {
+    if (!useStored) return []
+    const lines = []
+    const seen = new Set()
+    const themeOf = (contactId, label) => (themesByContact[contactId] || []).find(t => t.label === label)
+    const broadNote = 'Too broad to watch well. Name the specific company, team or place.'
+    for (const u of updates) {
+      if (u.score >= SIGNIFICANCE_THRESHOLD || u.giveable || u.category === 'birthday') continue
+      const key = `${u.contactId}|${u.themeLabel}`
+      if (seen.has(key)) continue
+      seen.add(key)
+      const broad = themeWatch(themeOf(u.contactId, u.themeLabel)).broad
+      lines.push({ key, theme: u.themeLabel, first: firstName(u.contactName), head: u.headline, verdict: broad ? broadNote : (u.rationale || u.holdReason), warn: broad })
+    }
+    for (const c of contacts) {
+      for (const t of themesByContact[c.id] || []) {
+        const key = `${c.id}|${t.label}`
+        if (seen.has(key)) continue
+        seen.add(key)
+        const broad = themeWatch(t).broad
+        lines.push({ key, theme: t.label, first: firstName(c.name), head: null, verdict: broad ? broadNote : 'Nothing new in the last three days.', warn: broad })
+      }
+    }
+    return lines.slice(0, 8)
+  }, [useStored, updates, contacts, themesByContact])
+
   // The lead reason goes to the home-screen widget.
   const leadId = queue[0]?.id
   useEffect(() => {
@@ -261,6 +335,9 @@ export default function CommonGround({ onImportContacts }) {
   // can't reset it.
   const touchingRef = useRef(false)
   const queueKey = queue.map(r => r.id).join('|')
+  useEffect(() => {
+    if (useStored && queue.some(r => r.kind === 'news')) trackOnce('first_reason_seen')
+  }, [queueKey]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     const el = deckRef.current
     if (!el) return
@@ -293,6 +370,7 @@ export default function CommonGround({ onImportContacts }) {
   // ── Draft screen ─────────────────────────────────────────────────────
   function openReason(r) {
     haptic.soft()
+    track('draft_opened', { kind: r.kind })
     setAngleIdx(0)
     setDraftStreaming(true)
     setSelected(r)
@@ -360,6 +438,7 @@ export default function CommonGround({ onImportContacts }) {
         : (isFavor ? `Passed along: ${u.headline}` : u.headline),
     })
     if (selected.kind !== 'drift') markReason(keyOf(u), 'sent')
+    track('message_sent', { kind: selected.kind, channel })
     haptic.success()
     setSelected(null)
   }
@@ -557,6 +636,8 @@ export default function CommonGround({ onImportContacts }) {
           scanning={scanning}
           checkError={checkError}
           neverScanned={neverScanned}
+          justScanned={justScanned}
+          checked={checked}
           themeCount={themeCount}
           themesByContact={themesByContact}
           onImportContacts={onImportContacts}
@@ -681,11 +762,16 @@ export default function CommonGround({ onImportContacts }) {
   )
 }
 
-function EmptyState({ contacts, scanning, checkError, neverScanned, themeCount, themesByContact, onImportContacts, onRetry }) {
+function EmptyState({ contacts, scanning, checkError, neverScanned, justScanned, checked = [], themeCount, themesByContact, onImportContacts, onRetry }) {
   const title = (t) => <h1 className="hb-display" style={{ fontSize: 30, fontWeight: 500, color: T.ink, lineHeight: 1.2, margin: 0 }}>{t}</h1>
   const body = (t) => <p style={{ fontSize: 14, lineHeight: 1.6, color: T.body, maxWidth: 420, margin: 0 }}>{t}</p>
+  const themesLine = `${themeCount} theme${themeCount === 1 ? '' : 's'}`
+  const peopleLine = `${contacts.length} ${contacts.length === 1 ? 'person' : 'people'}`
+  const showChecked = !scanning && !checkError && themeCount > 0 && checked.length > 0
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '0 32px', textAlign: 'center', gap: 16 }}>
+    // Centered when short, scrollable when the checked list makes it long.
+    <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ margin: 'auto 0', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '24px 32px', textAlign: 'center', gap: 16 }}>
       <AsteriskMark size={34} spinning={scanning} />
       {contacts.length === 0 ? (
         <>
@@ -709,18 +795,42 @@ function EmptyState({ contacts, scanning, checkError, neverScanned, themeCount, 
           {title('Nothing to watch yet')}
           {body(`Your crew is in. Give each person a theme or two — a team, a city, a company — and Harbored starts watching.`)}
         </>
-      ) : neverScanned ? (
+      ) : neverScanned && !justScanned ? (
         <>
           {title('The watch has begun')}
-          {body(`Harbored is now watching ${themeCount} theme${themeCount === 1 ? '' : 's'} across your ${contacts.length} ${contacts.length === 1 ? 'person' : 'people'}. It checks the news every morning and sends a push when something real turns up.`)}
+          {body(`Harbored is now watching ${themesLine} across your ${peopleLine}. It checks the news every morning and sends a push when something real turns up.`)}
+        </>
+      ) : neverScanned ? (
+        <>
+          {title('Nothing new yet')}
+          {body(`Harbored checked the news on your ${themesLine} and found nothing from the last three days. It checks again every morning and sends a push when something real turns up.`)}
         </>
       ) : (
         <>
           {title('All quiet')}
-          {body(`Harbored is watching ${themeCount} theme${themeCount === 1 ? '' : 's'} across ${contacts.length} people. You'll hear when something real turns up.`)}
+          {body(`Harbored is watching ${themesLine} across ${peopleLine}. Nothing today is worth a message; you'll hear when something real turns up.`)}
         </>
       )}
+      {showChecked && <CheckedCard lines={checked} />}
     </div>
+    </div>
+  )
+}
+
+function CheckedCard({ lines }) {
+  return (
+    <Card style={{ width: '100%', maxWidth: 420, textAlign: 'left', padding: '16px 18px', marginTop: 4 }}>
+      <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: T.muted }}>What Harbored checked</div>
+      {lines.map((l, i) => (
+        <div key={l.key} style={{ paddingTop: 12, marginTop: 12, borderTop: i ? `1px solid ${T.hairline}` : 'none', ...(i ? {} : { paddingTop: 0 }) }}>
+          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: T.muted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {[l.theme, l.first].filter(Boolean).join(' · ')}
+          </div>
+          {l.head && <div className="hb-display" style={{ fontSize: 15, lineHeight: 1.35, color: T.ink, marginTop: 4 }}>{l.head}</div>}
+          {l.verdict && <div style={{ fontSize: 13, lineHeight: 1.5, color: l.warn ? T.accent : T.body, marginTop: 4 }}>{l.verdict}</div>}
+        </div>
+      ))}
+    </Card>
   )
 }
 
@@ -780,9 +890,7 @@ function ThemesManager({ contacts, themesByContact, themeCount, onBack }) {
                     <div key={t.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px', borderRadius: 12, background: T.ground, border: `1px solid ${T.hairline}` }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 14, fontWeight: 600, color: T.ink }}>{t.label}</div>
-                        <div style={{ fontSize: 12, color: T.muted, marginTop: 3, lineHeight: 1.45 }}>
-                          {t.display || (themeRefining(t) ? <ThinkingMark size={10} label="Working out what to watch…" labelStyle={{ fontSize: 12 }} /> : 'Watching for significant news.')}
-                        </div>
+                        <ThemeWatchLine theme={t} />
                       </div>
                       <button
                         className="hb-press"

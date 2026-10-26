@@ -1,4 +1,5 @@
 import { Component } from 'react'
+import { hideSplash } from '../lib/splash'
 
 // One malformed record used to unmount the whole app and leave a blank screen
 // forever. This catches render errors, says so, and offers a reload.
@@ -14,6 +15,9 @@ export default class ErrorBoundary extends Component {
 
   componentDidCatch(error, info) {
     console.error('Render error:', error, info?.componentStack)
+    // A crash before the first screen would otherwise sit behind the launch
+    // screen forever.
+    hideSplash()
   }
 
   render() {

@@ -6,6 +6,7 @@ import { parseVCard } from '../services/vcard'
 import { SAMPLE_VCARD } from '../data/sampleContacts'
 import { isNativeContactsAvailable, pickNativeContacts, openContactSettings } from '../services/contacts'
 import { haptic } from '../services/haptics'
+import { track } from '../services/events'
 import ThinkingMark from './ThinkingMark'
 import Sheet from '../ui/Sheet'
 import Button from '../ui/Button'
@@ -13,6 +14,9 @@ import { ErrorText } from '../ui/Field'
 import { T } from '../ui/tokens'
 
 const hasContactPicker = typeof navigator !== 'undefined' && 'contacts' in navigator && 'ContactsManager' in window
+// A crew starts small: the quiz that follows asks about each person, and a
+// handful of people you'd actually text beats an address book.
+export const SUGGESTED_START = 5
 
 export default function ImportContactsModal({ open, onClose, onImported, onAddManually }) {
   const contacts = useDataStore(s => s.contacts)
@@ -23,6 +27,7 @@ export default function ImportContactsModal({ open, onClose, onImported, onAddMa
   const [selected, setSelected] = useState(new Set())
   const [skippedCount, setSkippedCount] = useState(0)
   const [error, setError] = useState('')
+  const [needsPermission, setNeedsPermission] = useState(false)
   const [loadingNative, setLoadingNative] = useState(false)
   const [limitedAccess, setLimitedAccess] = useState(false)
   const [query, setQuery] = useState('')
@@ -34,6 +39,7 @@ export default function ImportContactsModal({ open, onClose, onImported, onAddMa
     setSelected(new Set())
     setSkippedCount(0)
     setError('')
+    setNeedsPermission(false)
     setLoadingNative(false)
     setLimitedAccess(false)
     setQuery('')
@@ -84,19 +90,24 @@ export default function ImportContactsModal({ open, onClose, onImported, onAddMa
 
   async function handleNativeContacts() {
     setError('')
+    setNeedsPermission(false)
     setLoadingNative(true)
     try {
       const { contacts: parsed, limited } = await pickNativeContacts()
       setLimitedAccess(limited)
+      track('contacts_permission', { result: limited ? 'limited' : 'granted' })
       if (!parsed.length) {
         setError(limited
           ? "iOS isn't sharing any contacts with Harbored yet — allow full access in Settings → Harbored → Contacts."
           : 'No contacts with a name were found.')
+        setNeedsPermission(limited)
         return
       }
       ingest(parsed)
     } catch (err) {
+      track('contacts_permission', { result: 'denied' })
       setError(err?.message || 'Could not read your contacts.')
+      setNeedsPermission(true)
     } finally {
       setLoadingNative(false)
     }
@@ -130,7 +141,11 @@ export default function ImportContactsModal({ open, onClose, onImported, onAddMa
     const created = []
     candidates.forEach((c, i) => { if (selected.has(i)) created.push(addContact(c)) })
     handleClose()
-    if (created.length) { haptic.success(); onImported?.(created) }
+    if (created.length) {
+      haptic.success()
+      track('people_imported', { count: created.length, crew: contacts.length + created.length })
+      onImported?.(created)
+    }
   }
 
   const q = query.trim().toLowerCase()
@@ -138,6 +153,9 @@ export default function ImportContactsModal({ open, onClose, onImported, onAddMa
     .map((c, i) => ({ c, i }))
     .filter(({ c }) => !q || [c.name, c.company, c.email].some(v => v && v.toLowerCase().includes(q)))
   const allShownSelected = shown.length > 0 && shown.every(({ i }) => selected.has(i))
+  // A whole address book never gets a Select all: choosing people is the point.
+  const canSelectShown = q || (candidates || []).length <= 12
+  const firstCrew = contacts.length === 0
   const toggleShown = () => setSelected(s => {
     const next = new Set(s)
     shown.forEach(({ i }) => allShownSelected ? next.delete(i) : next.add(i))
@@ -149,7 +167,7 @@ export default function ImportContactsModal({ open, onClose, onImported, onAddMa
       open={open}
       onClose={handleClose}
       title="Import contacts"
-      sub="Bring your people in at once."
+      sub={firstCrew ? 'Start with the few people who matter most right now.' : 'Bring more of your people in.'}
       icon={<Users style={{ width: 15, height: 15 }} />}
       footer={candidates ? <>
         <Button variant="secondary" size="md" onClick={reset}>Back</Button>
@@ -203,6 +221,9 @@ export default function ImportContactsModal({ open, onClose, onImported, onAddMa
             <Button variant="ghost" size="sm" onClick={() => { handleClose(); onAddManually?.() }}>Or add someone by hand</Button>
           )}
           <ErrorText>{error}</ErrorText>
+          {needsPermission && (
+            <Button variant="secondary" size="md" onClick={openContactSettings}>Open Settings</Button>
+          )}
         </div>
       )}
 
@@ -226,8 +247,15 @@ export default function ImportContactsModal({ open, onClose, onImported, onAddMa
           ) : (
             <>
               <p style={{ fontSize: 13, color: T.body, lineHeight: 1.5, margin: 0 }}>
-                Tap the people you actually want to keep close — a handful is a great start.
+                {firstCrew
+                  ? `Pick the 3 to ${SUGGESTED_START} people you'd most like to stay close to right now. You can add more anytime.`
+                  : 'Tap the people you actually want to keep close.'}
               </p>
+              {firstCrew && selected.size > SUGGESTED_START && (
+                <p style={{ fontSize: 12, color: T.accent, lineHeight: 1.5, margin: 0 }}>
+                  That&rsquo;s plenty to start. You&rsquo;ll set up the first {SUGGESTED_START} next; the rest wait in your Crew.
+                </p>
+              )}
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <input
                   type="search"
@@ -240,9 +268,11 @@ export default function ImportContactsModal({ open, onClose, onImported, onAddMa
                     background: T.ground, border: `1px solid ${T.hairlineStrong}`, color: T.ink, fontFamily: 'inherit', outline: 'none',
                   }}
                 />
-                <Button variant="secondary" size="sm" onClick={toggleShown} style={{ color: T.accent, borderColor: T.accentLine }}>
-                  {allShownSelected ? 'Clear' : q ? 'Select these' : 'Select all'}
-                </Button>
+                {canSelectShown && (
+                  <Button variant="secondary" size="sm" onClick={toggleShown} style={{ color: T.accent, borderColor: T.accentLine }}>
+                    {allShownSelected ? 'Clear' : q ? 'Select these' : 'Select all'}
+                  </Button>
+                )}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 320, overflowY: 'auto' }}>
                 {shown.length === 0 && (

@@ -23,6 +23,20 @@ export function markReasonsStale() {
   if (typeof window !== 'undefined') window.dispatchEvent(new Event(REASONS_STALE_EVENT))
 }
 
+// Asks Today to scan this account right now (the end of onboarding). Held
+// until Today picks it up, in case it isn't mounted when the request is made.
+export const SCAN_NOW_EVENT = 'harbored:scan-now'
+let pendingScan = false
+export function requestScanNow() {
+  pendingScan = true
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event(SCAN_NOW_EVENT))
+}
+export function takeScanRequest() {
+  const was = pendingScan
+  pendingScan = false
+  return was
+}
+
 // A birthday row says "today", so it shows only on the day itself (the
 // contact's birthday in this device's calendar). News rows show while fresh.
 function isCurrent(row, contact, now = Date.now()) {

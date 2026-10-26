@@ -3,7 +3,7 @@
 ## What it is
 Harbored is an iPhone app (with a web demo and companion) that keeps you in touch with the
 people you choose, on purpose. For each person you name a few **themes** — things you share:
-a team, a city, a company, a market. A server scan every morning (13:00 UTC) reads the news for those
+a team, a city, a company, a market. A server scan every morning (16:00 UTC) reads the news for those
 themes, scores what it finds with Claude, and when something is genuinely worth a message it
 becomes a **reason**: the headline, the person, and a short draft. Reasons reach you by push
 and show on the Today screen. Drifting relationships (no message in 45+ days) and birthdays
@@ -20,7 +20,8 @@ layout for every screen (phone-width, centered on desktop); do not add desktop-o
 - Supabase: auth + Postgres (`user_data` one JSON blob per user, `scan_results`,
   `device_tokens`, plus the tables in `supabase/migrations/`). Row-level security is on.
 - Vercel: static site + serverless functions in `api/` (handlers in `server/`), crons in
-  `vercel.json` (daily scan at 13:00 UTC with push chained; weekly digest Monday 14:00 UTC).
+  `vercel.json` (daily scan at 16:00 UTC with push chained; the weekly recap email has no
+  schedule while it's opt-in only and has no sending domain).
 - Anthropic API (`server/llm.js`) for scoring, refining themes, drafting, redrafting.
   Pin a model id explicitly; never fall back to keyword scoring in the cron path.
 - APNs via `server/pushHandler.js`; Resend for the digest and owner alerts.
@@ -40,13 +41,16 @@ layout for every screen (phone-width, centered on desktop); do not add desktop-o
   signed-in user).
 - `src/services/` — `scanResults` (read the server's reasons), `monitoring` (live scan,
   demo only), `themes` (refine), `outreach` (mailto/sms deep links), `push`, `session`
-  (sign-out that leaves nothing behind), `widget`, `contacts` (native picker), `speech`.
+  (sign-out that leaves nothing behind), `widget`, `contacts` (native picker), `speech`,
+  `events` (funnel events into the `events` table: names and small counts, never names,
+  contact details, headlines or message text; the app can insert but never read them).
 - `src/pages/` — website: `Landing`, `Privacy`, `Terms`, `Support`, auth pages.
 - `server/` + `api/` — backend; `server/CHANGES.md` documents the latest hardening.
 
 ## Data model and sync (read before touching dataStore)
 - One snapshot per user: `contacts`, `themesByContact`, `touches`, `meetings` (legacy),
-  `prefs` (`push`, `digest`), `reasonState` (sent/dismissed per reason key).
+  `prefs` (`push`, `tz`, `recap`; the old `digest` flag is ignored), `reasonState`
+  (sent/dismissed per reason key).
 - `hydrate()` renders the cached copy at once, then reconciles with the server. A failed
   read sets `loadError` and **never writes**. A missing row is created with an insert that
   cannot overwrite.
@@ -60,6 +64,10 @@ layout for every screen (phone-width, centered on desktop); do not add desktop-o
   update, remove and merge all address themes by id, so never mint one from `Date.now()`
   alone), sample people (`seed: true`) removed outside the App Review account
   (`REVIEW_EMAILS`), made-up `@example.com` emails blanked. A repair is saved like an edit.
+- First session: import suggests 3 to 5 people and the quiz covers at most 5; when a new
+  account's quiz ends, Today waits for the theme refinements and the save, then runs
+  `/api/rescan` with narration, lands on what it found (or "What Harbored checked"), and only
+  then offers notifications behind a short explainer.
 - Writes happen only when `ownerId` is the signed-in user, the server has been reconciled
   (`synced`), and demo is off. Zustand: select stable slices; derive in render.
 
@@ -68,6 +76,13 @@ layout for every screen (phone-width, centered on desktop); do not add desktop-o
   "significance 70", "giveable"). The trust line is "Drafted for you. Nothing sends itself."
   Pitch outcomes, not Claude.
 - The push gate is the product: a wrong push is worse than a missed one. Relevance first.
+- Notification budget (the promise on the You tab; pinned by
+  `server/notificationBudget.test.js`): only the morning scan pushes (never "Check again" or
+  the first scan); at most one notification a day (two stories bundled) and three a week
+  (birthdays get through), one per person a week; only between 8 AM and 9 PM in the person's
+  own time zone (`prefs.tz`, kept current by the app); never a sound; the breaker holds any run
+  that would notify most people at once and alerts instead. Email is opt-in only
+  (`prefs.recap`). Loosening any of this is a product decision, not a tweak.
 - Fonts are self-hosted (@fontsource); no third-party CSS imports.
 - Pricing: none yet. The app is free. Don't invent tiers in copy.
 

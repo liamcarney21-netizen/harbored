@@ -2,6 +2,12 @@
 // current scan, applies the push gate, caps and durable dedupe, sends one
 // notification per user per run, and records what was sent.
 //
+// The notification budget (CLAUDE.md; pinned by notificationBudget.test.js):
+// at most one notification a day and three a week per person (birthdays get
+// through the weekly cap), one per contact a week, only between 8 AM and 9 PM
+// in the person's own time zone, and never with a sound. A run that would
+// notify an unusual share of everyone is held by the breaker instead.
+//
 // Push gate (stricter than the display bar, because a false-positive push is
 // the worst outcome):
 //  - engine 'claude' (never keyword-scored), relevant === true,
@@ -39,7 +45,19 @@ import { broadThemePairs, pairKey } from './scanHandler.js'
 import { isDuplicateKeyError, isMissingTableError, shortId } from './db.js'
 
 export const MAX_STORIES_PER_USER_PER_DAY = 2
+export const MAX_PUSHES_PER_USER_PER_WEEK = 3
 export const CONTACT_COOLDOWN_DAYS = 7
+// Local hours a push may land in (start inclusive, end exclusive), in the
+// time zone the app reports (prefs.tz). The daily run at 16:00 UTC is 8 AM to
+// noon across the continental US, so this mostly holds pushes for people
+// elsewhere; their reasons still wait on Today.
+export const PUSH_HOURS = { start: 8, end: 21 }
+// Blast-radius breaker: a run that would notify at least this many people and
+// more than this share of everyone with a device is more likely a scoring bug
+// than news. It holds every push and the run alerts the owner instead.
+// PUSH_BREAKER_OFF=1 lets one deliberate run through.
+export const BREAKER_MIN_USERS = 5
+export const BREAKER_SHARE = 0.5
 export const NOTIFIED_RETENTION_DAYS = 90
 const HOUR = 3600000
 const DAY = 24 * HOUR
@@ -74,6 +92,25 @@ function providerJwt() {
 
 export function isBirthdayRow(row) {
   return row?.theme_category === 'birthday'
+}
+
+// The hour (0-23) it is now in an IANA time zone, or null if there isn't a
+// usable one.
+export function localHour(timeZone, nowMs = Date.now()) {
+  if (!timeZone || typeof timeZone !== 'string') return null
+  try {
+    const h = Number(new Intl.DateTimeFormat('en-US', { timeZone, hour: 'numeric', hourCycle: 'h23' }).format(new Date(nowMs)))
+    return Number.isFinite(h) ? h % 24 : null
+  } catch {
+    return null
+  }
+}
+
+// Unknown time zones count as inside the window: the run time already suits
+// the US, where every current account is.
+export function withinPushHours(timeZone, nowMs = Date.now()) {
+  const h = localHour(timeZone, nowMs)
+  return h === null || (h >= PUSH_HOURS.start && h < PUSH_HOURS.end)
 }
 
 export function rowStoryKey(row) {
@@ -125,14 +162,18 @@ function historyFor(rows) {
 export function selectStoriesToPush(rows, history, {
   nowMs = Date.now(),
   maxPerDay = MAX_STORIES_PER_USER_PER_DAY,
+  maxPerWeek = MAX_PUSHES_PER_USER_PER_WEEK,
   cooldownDays = CONTACT_COOLDOWN_DAYS,
   broadPairs,
 } = {}) {
   const h = history || historyFor([])
   const sorted = [...rows].sort((a, b) =>
     (Number(isBirthdayRow(b)) - Number(isBirthdayRow(a))) || (Number(b.score) - Number(a.score)))
-  const counts = { gated: {}, deduped: 0, capped_daily: 0, capped_contact: 0 }
+  const counts = { gated: {}, deduped: 0, capped_daily: 0, capped_contact: 0, capped_weekly: 0 }
   const recent = h.times.filter(t => nowMs - t < DAY).length
+  // Stories pushed together share one notified_at, so distinct times in the
+  // last week are the notifications this person has had.
+  const pushesThisWeek = new Set(h.times.filter(t => nowMs - t < 7 * DAY)).size
   const toPush = []
   const byKey = new Map()
   const alreadyNotified = []
@@ -152,6 +193,7 @@ export function selectStoriesToPush(rows, history, {
     if (!isBirthdayRow(row)) {
       const last = h.lastByContact.get(contact)
       if (contactsThisRun.has(contact) || (last && nowMs - last < cooldownDays * DAY)) { counts.capped_contact++; continue }
+      if (pushesThisWeek >= maxPerWeek) { counts.capped_weekly++; continue }
     }
     if (recent + toPush.length >= maxPerDay) { counts.capped_daily++; continue }
     const entry = { key, row, rows: [row] }
@@ -174,8 +216,9 @@ export function buildPayload(topItem, count) {
   else title = `Reach out to ${topItem.contact_name}`
   return {
     aps: {
+      // No sound: the notification shows on the lock screen and in
+      // Notification Center, but never buzzes or chimes.
       alert: { title, body: topItem.headline },
-      sound: 'default',
       badge: count,
     },
     // Deep-link target for when the user taps the notification.
@@ -347,6 +390,7 @@ export async function runPush(supabase, {
   deadline,
   transport,
   maxPerDay = MAX_STORIES_PER_USER_PER_DAY,
+  maxPerWeek = MAX_PUSHES_PER_USER_PER_WEEK,
   cooldownDays = CONTACT_COOLDOWN_DAYS,
 } = {}) {
   const nowMs = now()
@@ -360,7 +404,8 @@ export async function runPush(supabase, {
     usersWithNew: 0, devicesPushed: 0, usersNoDevice: 0, previews: [],
     live: false, dedupe: null, candidates: 0,
     users_excluded: 0, users_prefs_off: 0, users_errored: 0, users_deferred: 0,
-    gated: {}, deduped: 0, capped_daily: 0, capped_contact: 0, stories_pushed: 0,
+    users_quiet_hours: 0, held_by_breaker: 0,
+    gated: {}, deduped: 0, capped_daily: 0, capped_contact: 0, capped_weekly: 0, stories_pushed: 0,
     pushes_attempted: 0, pushes_ok: 0, pushes_failed: 0, tokens_pruned: 0,
     errors: [],
   }
@@ -398,12 +443,13 @@ export async function runPush(supabase, {
   for (const userId of users) {
     if (prefs.get(userId)?.push === false) { summary.users_prefs_off++; continue }
     const plan = selectStoriesToPush(byUser.get(userId), historyFor(historyByUser.get(userId)), {
-      nowMs, maxPerDay, cooldownDays, broadPairs: context.broadPairs.get(userId),
+      nowMs, maxPerDay, maxPerWeek, cooldownDays, broadPairs: context.broadPairs.get(userId),
     })
     for (const [reason, n] of Object.entries(plan.counts.gated)) summary.gated[reason] = (summary.gated[reason] || 0) + n
     summary.deduped += plan.counts.deduped
     summary.capped_daily += plan.counts.capped_daily
     summary.capped_contact += plan.counts.capped_contact
+    summary.capped_weekly += plan.counts.capped_weekly
     plans.push({ userId, ...plan })
   }
   const pushable = plans.filter(p => p.toPush.length)
@@ -423,10 +469,33 @@ export async function runPush(supabase, {
   }
   if (pushable.length === 0) return summary
 
+  // Quiet hours, in each person's own time zone. Nothing is claimed, so the
+  // story can still go out on a later run while it's fresh.
+  const ready = pushable.filter(p => {
+    if (withinPushHours(prefs.get(p.userId)?.tz, nowMs)) return true
+    summary.users_quiet_hours++
+    return false
+  })
+  if (ready.length === 0) return summary
+
+  // The breaker: hold everything rather than notify half the user base on
+  // what is more likely a scoring bug than a news day.
+  if (live && !process.env.PUSH_BREAKER_OFF && ready.length >= BREAKER_MIN_USERS) {
+    const { data: deviceRows, error: dErr } = await supabase.from('device_tokens').select('user_id')
+    if (dErr) throw new Error(`read device_tokens: ${dErr.message}`)
+    const withDevices = new Set((deviceRows || []).map(r => r.user_id)).size
+    if (ready.length > withDevices * BREAKER_SHARE) {
+      summary.held_by_breaker = ready.length
+      summary.errors.push({ user: 'all', message: `breaker held ${ready.length} pushes (${withDevices} people have a device); check scoring, then set PUSH_BREAKER_OFF=1 for one run if it's real news` })
+      console.error(`[push] breaker held ${ready.length} pushes out of ${withDevices} people with a device`)
+      return summary
+    }
+  }
+
   const { data: tokenRows, error: tErr } = await supabase
     .from('device_tokens')
     .select('user_id, token')
-    .in('user_id', pushable.map(p => p.userId))
+    .in('user_id', ready.map(p => p.userId))
   if (tErr) throw new Error(`read device_tokens: ${tErr.message}`)
   const tokensByUser = new Map()
   for (const t of tokenRows || []) {
@@ -441,7 +510,7 @@ export async function runPush(supabase, {
   const dayKey = nowIso.slice(0, 10)
 
   try {
-    for (const plan of pushable) {
+    for (const plan of ready) {
       const { userId } = plan
       const tokens = tokensByUser.get(userId) || []
       if (tokens.length === 0) { summary.usersNoDevice++; continue }

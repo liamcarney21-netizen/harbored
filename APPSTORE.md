@@ -104,7 +104,8 @@ Declare these. **Nothing is used for tracking; nothing is sold.** Match this to 
 | Contact Info — your name | Yes | Yes | No | App Functionality (account) |
 | User Content — themes, notes, text of messages you sent (Other User Content) | Yes | Yes | No | App Functionality |
 | Identifiers — push device token | Yes | Yes | No | App Functionality (notifications) |
-| Usage / Diagnostics | No | — | — | — |
+| Usage Data — Product Interaction (funnel events, from build 11) | Yes | Yes | No | Analytics |
+| Diagnostics | No | — | — | — |
 
 Notes when Apple asks per data type:
 - **Contacts**: collected only for the contacts the user explicitly imports; used to monitor

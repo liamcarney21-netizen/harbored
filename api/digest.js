@@ -1,7 +1,8 @@
-// Vercel serverless function + Cron target: /api/digest
+// Vercel serverless function: /api/digest
 //
-// Fired weekly by Vercel Cron (see vercel.json). Emails each user the reach-out
-// opportunities the scan found for them. Gated by CRON_SECRET like /api/scan —
+// The weekly recap. Not on a cron while the recap is opt-in only and has no
+// sending domain (vercel.json); run it by hand. Emails each opted-in user the
+// reach-out opportunities the scan found for them. Gated by CRON_SECRET like /api/scan —
 // it reads all users and (with a Resend key) sends real email, so it must never
 // be publicly callable.
 import { runDigest } from '../server/digestHandler.js'

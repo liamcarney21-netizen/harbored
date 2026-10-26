@@ -5,7 +5,7 @@
 //
 // healthy = the scan ran, no user errored (including partial-cleanup errors),
 // every item was scored by Claude (items_fallback == 0), and push neither
-// threw nor had a failed send. Unhealthy runs email ALERT_EMAIL through Resend
+// threw, nor had a failed send, nor was held by the breaker. Unhealthy runs email ALERT_EMAIL through Resend
 // (when RESEND_API_KEY is set); healthy runs GET HEARTBEAT_URL (when set), so a
 // dead-man's switch pages you when the healthy pings stop. Logs and alerts
 // carry counts and short user ids only — never emails or names.
@@ -27,7 +27,8 @@ export function buildRunRecord({ startedAt, finishedAt, scan, push, errors = [] 
   const userErrors = (scan?.users_errored || 0) + (scan?.cleanup_errors || 0)
   const healthy = !!scan && errors.length === 0 && userErrors === 0 &&
     (scan.items_fallback || 0) === 0 && !pushThrew &&
-    (push?.pushes_failed || 0) === 0 && (push?.users_errored || 0) === 0
+    (push?.pushes_failed || 0) === 0 && (push?.users_errored || 0) === 0 &&
+    (push?.held_by_breaker || 0) === 0
 
   const problems = [...errors]
   for (const e of scan?.errors || []) problems.push(`user ${e.user} ${e.stage}: ${e.message}`)
@@ -181,6 +182,9 @@ export async function runScheduledScan(supabase, {
       deduped: push.deduped,
       capped_daily: push.capped_daily,
       capped_contact: push.capped_contact,
+      capped_weekly: push.capped_weekly,
+      users_quiet_hours: push.users_quiet_hours,
+      held_by_breaker: push.held_by_breaker,
       gated: push.gated,
       users_no_device: push.usersNoDevice,
       users_prefs_off: push.users_prefs_off,

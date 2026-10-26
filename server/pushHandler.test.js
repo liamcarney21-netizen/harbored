@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { pushGateReason, selectStoriesToPush, runPush, buildPayload } from './pushHandler.js'
+import { pushGateReason, selectStoriesToPush, runPush, buildPayload, localHour, withinPushHours } from './pushHandler.js'
 import { createFakeSupabase } from './testing/fakeSupabase.js'
 import { installGuards, removeGuards } from './testing/guards.js'
 
@@ -200,5 +200,79 @@ describe('runPush (live, fake APNs)', () => {
     expect(logged).toContain('403')
     expect(logged).not.toContain('SECRET')
     expect(logged).not.toContain('Ann')
+  })
+})
+
+describe('the notification budget', () => {
+  const at = (ms) => ({ user_id: 'u1', contact_id: 'x', story_key: `s${ms}`, notified_at: iso(ms) })
+  const historyOf = (rows) => {
+    const times = rows.map(r => Date.parse(r.notified_at))
+    return { stories: new Map(rows.map(r => [r.story_key, r.notified_at])), lastByContact: new Map(), times }
+  }
+
+  it('never buzzes: pushes carry no sound', () => {
+    const payload = buildPayload(row(), 1)
+    expect(payload.aps.sound).toBeUndefined()
+    expect(payload.aps['interruption-level']).toBeUndefined()
+  })
+
+  it('holds stories once three notifications went out this week; a birthday still gets through', () => {
+    const three = historyOf([at(NOW - 2 * 24 * H), at(NOW - 4 * 24 * H), at(NOW - 6 * 24 * H)])
+    const news = row({ contact_id: '9' })
+    const bday = row({ contact_id: '8', theme_category: 'birthday', theme_label: 'Birthday', score: 100 })
+    const plan = selectStoriesToPush([news, bday], three, { nowMs: NOW })
+    expect(plan.toPush.map(e => e.row.theme_category)).toEqual(['birthday'])
+    expect(plan.counts.capped_weekly).toBe(1)
+    // Two stories pushed together count as one notification, and pushes over a week old don't count.
+    const two = historyOf([at(NOW - 2 * 24 * H), { ...at(NOW - 2 * 24 * H), story_key: 'twin' }, at(NOW - 8 * 24 * H), at(NOW - 3 * 24 * H)])
+    expect(selectStoriesToPush([news], two, { nowMs: NOW }).toPush).toHaveLength(1)
+  })
+
+  it("reads the hour in the person's own time zone, and treats an unknown zone as inside the window", () => {
+    expect(localHour('America/Chicago', NOW)).toBe(8)   // 13:00 UTC in October = 8 AM CDT
+    expect(localHour('Asia/Tokyo', NOW)).toBe(22)
+    expect(localHour('Not/AZone', NOW)).toBe(null)
+    expect(withinPushHours('America/Chicago', NOW)).toBe(true)
+    expect(withinPushHours('Asia/Tokyo', NOW)).toBe(false)
+    expect(withinPushHours(undefined, NOW)).toBe(true)
+  })
+
+  it('holds a push that would land outside 8 AM to 9 PM local time, without spending the story', async () => {
+    const tokyo = row({ user_id: 'tokyo' })
+    const chicago = row({ user_id: 'chicago' })
+    const supabase = createFakeSupabase({
+      tables: {
+        scan_results: [tokyo, chicago],
+        device_tokens: [{ user_id: 'tokyo', token: 't-tokyo' }, { user_id: 'chicago', token: 't-chicago' }],
+        user_data: [{ user_id: 'tokyo', data: { prefs: { tz: 'Asia/Tokyo' } } }, { user_id: 'chicago', data: { prefs: { tz: 'America/Chicago' } } }],
+      },
+    })
+    const transport = transportWith()
+    const summary = await runPush(supabase, { now: () => NOW, since: iso(NOW - H), transport })
+    expect(transport.sends.map(x => x.token)).toEqual(['t-chicago'])
+    expect(summary.users_quiet_hours).toBe(1)
+    expect(supabase.rows('notified_stories').map(r => r.user_id)).toEqual(['chicago'])
+    expect(supabase.rows('scan_results').find(r => r.user_id === 'tokyo').notified_at).toBe(null)
+  })
+
+  it('holds every push when one run would notify most people at once, and lets a deliberate run through', async () => {
+    const users = ['a', 'b', 'c', 'd', 'e', 'f']
+    const tables = () => ({
+      scan_results: users.map(u => row({ user_id: u })),
+      device_tokens: users.map(u => ({ user_id: u, token: `t-${u}` })),
+      user_data: users.map(u => ({ user_id: u, data: {} })),
+    })
+    const held = createFakeSupabase({ tables: tables() })
+    const transport = transportWith()
+    const summary = await runPush(held, { now: () => NOW, since: iso(NOW - H), transport })
+    expect(summary.held_by_breaker).toBe(6)
+    expect(transport.sends).toHaveLength(0)
+    expect(held.rows('notified_stories')).toHaveLength(0)
+
+    vi.stubEnv('PUSH_BREAKER_OFF', '1')
+    const through = createFakeSupabase({ tables: tables() })
+    const t2 = transportWith()
+    expect((await runPush(through, { now: () => NOW, since: iso(NOW - H), transport: t2 })).stories_pushed).toBe(6)
+    vi.unstubAllEnvs()
   })
 })
