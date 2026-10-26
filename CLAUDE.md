@@ -99,7 +99,9 @@ the dev server.
 ## Deploy
 Web: `npx vercel --prod` from `main`. iOS: bump `CURRENT_PROJECT_VERSION`/`MARKETING_VERSION`
 in `ios/App/App.xcodeproj/project.pbxproj`, `xcodebuild archive` to `/private/tmp/hb-archiveN`,
-upload through Xcode Organizer (the CLI export can't use the signed-in Apple account).
+then upload with `xcodebuild -exportArchive -allowProvisioningUpdates` and export options
+`method app-store-connect`, `destination upload`, `teamID PAGZC8A3US` (it uses the Apple
+Account signed in under Xcode → Settings → Apple Accounts; Organizer's Distribute App also works).
 Live: https://harbored-three.vercel.app · App Store id 6812816966 · GitHub
 liamcarney21-netizen/harbored (public: keep audits and secrets out).
 
