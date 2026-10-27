@@ -1,8 +1,9 @@
 # Build 12: what you'd text them about
 
 Written 2026-10-27. Status: phase 1 (server) built and deployed 2026-10-27, migration 0009
-applied the same day. Phase 2 (the app) built 2026-10-27 and deployed to the website; the iOS
-build 12 isn't archived yet. Liam took the recommended answer to all four decisions below.
+applied the same day. Phase 2 (the app) built 2026-10-27 and deployed to the website, and
+1.1.0 (12) was uploaded to App Store Connect the same day. Next: Liam's TestFlight walkthrough
+(phase 3). Liam took the recommended answer to all four decisions below.
 
 ## Why
 
