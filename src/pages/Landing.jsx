@@ -134,7 +134,7 @@ const M = {
   cream: '#F5F4EF', muted: '#8C9AAD', body: '#C2CBD8', gold: '#D3A95C',
 };
 
-function BrowserWindow({ children, path = 'harbored.app/dashboard' }) {
+function BrowserWindow({ children, path = 'Harbored — Today' }) {
   return (
     <div style={{
       background: M.bg, borderRadius: 14, overflow: 'hidden', width: '100%',
@@ -217,7 +217,7 @@ function TodayMock() {
 // Voice → mapped themes: "just talk about them."
 function TalkMock() {
   return (
-    <BrowserWindow path="harbored.app — the quiz">
+    <BrowserWindow path="Harbored — the quiz">
       <div style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 500, color: M.cream, marginBottom: 10 }}>
         What do you share with Tom?
       </div>
@@ -248,7 +248,7 @@ function CrewMock() {
     { init: 'CB', tone: 3, name: 'Connor Blake', note: 'Drifting · 65 days quiet', hot: true },
   ];
   return (
-    <BrowserWindow path="harbored.app — your crew">
+    <BrowserWindow path="Harbored — your crew">
       <div style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 500, color: M.cream, marginBottom: 2 }}>Your crew</div>
       <div style={{ fontSize: 10.5, color: M.muted, marginBottom: 10 }}>12 watched · 3 need attention</div>
       {rows.map((r, i) => (
