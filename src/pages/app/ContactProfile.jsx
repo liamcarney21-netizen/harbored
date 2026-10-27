@@ -1,13 +1,16 @@
 import { useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ChevronLeft, Mail, Phone, X, Check, Pencil } from 'lucide-react'
+import { ChevronLeft, Mail, Phone, Check, Pencil } from 'lucide-react'
 import WarmAvatar from '../../components/WarmAvatar'
 import ThemeAdder from '../../components/ThemeAdder'
-import ThemeWatchLine from '../../components/ThemeWatchLine'
-import { useDataStore } from '../../store/dataStore'
+import ThemeRow from '../../components/ThemeRow'
+import RelationPicker from '../../components/RelationPicker'
+import { useDataStore, openerFor } from '../../store/dataStore'
 import { openSend, sendChannelFor } from '../../services/outreach'
 import { haptic } from '../../services/haptics'
+import { track } from '../../services/events'
 import { statusFor } from '../../lib/status'
+import { relationLabel } from '../../lib/relations'
 import Card, { Eyebrow } from '../../ui/Card'
 import Button from '../../ui/Button'
 import Sheet from '../../ui/Sheet'
@@ -30,6 +33,7 @@ export default function ContactProfile() {
   const recordTouch = useDataStore(s => s.recordTouch)
   const saveNote = useDataStore(s => s.saveNote)
   const updateContact = useDataStore(s => s.updateContact)
+  const setRelation = useDataStore(s => s.setRelation)
   const removeContact = useDataStore(s => s.removeContact)
   const showToast = useToast(s => s.show)
 
@@ -41,6 +45,7 @@ export default function ContactProfile() {
   const [draft, setDraft] = useState('')
   const [editing, setEditing] = useState(false)
   const [confirmRemove, setConfirmRemove] = useState(false)
+  const [pickingRelation, setPickingRelation] = useState(false)
 
   // Notes save themselves, a beat after you stop typing.
   const [noteDraft, setNoteDraft] = useState(contact?.notes ?? '')
@@ -80,9 +85,15 @@ export default function ContactProfile() {
   const channel = sendChannelFor(contact)
 
   function startComposing() {
-    const tail = contact.company ? `How's everything at ${contact.company}?` : "How's everything going?"
-    setDraft(`${first} — it's been a while! No agenda, just thinking about you. ${tail}`)
+    setDraft(openerFor(contact))
     setComposing(true)
+  }
+
+  function pickRelation(r) {
+    haptic.tick()
+    setRelation(contact.id, r)
+    track('relation_set', { relation: r || 'none', where: 'profile' })
+    setPickingRelation(false)
   }
 
   function handleSend() {
@@ -121,6 +132,14 @@ export default function ContactProfile() {
         <div style={{ flex: 1, minWidth: 0 }}>
           <h1 className="hb-display" style={{ fontSize: 26, fontWeight: 500, color: T.ink, lineHeight: 1.15, margin: 0 }}>{contact.name}</h1>
           {subtitle && <div style={{ fontSize: 13, color: T.muted, marginTop: 4 }}>{subtitle}</div>}
+          <button
+            type="button"
+            className="hb-press"
+            onClick={() => setPickingRelation(true)}
+            style={{ display: 'block', background: 'none', border: 'none', padding: '4px 0', marginTop: 2, cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, textAlign: 'left', color: contact.relation ? T.body : T.muted, textDecoration: contact.relation ? 'none' : 'underline', textUnderlineOffset: 3 }}
+          >
+            {relationLabel(contact.relation) || `How do you know ${first}?`}
+          </button>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, fontSize: 13, fontWeight: status.hot ? 600 : 400, color: status.hot ? T.accent : T.muted }}>
             {status.hot && <span style={{ width: 6, height: 6, borderRadius: '50%', background: T.accent }} />}
             {status.text}
@@ -160,20 +179,7 @@ export default function ContactProfile() {
         {themes.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
             {themes.map((t, i) => (
-              <div key={t.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px', borderRadius: 12, background: T.ground, border: `1px solid ${T.hairline}` }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: T.ink }}>{t.label}</div>
-                  <ThemeWatchLine theme={t} />
-                </div>
-                <button
-                  className="hb-press"
-                  onClick={() => handleRemoveTheme(t, i)}
-                  aria-label={`Stop watching ${t.label}`}
-                  style={{ width: 36, height: 36, margin: '-6px -8px -6px 0', borderRadius: 10, background: 'none', border: 'none', cursor: 'pointer', color: T.muted, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
-                >
-                  <X style={{ width: 14, height: 14 }} />
-                </button>
-              </div>
+              <ThemeRow key={t.id} contact={contact} theme={t} onRemove={() => handleRemoveTheme(t, i)} />
             ))}
           </div>
         )}
@@ -242,6 +248,15 @@ export default function ContactProfile() {
         </>}
       >
         <TextArea value={draft} onChange={e => setDraft(e.target.value)} rows={5} aria-label="Your message" style={{ background: T.ground, fontSize: 15 }} />
+      </Sheet>
+
+      <Sheet
+        open={pickingRelation}
+        onClose={() => setPickingRelation(false)}
+        title={`How do you know ${first}?`}
+        sub="It sets the tone of drafts and what Harbored guesses you'd text about."
+      >
+        <RelationPicker value={contact.relation} onChange={pickRelation} />
       </Sheet>
 
       <EditContactSheet open={editing} contact={contact} onClose={() => setEditing(false)} onSave={(patch) => { updateContact(contact.id, patch); setEditing(false) }} />

@@ -173,3 +173,43 @@ describe('three-way merge', () => {
     expect(mergeSnapshots(b, reordered, local).contacts.map(c => c.id)).toEqual([DAN])
   })
 })
+
+describe("build 12's fields", () => {
+  const NOW = Date.parse('2026-10-27T17:00:00Z')
+  const daysAgo = (n) => new Date(NOW - n * 86400000).toISOString()
+
+  it('keeps well-formed relation and theme fields, and drops or clamps the rest', () => {
+    const snap = normalizeSnapshot({
+      contacts: [{ id: 1, name: 'Collin', relation: 'teammate' }, { id: 2, name: 'Ann', relation: 'nemesis' }],
+      themesByContact: {
+        1: [{
+          id: 'a', label: 'Southern California',
+          textAbout: [{ label: 'Wildfires & storms', on: true }, { label: 'wildfires and storms', on: true }, { label: 'x'.repeat(41), on: true }, { label: 'Real estate', on: 'yes' }],
+          textAboutConfirmed: true, bar: 99, favors: false,
+          notAbout: [{ headline: 'Recent', at: daysAgo(2) }, { headline: 'Old', at: daysAgo(61) }, { headline: 'Undated' }],
+        }],
+        2: [
+          { id: 'b', label: 'Health and wellness', bare: true, narrower: ['Yoga', 'Yoga', 7], bar: 'high', favors: 'no', textAboutConfirmed: true },
+          { id: 'c', label: 'Lakers', bar: 50, narrower: ['Not bare, so dropped'] },
+        ],
+      },
+    })
+    expect(snap.contacts.map(c => c.relation)).toEqual(['teammate', undefined])
+    expect(snap.contacts[1]).not.toHaveProperty('relation')
+    const [a] = snap.themesByContact[1]
+    expect(a.textAbout).toEqual([{ label: 'Wildfires & storms', on: true }, { label: 'Real estate', on: false }])
+    expect(a).toMatchObject({ textAboutConfirmed: true, bar: 85, favors: false })
+    expect(a.notAbout.map(e => e.headline)).toEqual(['Recent'])
+    const [b, c] = snap.themesByContact[2]
+    expect(b).toEqual({ id: 'b', label: 'Health and wellness', bare: true, narrower: ['Yoga'] })
+    expect(c).toEqual({ id: 'c', label: 'Lakers' })
+  })
+
+  it("merges one device's choices with another device's bar on the same theme", () => {
+    const base = { contacts: [{ id: 1, name: 'Collin' }], themesByContact: { 1: [{ id: 'a', label: 'Southern California', textAbout: [{ label: 'Big local events', on: true }] }] } }
+    const server = { ...base, themesByContact: { 1: [{ ...base.themesByContact[1][0], bar: 75 }] } }
+    const local = { ...base, themesByContact: { 1: [{ ...base.themesByContact[1][0], textAbout: [{ label: 'Big local events', on: false }], textAboutConfirmed: true }] } }
+    const merged = mergeSnapshots(base, server, local)
+    expect(merged.themesByContact[1][0]).toMatchObject({ bar: 75, textAboutConfirmed: true, textAbout: [{ label: 'Big local events', on: false }] })
+  })
+})

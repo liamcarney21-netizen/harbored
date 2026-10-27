@@ -19,14 +19,15 @@
 import { callClaude } from './llm.js'
 import { isPressRelease, isListingPage } from './newsHandler.js'
 import { cleanRelation, relationLabel } from '../src/lib/relations.js'
-import { checkedChoices, uncheckedChoices, choiceKey, NOT_ABOUT_MAX } from '../src/lib/themeChoices.js'
+import { checkedChoices, uncheckedChoices, choiceKey, NOT_ABOUT_MAX, MAX_THEME_BAR } from '../src/lib/themeChoices.js'
 
 export const SIGNIFICANCE_THRESHOLD = 70 // display bar: above_bar, drafts
 export const PUSH_THRESHOLD = 80         // push bar (pushHandler); stricter than display
 // A theme's own bar: 70 unless the person marked one of its stories "Too
-// small to text about", which raises it 5 at a time up to this. Push asks for
-// 10 more than the theme's bar (never less than PUSH_THRESHOLD).
-export const MAX_THEME_BAR = 85
+// small to text about", which raises it 5 at a time up to MAX_THEME_BAR (85,
+// shared with the app). Push asks for 10 more than the theme's bar (never
+// less than PUSH_THRESHOLD).
+export { MAX_THEME_BAR }
 // Bad news (a death, a disaster, layoffs) can be worth a check-in, but it only
 // interrupts anyone when it's this significant; below it, the score is held
 // under the push bar so it can show on Today and never push.

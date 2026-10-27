@@ -82,6 +82,16 @@ network,contacts,relationships,keep in touch,networking,CRM,reminders,follow up,
 >
 > Your network is your most valuable asset. Harbored makes sure you never let it drift.
 
+## What's New (1.1.0) — draft for the build 12 submission
+
+> • Tell Harbored what you'd text each person about (storms near their home, big games, news
+>   at their company) and only those stories become reasons.
+> • "Not something I'd send" on any suggestion teaches Harbored what to skip next time.
+> • How you know someone (family, a teammate, a work contact) sets the tone of every draft.
+> • Your first session ends on what Harbored found, not a promise.
+> • Notifications stay rare and quiet: at most one a day and three a week, only between 8 AM
+>   and 9 PM, and never a sound.
+
 ## What's New (1.0.2)
 
 > • Your home-screen widget now shows today's best reason to reach out.
@@ -102,7 +112,7 @@ Declare these. **Nothing is used for tracking; nothing is sold.** Match this to 
 | Contacts (name, email, phone, company) | Yes | Yes | No | App Functionality |
 | Contact Info — your email address | Yes | Yes | No | App Functionality (account) |
 | Contact Info — your name | Yes | Yes | No | App Functionality (account) |
-| User Content — themes, notes, text of messages you sent (Other User Content) | Yes | Yes | No | App Functionality |
+| User Content — themes, what you'd text each person about, how you know them, notes, text of messages you sent (Other User Content) | Yes | Yes | No | App Functionality |
 | Identifiers — push device token | Yes | Yes | No | App Functionality (notifications) |
 | Usage Data — Product Interaction (funnel events, from build 11) | Yes | Yes | No | Analytics |
 | Diagnostics | No | — | — | — |

@@ -8,7 +8,7 @@ const MUTE = '#5C6B73'
 const NAVY = '#0a1628'
 const LINK = { color: NAVY, fontWeight: 500, textDecoration: 'underline', textDecorationColor: 'rgba(169,126,47,0.6)', textUnderlineOffset: 3 }
 
-const EFFECTIVE = 'October 26, 2026'
+const EFFECTIVE = 'October 27, 2026'
 const CONTACT_EMAIL = 'harboredsupport@gmail.com'
 
 // Substantive privacy policy — Harbored imports contacts and stores personal data,
@@ -65,9 +65,9 @@ export default function Privacy() {
             <Bullet><strong>Account details.</strong> Your name, and the email address and password you use to sign in. Authentication is handled by Supabase; we never see your password in plain text.</Bullet>
             <Bullet><strong>Contacts you import.</strong> When you import from your iPhone's contacts, Harbored lists them on your device so you can choose who to bring in. Only the people you select are saved to your account, and only these fields: name, email address, phone number, company and role, and birthday. We do not read your entire address book without your action, and we don't collect fields you don't need us to.</Bullet>
             <Bullet><strong>Birthdays.</strong> If a contact you choose to import has a birthday saved (or you add one yourself), Harbored keeps only the month and day, and uses it only for birthday reminders.</Bullet>
-            <Bullet><strong>Themes and notes.</strong> The shared themes, notes, and reminders you add for each contact — these are the basis of what Harbored watches for you.</Bullet>
+            <Bullet><strong>Themes and notes.</strong> The shared themes, notes, and reminders you add for each contact, how you know them, and what you'd text them about — these are the basis of what Harbored watches for you. When you tell Harbored a suggestion wasn't about a theme, that headline is kept with the theme for 60 days so similar stories are skipped.</Bullet>
             <Bullet><strong>Messages you send.</strong> When you send a drafted message, Harbored saves its text to your account history. See "Sending messages" below.</Bullet>
-            <Bullet><strong>How you use the app.</strong> A few moments are recorded with your account and the time: finishing setup, how many people you imported and themes you added, your first scan and first reason, opening or sending a draft, and whether you allowed notifications. These records never include anyone's name or contact details, headlines, or message text, and they're deleted with your account.</Bullet>
+            <Bullet><strong>How you use the app.</strong> A few moments are recorded with your account and the time: finishing setup, how many people you imported and themes you added, your first scan and first reason, opening or sending a draft, choosing how you know someone or what you'd text them about, skipping a suggestion with the reason you picked, and whether you allowed notifications. These records never include anyone's name or contact details, headlines, or message text, and they're deleted with your account.</Bullet>
             <Bullet><strong>What you tell Harbored about someone.</strong> When you describe a person to find shared themes, out loud or by typing, that text is sent for analysis (see "AI processing" below) and is not stored after the themes are returned. If you use the mic, your device's built-in speech recognition turns your voice into text; Harbored only ever receives the text, never audio.</Bullet>
             <Bullet><strong>Email updates.</strong> If you sign up for updates on our website, we use your first name and email address only to send you those updates.</Bullet>
           </ul>
@@ -90,8 +90,9 @@ export default function Privacy() {
 
         <Section title="AI processing">
           To refine the themes you add, score how much each news story matters, and draft messages,
-          Harbored sends the relevant contact's name, company, and role, the theme text, the
-          headlines being scored, and your draft text to Anthropic's API (Claude). When you describe
+          Harbored sends the relevant contact's name, company, and role, how you know them, the
+          theme text and what you'd text them about, the headlines being scored (and any you marked
+          as not about a theme), and your draft text to Anthropic's API (Claude). When you describe
           someone to find themes, that text is sent too. Anthropic does not use this data to train
           its models. Harbored sends only what each request needs and never
           sends your whole address book; your contacts' email addresses, phone numbers, and

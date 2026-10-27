@@ -1,14 +1,15 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronLeft, X } from 'lucide-react'
+import { ChevronLeft } from 'lucide-react'
 import WarmAvatar from '../../components/WarmAvatar'
 import ThemeAdder from '../../components/ThemeAdder'
+import ThemeRow from '../../components/ThemeRow'
 import StreamText from '../../components/StreamText'
 import WhyDisclosure from '../../components/WhyDisclosure'
+import NotForThemSheet, { ChoicesSheet } from '../../components/NotForThemSheet'
 import ScanNarration from '../../components/ScanNarration'
 import ThinkingMark from '../../components/ThinkingMark'
-import ThemeWatchLine from '../../components/ThemeWatchLine'
 import { themeUpdates, SIGNIFICANCE_THRESHOLD } from '../../data/commonGround'
 import { useDataStore, selectNudges } from '../../store/dataStore'
 import { useDemoStore } from '../../store/demoStore'
@@ -22,6 +23,7 @@ import { haptic } from '../../services/haptics'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { apiUrl } from '../../lib/apiBase'
 import { themeRefining, themeWatch } from '../../lib/status'
+import { choiceKey, isPausedTheme } from '../../lib/themeChoices'
 import { supabase } from '../../lib/supabase'
 import Button from '../../ui/Button'
 import Card, { PageTitle } from '../../ui/Card'
@@ -163,6 +165,11 @@ export default function CommonGround({ onImportContacts, onFirstScanDone }) {
   const [draftStreaming, setDraftStreaming] = useState(false)
   const [redrafting, setRedrafting] = useState(false)
   const [angleIdx, setAngleIdx] = useState(0)
+  // "Not something I'd send" on a card or the draft screen, and "Change" on
+  // a guessed choice in the Why panel.
+  const [notFor, setNotFor] = useState(null)
+  const [changingChoices, setChangingChoices] = useState(null)
+  const themeFor = (u) => (themesByContact[String(u?.contactId)] || []).find(t => t.label === u?.themeLabel)
 
   // ── Loading reasons ──────────────────────────────────────────────────
   // `quiet` re-reads in the background (resume, push tap): no narration, and
@@ -276,16 +283,25 @@ export default function CommonGround({ onImportContacts, onFirstScanDone }) {
   )
   const keyOf = (u) => u.key || u.id
   const isHandled = (u) => !!reasonState[keyOf(u)]
+  // A card stops showing as soon as what it matched is turned off (the next
+  // scan would drop it anyway): its theme paused or bare, or its choice off.
+  const stillWatched = (u) => {
+    const t = themeFor(u)
+    if (!t) return true
+    if (t.bare || isPausedTheme(t)) return false
+    const matched = u.textAbout && t.textAbout?.find(c => choiceKey(c.label) === choiceKey(u.textAbout))
+    return !matched || matched.on
+  }
 
   const queue = useMemo(() => {
-    const opportunities = allUpdates.filter(u => u.score >= SIGNIFICANCE_THRESHOLD && !isHandled(u))
-    const giveables = allUpdates.filter(u => u.score < SIGNIFICANCE_THRESHOLD && u.giveable && !isHandled(u))
+    const opportunities = allUpdates.filter(u => u.score >= SIGNIFICANCE_THRESHOLD && !isHandled(u) && stillWatched(u))
+    const giveables = allUpdates.filter(u => u.score < SIGNIFICANCE_THRESHOLD && u.giveable && !isHandled(u) && stillWatched(u))
     return [
       ...opportunities.map(u => ({ kind: 'news', id: `n-${keyOf(u)}`, update: u })),
       ...giveables.map(u => ({ kind: 'favor', id: `f-${keyOf(u)}`, update: u })),
       ...nudges.slice(0, 2).map(n => ({ kind: 'drift', id: `d-${n.contact.id}`, nudge: n })),
     ]
-  }, [allUpdates, reasonState, nudges]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [allUpdates, reasonState, nudges, themesByContact]) // eslint-disable-line react-hooks/exhaustive-deps
   const themeCount = Object.values(themesByContact).reduce((n, t) => n + t.length, 0)
 
   // When nothing is worth a message, show what Harbored looked at instead:
@@ -297,22 +313,23 @@ export default function CommonGround({ onImportContacts, onFirstScanDone }) {
     const lines = []
     const seen = new Set()
     const themeOf = (contactId, label) => (themesByContact[contactId] || []).find(t => t.label === label)
-    const broadNote = 'Too broad to watch well. Name the specific company, team or place.'
+    // A bare category or a theme with every choice off isn't watched.
+    const note = (w) => (w.broad ? 'Too broad to watch. Pick something narrower on their profile.' : w.paused ? 'Not watching anything here: every choice is off.' : null)
     for (const u of updates) {
       if (u.score >= SIGNIFICANCE_THRESHOLD || u.giveable || u.category === 'birthday') continue
       const key = `${u.contactId}|${u.themeLabel}`
       if (seen.has(key)) continue
       seen.add(key)
-      const broad = themeWatch(themeOf(u.contactId, u.themeLabel)).broad
-      lines.push({ key, theme: u.themeLabel, first: firstName(u.contactName), head: u.headline, verdict: broad ? broadNote : (u.rationale || u.holdReason), warn: broad })
+      const w = themeWatch(themeOf(u.contactId, u.themeLabel))
+      lines.push({ key, theme: u.themeLabel, first: firstName(u.contactName), head: u.headline, verdict: note(w) || u.rationale || u.holdReason, warn: !!note(w) })
     }
     for (const c of contacts) {
       for (const t of themesByContact[c.id] || []) {
         const key = `${c.id}|${t.label}`
         if (seen.has(key)) continue
         seen.add(key)
-        const broad = themeWatch(t).broad
-        lines.push({ key, theme: t.label, first: firstName(c.name), head: null, verdict: broad ? broadNote : 'Nothing new in the last three days.', warn: broad })
+        const w = themeWatch(t)
+        lines.push({ key, theme: t.label, first: firstName(c.name), head: null, verdict: note(w) || 'Nothing new in the last three days.', warn: !!note(w) })
       }
     }
     return lines.slice(0, 8)
@@ -394,6 +411,7 @@ export default function CommonGround({ onImportContacts, onFirstScanDone }) {
           kind: selected.kind,
           current: msgText,
           angle: ANGLE_ROTATION[angleIdx % ANGLE_ROTATION.length],
+          relation: contact?.relation,
         }),
       })
       const body = await resp.json()
@@ -443,8 +461,10 @@ export default function CommonGround({ onImportContacts, onFirstScanDone }) {
     setSelected(null)
   }
 
+  // A drift card has no news behind it: skipping just closes the draft. A
+  // news card or a pass-along asks why (NotForThemSheet).
   function handleSkip() {
-    if (selected.kind !== 'drift') markReason(keyOf(selected.update), 'dismissed')
+    if (selected.kind !== 'drift') { setNotFor(selected); return }
     setSelected(null)
   }
 
@@ -620,7 +640,26 @@ export default function CommonGround({ onImportContacts, onFirstScanDone }) {
                   </div>
                 )}
 
-                {r.kind !== 'drift' && <WhyDisclosure update={v.u} kind={r.kind} style={{ marginTop: 14 }} />}
+                {r.kind !== 'drift' && (
+                  <WhyDisclosure
+                    update={v.u}
+                    kind={r.kind}
+                    first={v.first}
+                    guessed={!!themeFor(v.u)?.textAbout && !themeFor(v.u)?.textAboutConfirmed}
+                    onChangeChoices={() => setChangingChoices(v.u)}
+                    aside={(
+                      <button
+                        type="button"
+                        className="hb-press"
+                        onClick={() => setNotFor(r)}
+                        style={{ minHeight: 32, background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit', fontSize: 12, color: T.muted }}
+                      >
+                        Not something I&rsquo;d send
+                      </button>
+                    )}
+                    style={{ marginTop: 14 }}
+                  />
+                )}
 
                 <div style={{ flex: 1, minHeight: 14 }} />
 
@@ -752,12 +791,21 @@ export default function CommonGround({ onImportContacts, onFirstScanDone }) {
               <div style={{ flex: 1, minHeight: 18 }} />
 
               <Button size="lg" full onClick={handleSend} icon={<SendIcon />} style={{ flexShrink: 0 }}>{sendLabel}</Button>
-              <Button variant="secondary" size="lg" full onClick={handleSkip} style={{ marginTop: 10, flexShrink: 0 }}>Skip this one</Button>
+              <Button variant="secondary" size="lg" full onClick={handleSkip} style={{ marginTop: 10, flexShrink: 0 }}>
+                {selected.kind === 'drift' ? 'Skip this one' : 'Not something I’d send'}
+              </Button>
               <div style={{ fontSize: 12, color: T.muted, textAlign: 'center', marginTop: 12, flexShrink: 0 }}>{TRUST_LINE}</div>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      <NotForThemSheet
+        reason={notFor}
+        onClose={() => setNotFor(null)}
+        onDone={() => { setNotFor(null); setSelected(null) }}
+      />
+      <ChoicesSheet target={changingChoices} onClose={() => setChangingChoices(null)} />
     </div>
   )
 }
@@ -887,20 +935,7 @@ function ThemesManager({ contacts, themesByContact, themeCount, onBack }) {
               {themes.length > 0 && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
                   {themes.map((t, i) => (
-                    <div key={t.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px', borderRadius: 12, background: T.ground, border: `1px solid ${T.hairline}` }}>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 14, fontWeight: 600, color: T.ink }}>{t.label}</div>
-                        <ThemeWatchLine theme={t} />
-                      </div>
-                      <button
-                        className="hb-press"
-                        onClick={() => remove(c, t, i)}
-                        aria-label={`Stop watching ${t.label}`}
-                        style={{ width: 36, height: 36, margin: '-6px -8px -6px 0', borderRadius: 10, background: 'none', border: 'none', cursor: 'pointer', color: T.muted, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
-                      >
-                        <X style={{ width: 14, height: 14 }} />
-                      </button>
-                    </div>
+                    <ThemeRow key={t.id} contact={c} theme={t} onRemove={() => remove(c, t, i)} />
                   ))}
                 </div>
               )}

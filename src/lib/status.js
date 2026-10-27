@@ -1,4 +1,5 @@
 import { healthFromLastTouch, daysUntilBirthday } from '../store/dataStore'
+import { isPausedTheme } from './themeChoices'
 
 // Plain-language status — one line, gold only when it needs attention.
 export function statusFor(contact) {
@@ -28,16 +29,20 @@ export function isFallbackRefinement(t) {
   return !!t?.query && Array.isArray(t.watchFor) && t.watchFor.length === 1 && t.watchFor[0] === 'significant news'
 }
 
-// What a theme actually watches, in plain words. A theme that resolved to a
-// broad topic says so, with the fix: it can only ever show on Today, never
-// push, and mostly finds noise.
+// What a theme actually watches, in plain words. A bare category ("Health and
+// wellness") says so: it isn't watched, and the narrower subjects offered for
+// it are the way out. A theme with every choice turned off is paused. A topic
+// narrow enough to name is watched like anything else (before build 12 every
+// topic was flagged as too broad).
 export function themeWatch(t) {
   if (!t) return { text: '', broad: false, refining: false }
   if (themeRefining(t)) return { text: '', broad: false, refining: true }
-  const refined = !!t.query && !isFallbackRefinement(t)
-  if (refined && t.entityType === 'topic') {
-    return { text: 'Too broad to watch well. Name the specific company, team or place instead.', broad: true, refining: false }
+  if (t.bare) {
+    const text = t.narrower?.length ? 'Too broad to watch. Pick one to watch instead:' : 'Too broad to watch. Name something more specific instead.'
+    return { text, broad: true, refining: false }
   }
+  if (isPausedTheme(t)) return { text: 'Not watching anything here.', broad: false, refining: false, paused: true }
+  const refined = !!t.query && !isFallbackRefinement(t)
   if (refined && t.display) return { text: t.display, broad: false, refining: false }
   return { text: `Watching the news for ${t.label}.`, broad: false, refining: false }
 }

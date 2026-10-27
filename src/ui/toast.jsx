@@ -14,8 +14,11 @@ export function ToastHost() {
           aria-live="polite"
           initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 12 }}
           transition={{ duration: 0.2 }}
+          // Centered by margins at its own width. left: 50% with a translate
+          // capped it at half the screen, and framer's transform for y
+          // replaced the translate anyway.
           style={{
-            position: 'fixed', left: '50%', transform: 'translateX(-50%)',
+            position: 'fixed', left: 0, right: 0, marginInline: 'auto', width: 'fit-content',
             bottom: 'calc(env(safe-area-inset-bottom) + 84px)', zIndex: 90,
             display: 'flex', alignItems: 'center', gap: 14, maxWidth: 'min(440px, calc(100vw - 32px))',
             padding: '12px 16px', borderRadius: 12, background: T.raised, color: T.ink,

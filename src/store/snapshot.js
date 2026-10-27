@@ -3,6 +3,9 @@
 // functions with no browser or Supabase dependency, so tests and one-off
 // maintenance scripts can import them directly. dataStore.js owns the sync.
 
+import { cleanRelation } from '../lib/relations'
+import { cleanChoices, cleanNarrower, cleanBar, cleanNotAbout } from '../lib/themeChoices'
+
 export const DEFAULT_PREFS = { push: true, digest: true }
 export const SNAPSHOT_KEYS = ['contacts', 'themesByContact', 'touches', 'meetings', 'prefs', 'reasonState']
 
@@ -47,12 +50,36 @@ function withUniqueIds(list) {
   return out
 }
 
-function normalize(raw) {
+// Build 12's theme fields, validated like the rest (see lib/themeChoices.js):
+// a malformed one is dropped, never trusted, and old "not about" headlines
+// age out.
+const THEME_FIELDS = ['textAbout', 'textAboutConfirmed', 'bare', 'narrower', 'bar', 'favors', 'notAbout']
+
+function cleanTheme(t, nowMs) {
+  if (!THEME_FIELDS.some(k => k in t)) return t
+  const out = { ...t }
+  for (const k of THEME_FIELDS) delete out[k]
+  const textAbout = cleanChoices(t.textAbout)
+  if (textAbout) out.textAbout = textAbout
+  if (textAbout && t.textAboutConfirmed === true) out.textAboutConfirmed = true
+  if (t.bare === true) out.bare = true
+  const narrower = t.bare === true ? cleanNarrower(t.narrower) : undefined
+  if (narrower) out.narrower = narrower
+  const bar = cleanBar(t.bar)
+  if (bar) out.bar = bar
+  if (t.favors === false) out.favors = false
+  const notAbout = cleanNotAbout(t.notAbout, nowMs)
+  if (notAbout) out.notAbout = notAbout
+  return out
+}
+
+function normalize(raw, nowMs = Date.now()) {
   const s = raw && typeof raw === 'object' ? raw : {}
   const contacts = (Array.isArray(s.contacts) ? s.contacts : [])
     .filter(c => c && typeof c.name === 'string' && c.name.trim() && c.id != null)
-    .map(c => ({
+    .map(({ relation, ...c }) => ({
       ...c,
+      ...(cleanRelation(relation) ? { relation } : {}),
       name: c.name.trim(),
       initials: c.initials || initialsOf(c.name),
       email: typeof c.email === 'string' ? c.email : '',
@@ -68,7 +95,7 @@ function normalize(raw) {
   if (s.themesByContact && typeof s.themesByContact === 'object') {
     for (const [cid, list] of Object.entries(s.themesByContact)) {
       if (!Array.isArray(list)) continue
-      const valid = list.filter(t => t && typeof t.label === 'string' && t.id != null)
+      const valid = list.filter(t => t && typeof t.label === 'string' && t.id != null).map(t => cleanTheme(t, nowMs))
       const unique = withUniqueIds(valid)
       if (unique.some((t, i) => t !== valid[i])) renamed = true
       themesByContact[cid] = unique

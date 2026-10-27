@@ -50,7 +50,11 @@ layout for every screen (phone-width, centered on desktop); do not add desktop-o
 ## Data model and sync (read before touching dataStore)
 - One snapshot per user: `contacts`, `themesByContact`, `touches`, `meetings` (legacy),
   `prefs` (`push`, `tz`, `recap`; the old `digest` flag is ignored), `reasonState`
-  (sent/dismissed per reason key).
+  (sent/dismissed per reason key, with `why` for "Not something I'd send").
+- Build 12 fields (`src/lib/relations.js`, `src/lib/themeChoices.js`; `normalize` validates them
+  and the server clamps them again): a contact's `relation`; a theme's `textAbout` choices
+  (`[{ label, on }]`, the checked ones define what counts), `textAboutConfirmed`, `bare` and
+  `narrower`, `bar` (raised by "Too small to text about"), `favors: false`, `notAbout` headlines.
 - `hydrate()` renders the cached copy at once, then reconciles with the server. A failed
   read sets `loadError` and **never writes**. A missing row is created with an insert that
   cannot overwrite.

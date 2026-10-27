@@ -1,7 +1,8 @@
 # Build 12: what you'd text them about
 
-Written 2026-10-27. Status: phase 1 (server) built and deployed 2026-10-27; phase 2 (the
-app) not started. Liam took the recommended answer to all four decisions below.
+Written 2026-10-27. Status: phase 1 (server) built and deployed 2026-10-27, migration 0009
+applied the same day. Phase 2 (the app) built 2026-10-27 and deployed to the website; the iOS
+build 12 isn't archived yet. Liam took the recommended answer to all four decisions below.
 
 ## Why
 

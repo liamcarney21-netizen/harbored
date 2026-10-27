@@ -13,9 +13,9 @@ export const sharedThemes = [
     role: 'Wealth Advisor',
     company: 'Morgan Stanley',
     themes: [
-      { id: 't1', label: 'Villanova Basketball', category: 'sports', updatesThisMonth: 4 },
-      { id: 't2', label: 'Pickleball in Charleston, SC', category: 'hobby', updatesThisMonth: 2 },
-      { id: 't3', label: 'Minneapolis Residential Real Estate', category: 'market', updatesThisMonth: 3 },
+      { id: 't1', label: 'Villanova Basketball', category: 'sports', updatesThisMonth: 4, textAbout: [{ label: 'Big games', on: true }, { label: 'Transfers & signings', on: true }, { label: 'Coaching changes', on: false }], textAboutConfirmed: true },
+      { id: 't2', label: 'Pickleball in Charleston, SC', category: 'hobby', updatesThisMonth: 2, textAbout: [{ label: 'Tournaments & events', on: true }, { label: 'New courts & clubs', on: false }], textAboutConfirmed: true },
+      { id: 't3', label: 'Minneapolis Residential Real Estate', category: 'market', updatesThisMonth: 3, textAbout: [{ label: 'Zoning & rule changes', on: true }, { label: 'Big developments', on: true }, { label: 'Home prices & rates', on: false }] },
     ],
   },
   {
@@ -26,8 +26,8 @@ export const sharedThemes = [
     role: 'Senior PM',
     company: 'Stripe',
     themes: [
-      { id: 't4', label: 'Minnesota Vikings', category: 'sports', updatesThisMonth: 5 },
-      { id: 't5', label: 'Fintech & Payments', category: 'industry', updatesThisMonth: 6 },
+      { id: 't4', label: 'Minnesota Vikings', category: 'sports', updatesThisMonth: 5, textAbout: [{ label: 'Big games', on: true }, { label: 'Trades & the draft', on: true }, { label: 'Coaching changes', on: false }], textAboutConfirmed: true },
+      { id: 't5', label: 'Fintech & Payments', category: 'industry', updatesThisMonth: 6, textAbout: [{ label: 'Stripe news', on: true }, { label: 'Big launches & deals', on: true }, { label: 'Funding rounds', on: false }] },
     ],
   },
   {
@@ -38,8 +38,8 @@ export const sharedThemes = [
     role: 'VP Marketing',
     company: 'Notion',
     themes: [
-      { id: 't6', label: 'Formula 1', category: 'sports', updatesThisMonth: 7 },
-      { id: 't7', label: 'NYC Restaurant Scene', category: 'place', updatesThisMonth: 3 },
+      { id: 't6', label: 'Formula 1', category: 'sports', updatesThisMonth: 7, textAbout: [{ label: 'Big races', on: true }, { label: 'New races & the calendar', on: true }, { label: 'Driver moves', on: false }], textAboutConfirmed: true },
+      { id: 't7', label: 'NYC Restaurant Scene', category: 'place', updatesThisMonth: 3, textAbout: [{ label: 'Big openings', on: true }, { label: 'Award lists', on: true }, { label: 'Closures', on: false }] },
     ],
   },
   {
@@ -50,7 +50,7 @@ export const sharedThemes = [
     role: 'Consultant',
     company: 'McKinsey',
     themes: [
-      { id: 't8', label: 'Marathon Running', category: 'hobby', updatesThisMonth: 2 },
+      { id: 't8', label: 'Marathon Running', category: 'hobby', updatesThisMonth: 2, textAbout: [{ label: 'The NYC Marathon', on: true }, { label: 'Records', on: false }], textAboutConfirmed: true },
     ],
   },
   {
@@ -61,8 +61,8 @@ export const sharedThemes = [
     role: 'Founder',
     company: 'Driftwood Studio',
     themes: [
-      { id: 't9', label: 'Brand & Identity Design', category: 'industry', updatesThisMonth: 4 },
-      { id: 't10', label: 'Surfing at Folly Beach', category: 'hobby', updatesThisMonth: 1 },
+      { id: 't9', label: 'Brand & Identity Design', category: 'industry', updatesThisMonth: 4, textAbout: [{ label: 'Big rebrands', on: true }, { label: 'Design awards', on: false }] },
+      { id: 't10', label: 'Surfing at Folly Beach', category: 'hobby', updatesThisMonth: 1, textAbout: [{ label: 'Big swells', on: true }, { label: 'Contests & events', on: true }], textAboutConfirmed: true },
     ],
   },
 ]
@@ -77,6 +77,7 @@ export const themeUpdates = [
     contactInitials: 'JS',
     contactColor: '#1e3a5f',
     headline: 'Villanova lands five-star transfer guard Jalen Reyes — biggest portal win since 2018',
+    textAbout: 'Transfers & signings',
     source: 'The Athletic',
     time: '3 hours ago',
     score: 92,
@@ -98,6 +99,7 @@ export const themeUpdates = [
     contactInitials: 'SC',
     contactColor: '#1a2e4a',
     headline: 'F1 confirms Chicago street race for the 2027 calendar',
+    textAbout: 'New races & the calendar',
     source: 'ESPN',
     time: 'Yesterday',
     score: 84,
@@ -119,6 +121,7 @@ export const themeUpdates = [
     contactInitials: 'JS',
     contactColor: '#1e3a5f',
     headline: 'Minneapolis approves citywide zoning reform — single-family lots open to duplex conversion',
+    textAbout: 'Zoning & rule changes',
     source: 'Star Tribune',
     time: '2 days ago',
     score: 78,
@@ -139,6 +142,7 @@ export const themeUpdates = [
     contactInitials: 'KC',
     contactColor: '#1e3a5f',
     headline: 'Vikings trade up to No. 4 overall in a blockbuster draft-day deal',
+    textAbout: 'Trades & the draft',
     source: 'NFL Network',
     time: '4 days ago',
     score: 73,
@@ -159,6 +163,7 @@ export const themeUpdates = [
     contactInitials: 'JS',
     contactColor: '#1e3a5f',
     headline: 'Charleston Pickleball Open announces November tournament dates',
+    textAbout: 'Tournaments & events',
     source: 'Post & Courier',
     time: '5 days ago',
     score: 58,
@@ -203,6 +208,7 @@ export const themeUpdates = [
     contactInitials: 'JL',
     contactColor: '#1a2e4a',
     headline: 'Strong swell forecast for Folly Beach this weekend',
+    textAbout: 'Big swells',
     source: 'Surfline',
     time: '6 days ago',
     score: 49,

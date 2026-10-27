@@ -150,3 +150,73 @@ describe('writes', () => {
     expect(calls).toHaveLength(0)
   })
 })
+
+describe("build 12: what you'd text them about", () => {
+  const COLIN = 1793048519744003
+  const socal = { id: 'a', label: 'Southern California', entityType: 'place', query: '"Southern California"', textAbout: [{ label: 'Wildfires & storms', on: true }, { label: 'Big local events', on: true }] }
+  const card = (over = {}) => ({ key: '1793048519744003|Southern California|Jay-Z will headline the halftime show at SoFi', contactId: COLIN, themeLabel: 'Southern California', headline: 'Jay-Z will headline the halftime show at SoFi', ...over })
+  const theme = () => useDataStore.getState().themesByContact[COLIN][0]
+  function setup(t = socal, contact = {}) {
+    useDataStore.getState().loadDemo()
+    useDataStore.setState({ contacts: [{ id: COLIN, name: 'Collin Parsons', ...contact }], themesByContact: { [COLIN]: [t] }, reasonState: {} })
+  }
+
+  it("dismisses a card with its reason and teaches the theme; undo puts both back", () => {
+    setup()
+    const undo = useDataStore.getState().notForThem(card(), 'off_subject')
+    expect(useDataStore.getState().reasonState[card().key]).toMatchObject({ state: 'dismissed', why: 'off_subject' })
+    expect(theme().notAbout.map(e => e.headline)).toEqual(['Jay-Z will headline the halftime show at SoFi'])
+    useDataStore.getState().notForThem(card({ key: 'k2', headline: 'Another off-subject story' }), 'off_subject')
+    expect(theme().notAbout.map(e => e.headline)).toEqual(['Another off-subject story', 'Jay-Z will headline the halftime show at SoFi'])
+    undo()
+    expect(useDataStore.getState().reasonState[card().key]).toBeUndefined()
+
+    setup()
+    const bars = []
+    for (let i = 0; i < 4; i++) { useDataStore.getState().notForThem(card({ key: `k${i}` }), 'too_small'); bars.push(theme().bar) }
+    expect(bars).toEqual([75, 80, 85, 85])
+    useDataStore.getState().notForThem(card({ key: 'fav' }), 'no_favor')
+    expect(theme().favors).toBe(false)
+    const before = theme()
+    useDataStore.getState().notForThem(card({ key: 'nn' }), 'not_now')
+    expect(theme()).toBe(before)
+    expect(useDataStore.getState().reasonState.nn).toMatchObject({ state: 'dismissed', why: 'not_now' })
+  })
+
+  it('keeps choices the person set over a late guess, and resets what a card changed', () => {
+    setup({ ...socal, textAbout: undefined })
+    useDataStore.getState().updateTheme(COLIN, 'a', { textAbout: [{ label: 'Real estate', on: true }, { label: 'Big local events', on: true }] })
+    expect(theme()).toMatchObject({ textAbout: [{ label: 'Real estate', on: true }, { label: 'Big local events', on: true }] })
+    expect(theme().textAboutConfirmed).toBeUndefined()
+    useDataStore.getState().setTextAbout(COLIN, 'a', [{ label: 'Real estate', on: false }, { label: 'Big local events', on: true }])
+    expect(theme()).toMatchObject({ textAboutConfirmed: true, textAbout: [{ label: 'Real estate', on: false }, { label: 'Big local events', on: true }] })
+    useDataStore.getState().updateTheme(COLIN, 'a', { query: '"Southern California"', textAbout: [{ label: 'Wildfires & storms', on: true }] })
+    expect(theme().textAbout[0].label).toBe('Real estate')
+
+    useDataStore.setState({ themesByContact: { [COLIN]: [{ ...theme(), bar: 80, favors: false }] } })
+    useDataStore.getState().resetTheme(COLIN, 'a', 'bar')
+    useDataStore.getState().resetTheme(COLIN, 'a', 'favors')
+    expect(theme().bar).toBeUndefined()
+    expect(theme().favors).toBeUndefined()
+  })
+
+  it('swaps a bare category for a narrower subject in the same place', () => {
+    setup({ id: 'h', label: 'Health and wellness', entityType: 'topic', bare: true, narrower: ['Yoga'] })
+    const saved = useDataStore.getState().replaceTheme(COLIN, 'h', 'Yoga')
+    expect(useDataStore.getState().themesByContact[COLIN]).toEqual([saved])
+    expect(saved).toMatchObject({ label: 'Yoga', query: null })
+  })
+
+  it('stores how you know someone, and the no-news opener follows it', async () => {
+    setup()
+    const { setRelation } = useDataStore.getState()
+    setRelation(COLIN, 'teammate')
+    expect(useDataStore.getState().contacts[0].relation).toBe('teammate')
+    setRelation(COLIN, 'boss')
+    expect(useDataStore.getState().contacts[0]).not.toHaveProperty('relation')
+    const { openerFor } = await import('./dataStore')
+    expect(openerFor({ name: 'Collin Parsons', relation: 'teammate' })).toBe("Collin! It's been way too long. What's new with you?")
+    expect(openerFor({ name: 'Ann Lee', relation: 'work', company: 'Stripe' })).toContain('Hope all is well at Stripe')
+    expect(openerFor({ name: 'Ann Lee', company: 'Stripe' })).toBe("Ann — it's been a while! No agenda, just thinking about you. How's everything at Stripe?")
+  })
+})

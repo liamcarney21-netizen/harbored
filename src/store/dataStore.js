@@ -4,6 +4,8 @@ import { sharedThemes as seedThemes } from '../data/commonGround'
 import { supabase } from '../lib/supabase'
 import { useAuthStore } from './authStore'
 import { daysUntilBirthday } from '../lib/birthday'
+import { cleanRelation } from '../lib/relations'
+import { cleanChoices, cleanNarrower, cleanNotAbout, raisedBar } from '../lib/themeChoices'
 import {
   DEFAULT_PREFS, SNAPSHOT_KEYS, emptySnapshot, initialsOf,
   normalizeSnapshot, repairSnapshot, mergeSnapshots,
@@ -160,6 +162,32 @@ let themeIdCounter = 0
 function nextThemeId() {
   themeIdCounter = (themeIdCounter + 1) % 1000
   return `t${Date.now()}-${themeIdCounter}`
+}
+
+// The refinement fields a theme stores. Build 12 adds the choices and, for a
+// bare category, the narrower subjects offered instead.
+function refinementFields(r = {}) {
+  const textAbout = cleanChoices(r.textAbout)
+  const narrower = r.bare ? cleanNarrower(r.narrower) : undefined
+  return {
+    query: r.query || null,
+    entityType: r.entityType || null,
+    watchFor: r.watchFor || null,
+    display: r.display || null,
+    ...(textAbout ? { textAbout } : {}),
+    ...(textAbout && r.textAboutConfirmed === true ? { textAboutConfirmed: true } : {}),
+    ...(r.bare ? { bare: true } : {}),
+    ...(narrower ? { narrower } : {}),
+  }
+}
+
+function mapTheme(s, contactId, themeId, fn) {
+  return {
+    themesByContact: {
+      ...s.themesByContact,
+      [contactId]: (s.themesByContact[contactId] || []).map(t => (t.id === themeId ? fn(t) : t)),
+    },
+  }
 }
 
 function randomId(prefix) {
@@ -444,6 +472,17 @@ export const useDataStore = create((set, get) => {
       contacts: s.contacts.map(c => (String(c.id) === String(contactId) ? { ...c, ...patch } : c)),
     })),
 
+    // How the person knows someone (lib/relations.js); anything else clears it.
+    setRelation: (contactId, relation) => syncedSet(s => ({
+      contacts: s.contacts.map(c => {
+        if (String(c.id) !== String(contactId)) return c
+        const out = { ...c }
+        delete out.relation
+        const r = cleanRelation(relation)
+        return r ? { ...out, relation: r } : out
+      }),
+    })),
+
     removeContact: (contactId) => syncedSet(s => {
       const key = String(contactId)
       const themesByContact = { ...s.themesByContact }
@@ -455,14 +494,13 @@ export const useDataStore = create((set, get) => {
       }
     }),
 
-    // refinement (optional): { query, entityType, watchFor } from /api/refine-theme.
+    // refinement (optional): what /api/refine-theme returned (query,
+    // entityType, watchFor, display, textAbout, bare, narrower), plus
+    // textAboutConfirmed when the person saw and saved the choices.
     addTheme: (contactId, label, category = 'topic', refinement = {}) => {
       const theme = {
         id: nextThemeId(), label: label.trim(), category, createdAt: new Date().toISOString(),
-        query: refinement.query || null,
-        entityType: refinement.entityType || null,
-        watchFor: refinement.watchFor || null,
-        display: refinement.display || null,
+        ...refinementFields(refinement),
       }
       syncedSet(s => ({
         themesByContact: {
@@ -473,19 +511,58 @@ export const useDataStore = create((set, get) => {
       return theme
     },
 
-    // A refinement that finished after the theme was already saved lands here.
-    updateTheme: (contactId, themeId, refinement = {}) => syncedSet(s => ({
-      themesByContact: {
-        ...s.themesByContact,
-        [contactId]: (s.themesByContact[contactId] || []).map(t => t.id === themeId ? {
-          ...t,
-          query: refinement.query || t.query,
-          entityType: refinement.entityType || t.entityType,
-          watchFor: refinement.watchFor || t.watchFor,
-          display: refinement.display || t.display,
-        } : t),
-      },
+    // A refinement that finished after the theme was already saved lands here,
+    // as does the choices backfill (see services/themes.js). Fields it doesn't
+    // carry are left alone, and choices the person already confirmed are never
+    // replaced by a guess.
+    updateTheme: (contactId, themeId, refinement = {}) => syncedSet(s => mapTheme(s, contactId, themeId, t => {
+      const textAbout = t.textAboutConfirmed ? null : cleanChoices(refinement.textAbout)
+      const narrower = refinement.bare ? cleanNarrower(refinement.narrower) : undefined
+      return {
+        ...t,
+        query: refinement.query || t.query,
+        entityType: refinement.entityType || t.entityType,
+        watchFor: refinement.watchFor || t.watchFor,
+        display: refinement.display || t.display,
+        ...(textAbout ? { textAbout } : {}),
+        ...(refinement.bare ? { bare: true } : {}),
+        ...(narrower ? { narrower } : {}),
+      }
     })),
+
+    // The person's own choices for a theme (quiz, profile, themes manager, a
+    // card): from now on they're theirs, not a guess.
+    setTextAbout: (contactId, themeId, textAbout) => syncedSet(s => mapTheme(s, contactId, themeId, t => {
+      const clean = cleanChoices(textAbout)
+      const out = { ...t }
+      delete out.textAbout
+      delete out.textAboutConfirmed
+      return clean ? { ...out, textAbout: clean, textAboutConfirmed: true } : out
+    })),
+
+    // Put a theme back exactly as it was, by id (undo).
+    putTheme: (contactId, theme) => syncedSet(s => mapTheme(s, contactId, theme.id, () => theme)),
+
+    // "Reset" on the profile: back to the default bar, or pass-alongs back on.
+    resetTheme: (contactId, themeId, field) => syncedSet(s => mapTheme(s, contactId, themeId, t => {
+      const out = { ...t }
+      if (field === 'bar') delete out.bar
+      if (field === 'favors') delete out.favors
+      return out
+    })),
+
+    // A bare category swapped for one of the narrower subjects offered for it,
+    // in the same place. Returns the new theme, to be refined by the caller.
+    replaceTheme: (contactId, themeId, label, category = 'topic') => {
+      const theme = { id: nextThemeId(), label: label.trim(), category, createdAt: new Date().toISOString(), query: null, entityType: null, watchFor: null, display: null }
+      syncedSet(s => ({
+        themesByContact: {
+          ...s.themesByContact,
+          [contactId]: (s.themesByContact[contactId] || []).map(t => (t.id === themeId ? theme : t)),
+        },
+      }))
+      return theme
+    },
 
     removeTheme: (contactId, themeId) => syncedSet(s => ({
       themesByContact: {
@@ -520,10 +597,47 @@ export const useDataStore = create((set, get) => {
     setPref: (key, value) => syncedSet(s => ({ prefs: { ...s.prefs, [key]: value } })),
 
     // 'sent' | 'dismissed' per reason, keyed by the server's content key so it
-    // survives tab switches, relaunches and re-scans.
-    markReason: (key, state) => {
+    // survives tab switches, relaunches and re-scans. A dismissal can say why
+    // (the reasons "Not something I'd send" offers).
+    markReason: (key, state, why) => {
       if (!key) return
-      syncedSet(s => ({ reasonState: { ...s.reasonState, [key]: { state, at: new Date().toISOString() } } }))
+      syncedSet(s => ({ reasonState: { ...s.reasonState, [key]: { state, ...(why ? { why } : {}), at: new Date().toISOString() } } }))
+    },
+
+    // "Not something I'd send" on a card. The card is dismissed with its
+    // reason, and the theme it came from learns from it:
+    //   off_subject  keeps the headline as an example of what isn't about it
+    //   too_small    raises the theme's bar a step (up to 85)
+    //   no_favor     stops the theme's pass-alongs
+    // not_their_thing and not_now only dismiss here; turning a choice off is
+    // its own step (setTextAbout). Returns undo(), which puts both back.
+    notForThem: (update, why) => {
+      const key = update?.key || update?.id
+      if (!key) return () => {}
+      const s = get()
+      const cid = String(update.contactId)
+      const theme = (s.themesByContact[cid] || []).find(t => t.label === update.themeLabel)
+      const before = s.reasonState[key]
+      const at = new Date().toISOString()
+      let after = null
+      if (theme && why === 'off_subject' && update.headline) {
+        after = { ...theme, notAbout: cleanNotAbout([{ headline: update.headline, at }, ...(theme.notAbout || []).filter(e => e.headline !== update.headline)]) }
+      } else if (theme && why === 'too_small') {
+        after = { ...theme, bar: raisedBar(theme) }
+      } else if (theme && why === 'no_favor') {
+        after = { ...theme, favors: false }
+      }
+      const swap = (st, from, to) => (to ? mapTheme(st, cid, from.id, () => to) : {})
+      syncedSet(st => ({
+        reasonState: { ...st.reasonState, [key]: { state: 'dismissed', why, at } },
+        ...swap(st, theme, after),
+      }))
+      return () => syncedSet(st => {
+        const reasonState = { ...st.reasonState }
+        if (before) reasonState[key] = before
+        else delete reasonState[key]
+        return { reasonState, ...swap(st, theme, after && theme) }
+      })
     },
   }
 })
@@ -555,6 +669,20 @@ export function selectUpcomingBirthdays(state, withinDays = 10) {
     })
 }
 
+// A no-news check-in, in the register of how the person knows them (the
+// drifting-friend card and "Reach out" on a profile).
+export function openerFor(contact) {
+  const first = (contact?.name || '').split(' ')[0]
+  const company = contact?.company
+  switch (contact?.relation) {
+    case 'family': return `${first}, it's been too long. Thinking of you. How is everyone?`
+    case 'teammate': return `${first}! It's been way too long. What's new with you?`
+    case 'coworker': return `${first}, it's been a while! Hope work's treating you well. ${company ? `How's everything at ${company}?` : "What's new?"}`
+    case 'work': return `${first}, it's been a while since we caught up. Hope all is well${company ? ` at ${company}` : ''}. Would love to hear what you're working on.`
+    default: return `${first} — it's been a while! No agenda, just thinking about you. ${company ? `How's everything at ${company}?` : "How's everything going?"}`
+  }
+}
+
 // Contacts quietly drifting: no touch in 45+ days (brand-new contacts have no
 // history yet and aren't "drifting"). Each gets a low-stakes opener.
 export function selectNudges(state) {
@@ -563,14 +691,10 @@ export function selectNudges(state) {
     .map(c => ({ contact: c, health: healthFromLastTouch(c.lastTouch) }))
     .filter(({ health }) => health.days >= 45)
     .sort((a, b) => b.health.days - a.health.days)
-    .map(({ contact, health }) => {
-      const first = contact.name.split(' ')[0]
-      const tail = contact.company ? `How's everything at ${contact.company}?` : "How's everything going?"
-      return {
-        contact,
-        health,
-        opener: `${first} — it's been a while! No agenda, just thinking about you. ${tail}`,
-        reason: `${health.days} days since your last touchpoint`,
-      }
-    })
+    .map(({ contact, health }) => ({
+      contact,
+      health,
+      opener: openerFor(contact),
+      reason: `${health.days} days since your last touchpoint`,
+    }))
 }

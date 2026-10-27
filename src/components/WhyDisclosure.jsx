@@ -7,11 +7,14 @@ const ACCENT = '#D3A95C'
 const HAIRLINE = 'rgba(255,255,255,0.08)'
 
 // The reasoning behind a reason, one tap away. Every card asserts "this
-// cleared the bar" — this is where that claim shows its work: the tide-line
-// gauge against the threshold, the scorer's own one-sentence judgment, and
-// the signals that moved it. Trust in the push is the whole product; this is
-// the receipt.
-export default function WhyDisclosure({ update, kind, style }) {
+// cleared the bar" — this is where that claim shows its work: which of the
+// things you'd text them about it is, the tide-line gauge against the
+// threshold, the scorer's own one-sentence judgment, and the signals that
+// moved it. Trust in the push is the whole product; this is the receipt.
+// `aside` sits at the other end of the toggle's row ("Not something I'd send").
+// A choice Harbored guessed (the person never confirmed the theme's choices)
+// says so, with Change.
+export default function WhyDisclosure({ update, kind, first, guessed = false, onChangeChoices, aside, style }) {
   const [open, setOpen] = useState(false)
   if (!update || typeof update.score !== 'number') return null
 
@@ -21,6 +24,7 @@ export default function WhyDisclosure({ update, kind, style }) {
 
   return (
     <div style={style}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '4px 12px' }}>
       <button
         className="hb-press"
         onClick={() => setOpen(o => !o)}
@@ -41,6 +45,8 @@ export default function WhyDisclosure({ update, kind, style }) {
           <path d="M6 9l6 6 6-6" />
         </svg>
       </button>
+      {aside}
+      </div>
 
       <AnimatePresence initial={false}>
         {open && (
@@ -55,6 +61,26 @@ export default function WhyDisclosure({ update, kind, style }) {
               marginTop: '10px', padding: '14px 16px', borderRadius: '12px',
               background: 'rgba(255,255,255,0.03)', border: `1px solid ${HAIRLINE}`,
             }}>
+              {/* Which of the things you'd text them about this is */}
+              {update.textAbout && (
+                <p style={{ fontSize: '13px', lineHeight: 1.5, color: '#C2CBD8', margin: '0 0 12px' }}>
+                  {guessed ? 'Harbored guessed you’d text ' : 'You’d text '}{first || 'them'} about <strong style={{ color: ACCENT, fontWeight: 600 }}>{update.textAbout}</strong>.
+                  {guessed && onChangeChoices && (
+                    <>
+                      {' '}
+                      <button
+                        type="button"
+                        className="hb-press"
+                        onClick={onChangeChoices}
+                        style={{ background: 'none', border: 'none', padding: '4px 2px', cursor: 'pointer', fontFamily: 'inherit', fontSize: '13px', fontWeight: 600, color: ACCENT, textDecoration: 'underline', textUnderlineOffset: '3px' }}
+                      >
+                        Change
+                      </button>
+                    </>
+                  )}
+                </p>
+              )}
+
               {/* Tide line — significance against the reach-out bar */}
               <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '12px' }}>
                 <span style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: MUTED }}>

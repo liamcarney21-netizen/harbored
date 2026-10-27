@@ -130,6 +130,9 @@ export async function fetchStoredUpdates(contacts = []) {
       score: row.score,
       headsUp,
       rationale: rationale || undefined,
+      // The choice the story matched (migration 0009), for "You'd text Colin
+      // about …" and the "wouldn't care" step.
+      textAbout: row.text_about || undefined,
       // The scorer always writes a draft for a reason; if one is ever missing,
       // the stand-in is a plain check-in that reads right whatever the news
       // was (bad news included) and never quotes the headline.

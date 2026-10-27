@@ -61,6 +61,12 @@ describe('fetchStoredUpdates', () => {
     ])
   })
 
+  it('carries the choice a story matched, when the row has one', async () => {
+    H.rows = [row({ headline: 'Lakers sign a star', text_about: 'Trades & signings' }), row({ headline: 'Before 0009' })]
+    const out = await fetchStoredUpdates(contacts)
+    expect(out.map(u => u.textAbout)).toEqual(['Trades & signings', undefined])
+  })
+
   it('falls back to a plain check-in that never quotes the headline when a reason has no draft', async () => {
     H.rows = [row({ headline: 'Three hurt in arena fire', draft_message: null })]
     const [u] = await fetchStoredUpdates(contacts)

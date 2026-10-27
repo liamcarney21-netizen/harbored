@@ -5,6 +5,7 @@
 
 import { SIGNIFICANCE_THRESHOLD } from '../data/commonGround'
 import { apiUrl } from '../lib/apiBase'
+import { isPausedTheme, recentNotAbout } from '../lib/themeChoices'
 
 // Kept as a fallback for when /api/score itself is unreachable (network
 // error) — the endpoint already falls back to the same heuristic server-side
@@ -52,10 +53,12 @@ export function holdReasonFor(score) {
 // whole batch in one call. Fails soft: any error just yields fewer/duller
 // cards, never a crash.
 export async function fetchLiveUpdates(contacts, themesByContact, { maxThemes = 6 } = {}) {
+  // Like the server's scan: a bare category or a theme with every choice off
+  // isn't watched.
   const pairs = []
   for (const contact of contacts) {
     for (const theme of themesByContact[contact.id] || []) {
-      pairs.push({ contact, theme })
+      if (!theme.bare && !isPausedTheme(theme)) pairs.push({ contact, theme })
     }
   }
   const sample = pairs.slice(0, maxThemes)
@@ -81,6 +84,11 @@ export async function fetchLiveUpdates(contacts, themesByContact, { maxThemes = 
     contactName: f.contact.name,
     contactCompany: f.contact.company,
     contactRole: f.contact.role,
+    // What you'd text them about (the scorer keeps only stories that are one
+    // of the checked choices), how you know them, and "not about" examples.
+    textAbout: f.theme.textAbout,
+    notAbout: recentNotAbout(f.theme.notAbout),
+    relation: f.contact.relation,
   }))
 
   let scoreById = new Map()
@@ -123,6 +131,7 @@ export async function fetchLiveUpdates(contacts, themesByContact, { maxThemes = 
       // Claude's own one-sentence judgment of why this scored the way it did
       // (falls back to a heuristic rationale server-side when no API key).
       rationale: scored?.rationale,
+      textAbout: scored?.textAbout,
       headsUp: scored?.eventWhen,
       factors: above
         ? [

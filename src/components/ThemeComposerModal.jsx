@@ -8,7 +8,10 @@ import { isSpeechSupported, createRecognizer } from '../services/speech'
 import WarmAvatar from './WarmAvatar'
 import ThemeSpecificityHint from './ThemeSpecificityHint'
 import ThinkingMark from './ThinkingMark'
+import RelationPicker from './RelationPicker'
+import TextAboutChips, { NarrowerPicks } from './TextAboutChips'
 import { haptic } from '../services/haptics'
+import { track } from '../services/events'
 import { useIsMobile } from '../hooks/useIsMobile'
 
 const INK = '#F5F4EF'
@@ -38,9 +41,23 @@ const PROMPTS = [
   { text: "What they're trying to break into", category: 'market',  ph: 'e.g. Venture capital' },
 ]
 
+// Local ids for answers on screen, unique for the life of the page.
+let answerSeq = 0
+const nextAnswerId = () => `c${++answerSeq}`
+
+// How you know someone puts the likeliest prompt first: their company for a
+// coworker or work contact, a team for a teammate, a place for family.
+const FIRST_PROMPT = { coworker: 0, work: 0, teammate: 1, family: 3 }
+function promptOrder(relation) {
+  const lead = FIRST_PROMPT[relation]
+  const all = PROMPTS.map((_, i) => i)
+  return lead === undefined ? all : [lead, ...all.filter(i => i !== lead)]
+}
+
 export default function ThemeComposerModal({ open, contacts = [], onClose }) {
   const addTheme = useDataStore(s => s.addTheme)
   const updateTheme = useDataStore(s => s.updateTheme)
+  const setRelation = useDataStore(s => s.setRelation)
   const isMobile = useIsMobile()
   const inputRef = useRef(null)
 
@@ -90,6 +107,8 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
   }, [])
 
   const current = contacts[index]
+  // The person as saved now: "How do you know them" is stored as it's tapped.
+  const relation = useDataStore(s => s.contacts.find(c => String(c.id) === String(current?.id))?.relation)
   const total = contacts.length
   const isLast = index >= total - 1
   const category = promptIdx !== null ? PROMPTS[promptIdx].category : 'topic'
@@ -121,10 +140,10 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
   // the raw label into a precise, entity-grounded news query + a plain-English
   // "here's what we'll watch" the user can eyeball before committing.
   async function addThemeWithRefine(l, cat) {
-    const cid = `c${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+    const cid = nextAnswerId()
     haptic.tick()
     setThemes(t => [...t, { cid, label: l, category: cat, refining: true }])
-    const result = await refineTheme(l, current)
+    const result = await refineTheme(l, { ...current, relation })
     // Already saved (user moved on mid-spinner)? Patch the stored theme.
     const saved = committedRef.current.get(cid)
     if (saved) {
@@ -210,20 +229,44 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
     }
   }
 
+  // Choices shown on an answer card were the person's to change, so saving
+  // the screen confirms them. A refinement that lands after the screen is
+  // saved is a guess until they confirm it somewhere else.
+  function setChoices(cid, textAbout) {
+    haptic.tick()
+    setThemes(ts => ts.map(x => (x.cid === cid ? { ...x, refinement: { ...x.refinement, textAbout } } : x)))
+  }
+
+  // A bare category swapped for one of the narrower subjects offered for it.
+  function pickNarrower(t, narrower) {
+    setThemes(ts => ts.filter(x => x.cid !== t.cid))
+    addThemeWithRefine(narrower, t.category)
+  }
+
+  function pickRelation(r) {
+    haptic.tick()
+    setRelation(current.id, r)
+    track('relation_set', { relation: r || 'none', where: 'quiz' })
+  }
+
   // Persist the current contact's themes, plus any text left un-added in the
   // field unless the quiz is being closed (half-typed text isn't an answer).
   function commitCurrent({ includePending = true } = {}) {
     if (!current) return
     const contactId = current.id
+    let on = 0, off = 0
     themes.forEach(t => {
-      const saved = addTheme(contactId, t.label, t.category, t.refinement || {})
+      const choices = t.refinement?.textAbout || []
+      choices.forEach(c => { if (c.on) on++; else off++ })
+      const saved = addTheme(contactId, t.label, t.category, choices.length ? { ...t.refinement, textAboutConfirmed: true } : (t.refinement || {}))
       if (t.refining) committedRef.current.set(t.cid, { contactId, themeId: saved.id })
     })
+    if (on + off) track('text_about_saved', { on, off })
     // Text left in the field counts too — saved now, refined in the background.
     const pending = includePending ? label.trim() : ''
     if (pending) {
       const saved = addTheme(contactId, pending, category)
-      refineTheme(pending, current).then(r => { if (r) updateTheme(contactId, saved.id, r.refinement) })
+      refineTheme(pending, { ...current, relation }).then(r => { if (r) updateTheme(contactId, saved.id, r.refinement) })
     }
     const count = themes.length + (pending ? 1 : 0)
     if (count) savedRef.current = { themes: savedRef.current.themes + count, people: savedRef.current.people + 1 }
@@ -323,9 +366,16 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
                 </div>
               </div>
 
+              {/* How you know them — one optional tap */}
+              <div style={{ marginTop: '18px' }}>
+                <div style={{ fontSize: '12px', fontWeight: 600, color: MUTED, marginBottom: '8px' }}>How do you know {first}?</div>
+                <RelationPicker value={relation} onChange={pickRelation} />
+              </div>
+
               {/* Prompt cards — tap one to spark an answer */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '9px', marginTop: '20px' }}>
-                {PROMPTS.map((p, i) => {
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '9px', marginTop: '16px' }}>
+                {promptOrder(relation).map((i) => {
+                  const p = PROMPTS[i]
                   const on = promptIdx === i
                   return (
                     <button
@@ -459,6 +509,9 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
               {/* Answers so far — each shows what Harbored will actually watch */}
               {themes.length > 0 && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px' }}>
+                  {themes.some(t => t.refinement?.textAbout?.length) && (
+                    <div style={{ fontSize: '13px', fontWeight: 600, color: INK }}>Tap what you&rsquo;d text {first} about.</div>
+                  )}
                   {themes.map((t) => (
                     <motion.div
                       key={t.cid}
@@ -485,10 +538,25 @@ export default function ThemeComposerModal({ open, contacts = [], onClose }) {
                           style={{ marginTop: '4px' }}
                           labelStyle={{ fontSize: '12px', fontStyle: 'italic' }}
                         />
+                      ) : t.refinement?.bare ? (
+                        <>
+                          <div style={{ fontSize: '12px', color: ACCENT, marginTop: '4px', lineHeight: 1.45 }}>
+                            {t.refinement.narrower?.length ? 'Too broad to watch. Pick one to watch instead:' : 'Too broad to watch. Name something more specific instead.'}
+                          </div>
+                          <NarrowerPicks narrower={t.refinement.narrower} onPick={(n) => pickNarrower(t, n)} style={{ marginTop: '8px' }} />
+                        </>
                       ) : (
-                        <div style={{ fontSize: '12px', color: MUTED, marginTop: '4px', lineHeight: 1.45 }}>
-                          {t.display || "We'll watch this for significant news."}
-                        </div>
+                        <>
+                          <div style={{ fontSize: '12px', color: MUTED, marginTop: '4px', lineHeight: 1.45 }}>
+                            {t.display || "We'll watch this for significant news."}
+                          </div>
+                          <TextAboutChips
+                            choices={t.refinement?.textAbout}
+                            onChange={(list) => setChoices(t.cid, list)}
+                            noneHint={`Nothing on, so Harbored won't watch ${t.label} for ${first}.`}
+                            style={{ marginTop: '9px' }}
+                          />
+                        </>
                       )}
                     </motion.div>
                   ))}
