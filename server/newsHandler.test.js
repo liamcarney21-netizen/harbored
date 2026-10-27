@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { parseRss, decodeEntities, filterFresh, fetchThemeNews, handleNewsRequest, withRecency, sortByPublished } from './newsHandler.js'
+import { parseRss, decodeEntities, filterFresh, fetchThemeNews, handleNewsRequest, withRecency, sortByPublished, isPressRelease, isListingPage } from './newsHandler.js'
 import { installGuards, removeGuards } from './testing/guards.js'
 
 const NOW = Date.parse('2026-10-21T13:00:00Z')
@@ -70,6 +70,29 @@ describe('ordering and freshness (test e)', () => {
   it('does not add a second when: operator', () => {
     expect(withRecency('Vikings when:1d')).toBe('Vikings when:1d')
     expect(withRecency('Vikings')).toBe('Vikings when:3d')
+  })
+})
+
+describe('isPressRelease', () => {
+  it('recognises the press-release wires by source name, and nothing else', () => {
+    for (const source of ['PR Newswire', 'PRNewswire', 'Business Wire', 'GlobeNewswire', 'ACCESSWIRE', 'ACCESS Newswire', 'EIN Presswire', 'PRWeb', 'Newsfile Corp', 'Newswire']) {
+      expect(isPressRelease({ source })).toBe(true)
+    }
+    for (const source of ['Los Angeles Times', 'Business Insider', 'WIRED', 'Orange County Register', 'Access Hollywood', 'PRWeek', 'Google News', '']) {
+      expect(isPressRelease({ source })).toBe(false)
+    }
+    expect(isPressRelease({})).toBe(false)
+  })
+})
+
+describe('isListingPage', () => {
+  it('recognises live-score, box-score and TV listing pages, not stories about the game', () => {
+    for (const h of ['Devils vs. Avalanche - Live Score - October 28, 2026', 'Lakers vs. Celtics box score', 'How to watch Chiefs vs. Bills: TV channel, live stream', 'Friday night scoreboard']) {
+      expect(isListingPage(h)).toBe(true)
+    }
+    for (const h of ['Live updates: Wildfire forces evacuations in Irvine', 'Dodgers parade start time and route announced', '2027 F1 calendar released', 'Netflix expands live streaming of NFL games', 'Avalanche look to snap skid against Devils', '']) {
+      expect(isListingPage(h)).toBe(false)
+    }
   })
 })
 

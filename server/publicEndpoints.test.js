@@ -25,6 +25,16 @@ describe('input clamps on the public LLM endpoints', () => {
     expect(res.body.engine).toBe('heuristic')
   })
 
+  it('refine: a place is searched as the place itself, never steered to business news', async () => {
+    vi.stubEnv('ANTHROPIC_API_KEY', 'test-key')
+    const llm = vi.fn(async () => ({ ok: true, parsed: { entityType: 'place', query: '"Southern California"', watchFor: ['big local events'], display: 'Watching Southern California for news people there would notice.' } }))
+    const res = await handleRefineRequest({ label: 'Southern California', contactName: 'Collin Parsons' }, { llm })
+    const { system } = llm.mock.calls[0][0]
+    expect(system).toContain('Search a place as the place itself')
+    expect(system).toContain('never steer it toward business news')
+    expect(res.body).toMatchObject({ engine: 'claude', entityType: 'place', query: '"Southern California"' })
+  })
+
   it('discover: text ≤ 12,000 chars, else 400', async () => {
     const long = 'We talked about Villanova basketball and the Final Four. '.repeat(250)
     expect(long.length).toBeGreaterThan(12000)

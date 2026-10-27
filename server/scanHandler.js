@@ -17,8 +17,8 @@
 //    insert can't wipe a user's results.
 
 import { createHash } from 'node:crypto'
-import { fetchThemeNews, filterFresh, FRESH_HOURS } from './newsHandler.js'
-import { scoreItems, SIGNIFICANCE_THRESHOLD, MAX_ITEMS as MAX_SCORED_ITEMS } from './scoreHandler.js'
+import { fetchThemeNews, filterFresh, isPressRelease, isListingPage, FRESH_HOURS } from './newsHandler.js'
+import { scoreItems, headlineNamesSubject, isBareCategory, SIGNIFICANCE_THRESHOLD, MAX_ITEMS as MAX_SCORED_ITEMS } from './scoreHandler.js'
 import { daysUntilBirthday } from '../src/lib/birthday.js'
 import { isMissingColumnError, shortId } from './db.js'
 
@@ -104,6 +104,47 @@ export function broadThemePairs(data) {
     if (theme.entityType === 'topic') broad.add(pairKey(contact.id, theme.label))
   }
   return broad
+}
+
+// What the scan searches for a theme: its refined query, else its label. A
+// place is searched as the place itself. Older refinements gave places an
+// OR-group of business terms ("Southern California (startup OR funding OR real
+// estate OR tech OR business)"), which turned the place someone lives into a
+// feed of company press releases. A group of plain lowercase terms is
+// dropped; one that names things ("(Broncos OR Avalanche)") stays.
+export function newsQueryFor(theme = {}) {
+  const query = String(theme.query || '').trim()
+  if (!query) return theme.label
+  if (theme.entityType !== 'place') return query
+  const place = query
+    .replace(/\(([^()]*)\)/g, (group, inner) => (/[A-Z"]/.test(inner.replace(/\b(?:OR|AND)\b/g, '')) ? group : ' '))
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/^(?:(?:OR|AND) )+|(?: (?:OR|AND))+$/g, '')
+    .trim()
+  return place || theme.label
+}
+
+// Press releases are a company's own announcements: kept for a company or
+// person theme, dropped before scoring for everything else.
+export function keepsPressReleases(theme = {}) {
+  return theme.entityType === 'company' || theme.entityType === 'person'
+}
+
+// The fetched stories worth scoring for a theme, filtered before scoring so
+// the rest never take one of the few slots a theme gets: no live-score or TV
+// listing page, no press release unless it's a company or person theme, and
+// for a topic, only headlines that name it. A bare category ("Health and
+// wellness") gets nothing.
+export function scorableFor(theme = {}, items = []) {
+  const subject = { themeLabel: theme.label, themeQuery: theme.query, entityType: theme.entityType }
+  if (isBareCategory(subject)) return []
+  return items.filter(it => {
+    if (isListingPage(it.title)) return false
+    if (!keepsPressReleases(theme) && isPressRelease(it)) return false
+    if (theme.entityType === 'topic' && !headlineNamesSubject({ ...subject, headline: it.title })) return false
+    return true
+  })
 }
 
 // content_key is the stable identity of a result — the same headline for the
@@ -351,15 +392,15 @@ export async function scanUser(supabase, userId, data, {
 
   // 1. News: up to 8 recent items per theme (the query carries when:3d), keep
   // the freshest few published in the last 72 hours, sized so the whole user
-  // fits one scoring call.
+  // fits one scoring call. Stories that can't count for the theme (see
+  // scorableFor) are dropped before the cut, so a real story gets the slot.
   const refreshed = new Set()
   const candidates = []
   const perTheme = Math.max(1, Math.min(ITEMS_SCORED_PER_THEME, Math.floor(MAX_SCORED_ITEMS / Math.max(1, pairs.length))))
   if (pairs.length) {
     const settled = await Promise.allSettled(pairs.map(async ({ theme }) => {
-      // Search with the refined query when the theme has one, else the label.
-      const items = await fetchNews(theme.query || theme.label, NEWS_ITEMS_PER_THEME)
-      return filterFresh(items || [], { now: nowMs }).slice(0, perTheme)
+      const items = (await fetchNews(newsQueryFor(theme), NEWS_ITEMS_PER_THEME)) || []
+      return filterFresh(scorableFor(theme, items), { now: nowMs }).slice(0, perTheme)
     }))
     settled.forEach((r, i) => {
       if (r.status !== 'fulfilled') { stats.news_failed++; return }

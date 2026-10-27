@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { scoreItems, handleScoreRequest, toScore, subjectFor, draftHasForeignUrl, IRRELEVANT_MAX, PUSH_THRESHOLD, SENSITIVE_PUSH_THRESHOLD } from './scoreHandler.js'
+import { scoreItems, handleScoreRequest, toScore, subjectFor, draftHasForeignUrl, headlineNamesSubject, isBareCategory, IRRELEVANT_MAX, PUSH_THRESHOLD, SENSITIVE_PUSH_THRESHOLD, SIGNIFICANCE_THRESHOLD, ROUTINE_MAX } from './scoreHandler.js'
 import { callClaude } from './llm.js'
 import { installGuards, removeGuards, fakeClaudeFetch, noSleep } from './testing/guards.js'
 
@@ -185,6 +185,143 @@ describe('bad news and pass-along notes', () => {
     const items = [0, 1, 2, 3, 4].map(i => item({ headline: `Story ${i}` }))
     const out = await scoreItems(items, { allowFallback: false, llm: rawLlm(text), now: () => NOW })
     expect(out.results.map(r => r.passAlong)).toEqual(['Kellan, figured you would want this one.', undefined, undefined, undefined, undefined])
+  })
+})
+
+describe('place themes', () => {
+  // Colin's theme from the October 26 walkthrough, refined before the place rule.
+  const socal = (over = {}) => item({
+    headline: 'FF EAI Robotics completes acquisition of FFAI Robotics business',
+    source: 'PR Newswire',
+    themeLabel: 'Southern California',
+    themeQuery: 'Southern California (startup OR funding OR real estate OR tech OR business)',
+    entityType: 'place',
+    watchFor: ['business news', 'startup activity', 'real estate developments', 'local events'],
+    contactName: 'Collin Parsons',
+    contactCompany: undefined,
+    ...over,
+  })
+
+  it('judges a place by the place rule, without its old business watchFor', async () => {
+    const fetchImpl = fakeClaudeFetch({ judge: () => ({ relevant: false, significance: 15 }) })
+    await scoreItems([socal()], { allowFallback: false, llm: llmWith(fetchImpl), now: () => NOW })
+    const body = fetchImpl.requests[0]
+    expect(body.system).toContain('just because the company is based there')
+    expect(body.system).toContain('News that is merely set there is not news about life there')
+    const content = body.messages[0].content
+    expect(content).toContain('"subject":"Southern California"')
+    expect(content).toContain('"subjectType":"place"')
+    expect(content).not.toContain('startup activity')
+  })
+
+  it('never passes along a press release', async () => {
+    const fetchImpl = fakeClaudeFetch({ judge: () => ({ relevant: true, significance: 60, passAlong: 'Collin, thought of you.' }) })
+    const items = [socal(), socal({ headline: 'The best taco spots in Orange County, ranked', source: 'Orange County Register' })]
+    const out = await scoreItems(items, { allowFallback: false, llm: llmWith(fetchImpl), now: () => NOW })
+    expect(out.results.map(r => r.passAlong)).toEqual([undefined, 'Collin, thought of you.'])
+  })
+})
+
+describe('topic themes', () => {
+  // Mom's themes from the October 26 walkthrough, as refined.
+  const mcm = (over = {}) => item({
+    themeLabel: 'Mid century modern architecture',
+    themeQuery: 'mid-century modern architecture (restoration OR preservation OR exhibition OR design)',
+    entityType: 'topic',
+    watchFor: ['restoration projects', 'museum exhibitions'],
+    contactName: 'Mom C',
+    contactCompany: undefined,
+    ...over,
+  })
+
+  it('knows when a headline names the topic', () => {
+    const names = (headline, over) => headlineNamesSubject(mcm({ headline, ...over }))
+    expect(names('Vacant Galveston hotel vies for landmark status amid restoration')).toBe(false) // "amid" is not "mid"
+    expect(names('A Palm Springs mid-century modern home hits the market')).toBe(true)
+    expect(names('Midcentury gem in Denver sells in a day')).toBe(true)
+    expect(names('Modernism Week returns to Palm Springs')).toBe(true)
+    expect(names('An architectural tour of the desert')).toBe(true)
+    const health = { themeLabel: 'Health and wellness', themeQuery: 'health AND wellness (breakthrough OR study OR campaign OR product)' }
+    expect(names('Alabama’s Fitness Courts offer free workouts in parks across the state', health)).toBe(false)
+    const dailyWire = { themeLabel: 'Daily wire podcast and show', themeQuery: '"Daily Wire" podcast show (launch OR episode OR host OR guest)' }
+    expect(names('Trump Trashes Bill Maher After Promising Not To Be Mean', dailyWire)).toBe(false)
+    expect(names('The Daily Wire launches a new streaming series', dailyWire)).toBe(true)
+  })
+
+  it('knows a bare category from a topic narrow enough to name', () => {
+    const topic = (themeLabel, themeQuery, entityType = 'topic') => isBareCategory({ themeLabel, themeQuery, entityType })
+    expect(topic('Health and wellness', 'health AND wellness (breakthrough OR study OR campaign OR product)')).toBe(true)
+    expect(topic('Real estate')).toBe(true)
+    expect(topic('Fintech startups')).toBe(true)
+    expect(topic('AI')).toBe(true)
+    expect(topic('Mental health')).toBe(true)
+    expect(topic('Mid century modern architecture', 'mid-century modern architecture (restoration OR preservation)')).toBe(false)
+    expect(topic('Daily wire podcast and show', '"Daily Wire" podcast show (launch OR episode)')).toBe(false)
+    expect(topic('Real Madrid')).toBe(false)
+    expect(topic('Fintech startup', '"Sunny Benefits" (funding OR hiring)', 'company')).toBe(false)
+  })
+
+  it('tells the model that a bare category produces nothing and a topic must be named, without its watchFor', async () => {
+    const fetchImpl = fakeClaudeFetch({ judge: () => ({ relevant: false, significance: 10 }) })
+    await scoreItems([mcm({ headline: 'A Palm Springs mid-century modern home hits the market' })], { allowFallback: false, llm: llmWith(fetchImpl), now: () => NOW })
+    const { system, messages } = fetchImpl.requests[0]
+    expect(system).toContain('"health and wellness"')
+    expect(system).toContain('relevant only when the headline itself names it')
+    expect(messages[0].content).not.toContain('restoration projects')
+  })
+
+  it('overrules a model that finds a bare category relevant, or a topic in a headline that never names it', async () => {
+    const fetchImpl = fakeClaudeFetch({ judge: () => ({ relevant: true, significance: 72, rationale: 'Matches restoration projects.', draftMessage: 'Mom, your kind of story!' }) })
+    const items = [
+      mcm({ headline: 'Vacant Galveston hotel vies for landmark status amid restoration' }),
+      mcm({ headline: 'A Palm Springs mid-century modern home hits the market' }),
+      mcm({ headline: 'Walking 7,000 steps a day cuts major health risks, study finds', themeLabel: 'Health and wellness', themeQuery: 'health AND wellness (breakthrough OR study OR campaign OR product)' }),
+    ]
+    const out = await scoreItems(items, { allowFallback: false, llm: llmWith(fetchImpl), now: () => NOW })
+    expect(out.results[0]).toMatchObject({ relevant: false, score: IRRELEVANT_MAX, draftMessage: undefined, rationale: "The headline doesn't mention Mid century modern architecture." })
+    expect(out.results[1]).toMatchObject({ relevant: true, score: 72, draftMessage: 'Mom, your kind of story!' })
+    expect(out.results[2]).toMatchObject({ relevant: false, score: IRRELEVANT_MAX, draftMessage: undefined, rationale: 'Health and wellness is too broad to watch well.' })
+  })
+})
+
+describe('games', () => {
+  const avs = (over = {}) => item({
+    themeLabel: 'Colorado Avalanche',
+    themeQuery: '"Colorado Avalanche" (game OR signs OR trade OR championship)',
+    entityType: 'team',
+    watchFor: ['games', 'trades', 'playoff runs'],
+    contactName: 'Collin Parsons',
+    contactCompany: undefined,
+    ...over,
+  })
+
+  it('tells the model an ordinary regular-season game is routine, and asks it to label each game', async () => {
+    const fetchImpl = fakeClaudeFetch({ judge: () => ({ relevant: true, significance: 40 }) })
+    await scoreItems([avs({ headline: 'Avalanche look to snap skid against Devils' })], { allowFallback: false, llm: llmWith(fetchImpl), now: () => NOW })
+    const { system } = fetchImpl.requests[0]
+    expect(system).toContain('An ordinary regular-season game is routine')
+    expect(system).toContain('"regular" for any other regular-season game')
+  })
+
+  it('holds a live-score page and a game labelled regular under the bar, with no draft or favor', async () => {
+    const answers = [
+      { game: undefined }, // the live-score page: caught by its headline
+      { game: 'regular' }, // "must-win" or not
+      { game: 'rivalry' },
+      { game: undefined }, // not a game
+    ]
+    let n = 0
+    const fetchImpl = fakeClaudeFetch({ judge: () => ({ relevant: true, significance: 85, draftMessage: 'Collin, you watching?', passAlong: 'Collin, look.', ...answers[n++] }) })
+    const items = [
+      avs({ headline: 'Devils vs. Avalanche - Live Score - October 28, 2026', source: 'FOX Sports' }),
+      avs({ headline: 'Avalanche look to snap four-game skid against Devils on Wednesday' }),
+      avs({ headline: 'Avalanche and Wild meet with the division lead on the line' }),
+      avs({ headline: 'Avalanche sign Cale Makar to an eight-year extension' }),
+    ]
+    const out = await scoreItems(items, { allowFallback: false, llm: llmWith(fetchImpl), now: () => NOW })
+    for (const r of out.results.slice(0, 2)) expect(r).toMatchObject({ relevant: true, score: ROUTINE_MAX, draftMessage: undefined, passAlong: undefined })
+    expect(ROUTINE_MAX).toBeLessThan(SIGNIFICANCE_THRESHOLD)
+    for (const r of out.results.slice(2)) expect(r).toMatchObject({ score: 85, draftMessage: 'Collin, you watching?' })
   })
 })
 

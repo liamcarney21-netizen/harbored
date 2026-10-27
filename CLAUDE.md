@@ -76,6 +76,10 @@ layout for every screen (phone-width, centered on desktop); do not add desktop-o
   "significance 70", "giveable"). The trust line is "Drafted for you. Nothing sends itself."
   Pitch outcomes, not Claude.
 - The push gate is the product: a wrong push is worse than a missed one. Relevance first.
+  A place theme means life there (what people who live there would notice), never news from
+  companies based there; press releases only count for company and person themes. A topic
+  counts only when the headline names it, and a bare category ("health and wellness") produces
+  nothing. An ordinary regular-season game or a live-score page is never a reason.
 - Notification budget (the promise on the You tab; pinned by
   `server/notificationBudget.test.js`): only the morning scan pushes (never "Check again" or
   the first scan); at most one notification a day (two stories bundled) and three a week

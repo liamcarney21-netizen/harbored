@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { contentKeyFor, notifiedKeyMap, shapeResultRows, birthdayRowsForUser, pairsForUser, broadThemePairs, pairKey, pickBestPerPair } from './scanHandler.js'
+import { contentKeyFor, notifiedKeyMap, shapeResultRows, birthdayRowsForUser, pairsForUser, broadThemePairs, pairKey, pickBestPerPair, newsQueryFor, scanUser, scorableFor } from './scanHandler.js'
+import { createFakeSupabase } from './testing/fakeSupabase.js'
 
 describe('birthdayRowsForUser', () => {
   const now = new Date(2026, 5, 1) // Jun 1, 2026
@@ -174,6 +175,72 @@ describe('pass-along notes', () => {
     expect(shapeResultRows(found, relevant, 'u1', new Map(), 'now')[0]).toMatchObject({ above_bar: false, draft_message: 'Ann, the 2027 calendar is out.' })
     const irrelevant = new Map([[0, { engine: 'claude', relevant: false, score: 15, passAlong: 'Ann, look.' }]])
     expect(shapeResultRows(found, irrelevant, 'u1', new Map(), 'now')[0].draft_message).toBe(null)
+  })
+})
+
+describe('place themes and press releases', () => {
+  it('searches a place as the place itself, keeping a group that names things', () => {
+    const place = (query, label = 'Southern California') => newsQueryFor({ label, query, entityType: 'place' })
+    expect(place('Southern California (startup OR funding OR real estate OR tech OR business)')).toBe('Southern California')
+    expect(place('Colorado sports (Broncos OR Avalanche OR Rockies)', 'Colorado state sports')).toBe('Colorado sports (Broncos OR Avalanche OR Rockies)')
+    expect(place('"Orange County" real estate', 'Orange County real estate')).toBe('"Orange County" real estate')
+    expect(place('"Austin" OR (events OR festivals)', 'Austin')).toBe('"Austin"')
+    expect(place('(news OR events)', 'Charleston')).toBe('Charleston')
+    expect(newsQueryFor({ label: 'Sunny Benefits', query: '"Sunny Benefits" (funding OR hiring)', entityType: 'company' })).toBe('"Sunny Benefits" (funding OR hiring)')
+    expect(newsQueryFor({ label: 'Lakers' })).toBe('Lakers')
+  })
+
+  it('drops press releases before scoring, except for a company or person theme', async () => {
+    const now = Date.parse('2026-10-26T21:00:00Z')
+    const fresh = new Date(now - 2 * 3600000).toISOString()
+    const story = (id, title, source) => ({ title, source, link: `https://n/${id}`, guid: id, pubDate: fresh, publishedAt: fresh })
+    const data = {
+      contacts: [{ id: 1793048519744003, name: 'Collin Parsons' }],
+      themesByContact: { 1793048519744003: [
+        { id: 'a', label: 'Southern California', entityType: 'place', query: 'Southern California (startup OR funding OR real estate OR tech OR business)' },
+        { id: 'b', label: 'Bernhardt furniture company', entityType: 'company', query: '"Bernhardt" furniture (funding OR hiring OR launch)' },
+      ] },
+    }
+    const feeds = {
+      'Southern California': [story('r', 'FF EAI Robotics completes acquisition of FFAI Robotics business', 'PR Newswire'), story('w', 'Wildfire forces evacuations in Irvine', 'Los Angeles Times')],
+      '"Bernhardt" furniture (funding OR hiring OR launch)': [story('s', 'Bernhardt Furniture opens a new High Point showroom', 'Business Wire')],
+    }
+    const queries = []
+    let scored = []
+    await scanUser(createFakeSupabase({ tables: { scan_results: [] } }), 'u1', data, {
+      now: () => now,
+      recordScanTime: false,
+      fetchNews: async (q) => { queries.push(q); return feeds[q] || [] },
+      score: async (items) => {
+        scored = items
+        return { ok: true, results: items.map(i => ({ id: i.id, engine: 'claude', relevant: false, score: 10 })) }
+      },
+    })
+    expect(queries).toContain('Southern California')
+    expect(scored.map(i => i.headline)).toEqual(['Wildfire forces evacuations in Irvine', 'Bernhardt Furniture opens a new High Point showroom'])
+  })
+
+  it('never scores a live-score or TV listing page', () => {
+    const avs = { label: 'Colorado Avalanche', entityType: 'team', query: '"Colorado Avalanche" (game OR signs OR trade OR championship)' }
+    const stories = [
+      { title: 'Devils vs. Avalanche - Live Score - October 28, 2026', source: 'FOX Sports' },
+      { title: 'Avalanche sign Cale Makar to an eight-year extension', source: 'The Denver Post' },
+    ]
+    expect(scorableFor(avs, stories).map(s => s.source)).toEqual(['The Denver Post'])
+  })
+
+  it('scores a topic story only when its headline names the topic', () => {
+    const mcm = { label: 'Mid century modern architecture', entityType: 'topic', query: 'mid-century modern architecture (restoration OR preservation OR exhibition OR design)' }
+    const stories = [
+      { title: 'Vacant Galveston hotel vies for landmark status amid restoration', source: 'Chron' },
+      { title: 'A Palm Springs mid-century modern home by Albert Frey hits the market', source: 'Desert Sun' },
+    ]
+    expect(scorableFor(mcm, stories).map(s => s.source)).toEqual(['Desert Sun'])
+    // Other theme types are left to the scorer.
+    expect(scorableFor({ ...mcm, entityType: 'team' }, stories)).toHaveLength(2)
+    // A bare category gets nothing, even a headline that names it.
+    const health = { label: 'Health and wellness', entityType: 'topic', query: 'health AND wellness (breakthrough OR study OR campaign OR product)' }
+    expect(scorableFor(health, [{ title: 'Walking 7,000 steps a day cuts major health risks, study finds', source: 'CNN' }])).toEqual([])
   })
 })
 

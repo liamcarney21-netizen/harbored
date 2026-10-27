@@ -90,6 +90,23 @@ export function filterFresh(items, { now = Date.now(), maxAgeHours = FRESH_HOURS
   })
 }
 
+// Press-release wires, by the source name Google News gives them: a company
+// announcing its own news. Worth seeing for a company or person theme, never as
+// news about a place, a team or a topic, and never as something to pass along.
+const PRESS_WIRES = /\b(?:pr ?newswire|business ?wire|globe ?newswire|access ?(?:news)?wire|ein ?presswire|prweb|newsfile|prlog|openpr|cision)\b|^newswire(?:\.com)?$/i
+
+export function isPressRelease(item) {
+  return PRESS_WIRES.test(String(item?.source || '').trim())
+}
+
+// Listing pages, not stories: a live score, a box score, a TV listing. They
+// never become a reason or a favor, whatever the game.
+const LISTING_PAGE = /\b(?:live scores?|box scores?|scoreboard|tv channel|live stream)\b/i
+
+export function isListingPage(headline) {
+  return LISTING_PAGE.test(String(headline || ''))
+}
+
 export function withRecency(query, when = '3d') {
   const q = String(query || '').trim()
   if (!when || /(^|\s)when:\d+[hdmy]\b/i.test(q)) return q
