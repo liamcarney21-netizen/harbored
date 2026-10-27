@@ -133,6 +133,31 @@ describe('broad themes', () => {
   })
 })
 
+describe("a theme's own bar", () => {
+  it('asks a theme the person raised for 10 more than its bar before it pushes', () => {
+    const themeBars = new Map([['1|Lakers', 80]])
+    expect(pushGateReason(row({ score: 85 }), NOW, { themeBars })).toBe('below-push-bar')
+    expect(pushGateReason(row({ score: 90 }), NOW, { themeBars })).toBe(null)
+    expect(pushGateReason(row({ score: 85, theme_label: 'Celtics' }), NOW, { themeBars })).toBe(null)
+    expect(pushGateReason(row({ score: 80 }), NOW)).toBe(null)
+  })
+
+  it("reads the theme bars from the user's data when the scan didn't hand them over", async () => {
+    const raised = row({ theme_label: 'Lakers', score: 86 })
+    const supabase = createFakeSupabase({
+      tables: {
+        scan_results: [raised],
+        device_tokens: [{ user_id: 'u1', token: 't' }],
+        user_data: [{ user_id: 'u1', data: { contacts: [{ id: 1, name: 'Ann Lee' }], themesByContact: { 1: [{ id: 'a', label: 'Lakers', entityType: 'team', bar: 80 }] } } }],
+      },
+    })
+    const transport = transportWith()
+    const summary = await runPush(supabase, { now: () => NOW, since: iso(NOW - H), transport })
+    expect(summary.gated).toMatchObject({ 'below-push-bar': 1 })
+    expect(transport.sends).toHaveLength(0)
+  })
+})
+
 describe('runPush (live, fake APNs)', () => {
   it('pushes once per user with a per-day collapse id, records the story and marks the rows', async () => {
     const r = row()

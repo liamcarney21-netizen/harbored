@@ -79,7 +79,10 @@ layout for every screen (phone-width, centered on desktop); do not add desktop-o
   A place theme means life there (what people who live there would notice), never news from
   companies based there; press releases only count for company and person themes. A topic
   counts only when the headline names it, and a bare category ("health and wellness") produces
-  nothing. An ordinary regular-season game or a live-score page is never a reason.
+  nothing. An ordinary regular-season game or a live-score page is never a reason. When a theme
+  has checked "What would you text them about?" choices (`textAbout`), they define what counts:
+  the scorer must name the one a story is, and code drops any story that names none. Choices
+  only narrow; they never loosen these rules.
 - Notification budget (the promise on the You tab; pinned by
   `server/notificationBudget.test.js`): only the morning scan pushes (never "Check again" or
   the first scan); at most one notification a day (two stories bundled) and three a week

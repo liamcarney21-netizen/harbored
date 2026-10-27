@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest'
-import { contentKeyFor, notifiedKeyMap, shapeResultRows, birthdayRowsForUser, pairsForUser, broadThemePairs, pairKey, pickBestPerPair, newsQueryFor, scanUser, scorableFor } from './scanHandler.js'
+import { describe, it, expect, vi } from 'vitest'
+import { contentKeyFor, notifiedKeyMap, shapeResultRows, birthdayRowsForUser, pairsForUser, broadThemePairs, themeBarPairs, pairKey, pickBestPerPair, newsQueryFor, scanUser, scorableFor } from './scanHandler.js'
 import { createFakeSupabase } from './testing/fakeSupabase.js'
 
 describe('birthdayRowsForUser', () => {
@@ -274,5 +274,105 @@ describe('best story per theme', () => {
     ]
     const scores = new Map([[1, { engine: 'claude', relevant: false, score: 10 }]])
     expect(pickBestPerPair(candidates, scores).found[0].item.title).toBe('Scored low')
+  })
+})
+
+describe("what you'd text them about", () => {
+  const now = Date.parse('2026-10-27T17:00:00Z')
+  const DAY = 86400000
+  const fresh = new Date(now - 2 * 3600000).toISOString()
+  const story = (id, title, source = 'Los Angeles Times') => ({ title, source, link: `https://n/${id}`, guid: id, pubDate: fresh, publishedAt: fresh })
+  const colinId = 1793048519744003
+  const colin = (themes, contact = {}) => ({ contacts: [{ id: colinId, name: 'Collin Parsons', ...contact }], themesByContact: { [colinId]: themes } })
+  const wildfire = { id: 'a', label: 'Southern California', entityType: 'place', query: '"Southern California"', textAbout: [{ label: 'Wildfires & storms', on: true }] }
+
+  it('skips a theme with every choice off and one refined as a bare category, and keeps one without choices', () => {
+    const data = colin([
+      { id: 'a', label: 'Southern California', entityType: 'place', textAbout: [{ label: 'Wildfires & storms', on: false }, { label: 'Big local events', on: false }] },
+      { id: 'b', label: 'Health and wellness', entityType: 'topic', bare: true, narrower: ['Yoga'] },
+      { id: 'c', label: 'Colorado Avalanche', entityType: 'team' },
+      { id: 'd', label: 'Denver', entityType: 'place', textAbout: [{ label: 'Big local events', on: true }, { label: 'Real estate', on: false }] },
+    ])
+    expect(pairsForUser(data).map(p => p.theme.label)).toEqual(['Colorado Avalanche', 'Denver'])
+  })
+
+  it('sends the scorer the stored choices, recent not-about headlines and the relation', async () => {
+    const choices = [{ label: 'Wildfires & storms', on: true }, { label: 'Big local events', on: true }, { label: 'Real estate', on: false }]
+    const data = colin([{
+      ...wildfire,
+      textAbout: choices,
+      notAbout: [
+        { headline: 'FF EAI Robotics completes acquisition of FFAI Robotics business', at: new Date(now - 3 * DAY).toISOString() },
+        { headline: 'Two months back', at: new Date(now - 61 * DAY).toISOString() },
+        { headline: 'Undated' },
+      ],
+    }], { relation: 'teammate' })
+    let scored = []
+    await scanUser(createFakeSupabase({ tables: { scan_results: [] } }), 'u1', data, {
+      now: () => now,
+      recordScanTime: false,
+      fetchNews: async () => [story('w', 'Wildfire forces evacuations in Irvine')],
+      score: async (items) => {
+        scored = items
+        return { ok: true, results: items.map(i => ({ id: i.id, engine: 'claude', relevant: false, score: 10 })) }
+      },
+    })
+    expect(scored[0]).toMatchObject({
+      textAbout: choices,
+      notAbout: ['FF EAI Robotics completes acquisition of FFAI Robotics business'],
+      relation: 'teammate',
+    })
+  })
+
+  it("holds a theme's stories to its own bar, drops pass-alongs when they're off, and stores the matched choice", () => {
+    const found = (theme) => [{ contact: { id: 1, name: 'Collin Parsons' }, theme: { label: 'Southern California', ...theme }, item: { title: 'Wildfire forces evacuations in Irvine', link: 'https://n/w' } }]
+    const row = (theme, score, extra = {}) => shapeResultRows(found(theme), new Map([[0, {
+      engine: 'claude', relevant: true, score, draftMessage: 'Collin, you OK?', textAbout: 'Wildfires & storms', ...extra,
+    }]]), 'u1', new Map(), 'now')[0]
+    expect(row({}, 72)).toMatchObject({ above_bar: true, draft_message: 'Collin, you OK?', text_about: 'Wildfires & storms' })
+    expect(row({ bar: 80 }, 78)).toMatchObject({ above_bar: false, draft_message: null, text_about: 'Wildfires & storms' })
+    expect(row({ bar: 80 }, 80).above_bar).toBe(true)
+    expect(row({ bar: 50 }, 69).above_bar).toBe(false) // a bar never drops below 70
+    expect(row({ bar: 99 }, 85).above_bar).toBe(true)  // or rises past 85
+    expect(row({ bar: 'high' }, 70).above_bar).toBe(true)
+    expect(row({}, 45, { passAlong: 'Collin, the fire map.' }).draft_message).toBe('Collin, the fire map.')
+    expect(row({ favors: false }, 45, { passAlong: 'Collin, the fire map.' }).draft_message).toBe(null)
+    expect(row({}, 15, { relevant: false }).text_about).toBe(null)
+  })
+
+  it('hands push the themes with their own bar', () => {
+    const data = colin([{ id: 'a', label: 'Southern California', bar: 80 }, { id: 'b', label: 'Colorado Avalanche' }, { id: 'c', label: 'Denver', bar: 120 }])
+    expect([...themeBarPairs(data)]).toEqual([[pairKey(colinId, 'Southern California'), 80], [pairKey(colinId, 'Denver'), 85]])
+  })
+
+  it('writes rows without text_about until migration 0009 is applied, keeping the 0005 columns', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const scan = (supabase, state = {}) => scanUser(supabase, 'u1', colin([wildfire]), {
+      now: () => now,
+      recordScanTime: false,
+      state,
+      fetchNews: async () => [story('w', 'Wildfire forces evacuations in Irvine')],
+      score: async (items) => ({ ok: true, results: items.map(i => ({ id: i.id, engine: 'claude', relevant: true, score: 84, draftMessage: 'Collin, you OK?', textAbout: 'Wildfires & storms' })) }),
+    })
+
+    const no0009 = createFakeSupabase({ tables: { scan_results: [] }, missingColumns: { scan_results: ['text_about'] } })
+    const state = {}
+    await scan(no0009, state)
+    const [written] = no0009.rows('scan_results')
+    expect(written).toMatchObject({ above_bar: true, engine: 'claude', relevant: true, published_at: fresh })
+    expect(written.story_key).toMatch(/^[0-9a-f]{40}$/)
+    expect(written).not.toHaveProperty('text_about')
+    expect(state).toEqual({ noTextAbout: true })
+
+    const neither = createFakeSupabase({ tables: { scan_results: [] }, missingColumns: { scan_results: ['published_at', 'engine', 'story_key', 'relevant', 'text_about'] } })
+    await scan(neither)
+    expect(neither.rows('scan_results')[0]).toMatchObject({ above_bar: true, score: 84 })
+    expect(Object.keys(neither.rows('scan_results')[0])).not.toContain('text_about')
+
+    const both = createFakeSupabase({ tables: { scan_results: [] } })
+    await scan(both)
+    expect(both.rows('scan_results')[0].text_about).toBe('Wildfires & storms')
+    expect(spy.mock.calls.flat().join('\n')).toContain('migration 0009')
+    spy.mockRestore()
   })
 })

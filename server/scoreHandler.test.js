@@ -333,3 +333,111 @@ describe('heads-up timing', () => {
     expect(out.results.map(r => r.eventWhen)).toEqual(['Saturday night', 'tonight', 'Nov 12', undefined, undefined, undefined, undefined])
   })
 })
+
+describe("what you'd text them about", () => {
+  // Colin's place theme with the two choices refine checks for it.
+  const socal = (over = {}) => item({
+    headline: 'Wildfire forces evacuations in Irvine',
+    source: 'Los Angeles Times',
+    themeLabel: 'Southern California',
+    themeQuery: '"Southern California"',
+    entityType: 'place',
+    watchFor: ['big local events', 'wildfires and storms'],
+    textAbout: ['Wildfires & storms', 'Big local events'],
+    contactName: 'Collin Parsons',
+    contactCompany: undefined,
+    ...over,
+  })
+
+  it('sends the checked choices instead of watchFor, with the relation and the not-about headlines', async () => {
+    const fetchImpl = fakeClaudeFetch({ judge: () => ({ relevant: false, significance: 10 }) })
+    const items = [
+      socal({ relation: 'teammate', notAbout: ['FF EAI Robotics completes acquisition of FFAI Robotics business'] }),
+      item({ textAbout: ['Big launches & deals', 'New leaders'], relation: 'work' }),
+    ]
+    await scoreItems(items, { allowFallback: false, llm: llmWith(fetchImpl), now: () => NOW })
+    const { system, messages } = fetchImpl.requests[0]
+    expect(system).toContain('If it is a kind in notTextAbout, or none of them, it is not relevant')
+    expect(system).toContain('textAbout only narrows what counts')
+    expect(system).toContain('marked as not about this theme')
+    expect(system).toContain('It never changes relevant or significance')
+    const content = messages[0].content
+    expect(content).toContain('"textAbout":["Wildfires & storms","Big local events"]')
+    expect(content).toContain('"notAboutHeadlines":["FF EAI Robotics completes acquisition of FFAI Robotics business"]')
+    expect(content).toContain('"relation":"teammate"')
+    expect(content).toContain('"textAbout":["Big launches & deals","New leaders"]')
+    expect(content).toContain('"relation":"work contact"')
+    expect(content).not.toContain('watchFor') // a place never sends it, and choices replace it
+  })
+
+  it('keeps a story only when the model names one of the checked choices', async () => {
+    const answers = {
+      'Wildfire forces evacuations in Irvine': { textAbout: 'wildfires and storms', draftMessage: 'Collin, you guys OK out there?' },
+      'Disneyland opens its biggest expansion in decades': { textAbout: ['Not a choice', 'Big local events'], draftMessage: 'Collin, going?' },
+      'Orange County home prices hit a record': { textAbout: 'Real estate', draftMessage: 'Collin!' }, // offered, not checked
+      'Huntington Beach pier reopens after repairs': { draftMessage: 'Collin!' },                        // names none
+    }
+    const fetchImpl = fakeClaudeFetch({ judge: (it) => ({ relevant: true, significance: 84, ...answers[it.headline] }) })
+    const items = Object.keys(answers).map(headline => socal({ headline }))
+    const out = await scoreItems(items, { allowFallback: false, llm: llmWith(fetchImpl), now: () => NOW })
+    expect(out.results[0]).toMatchObject({ relevant: true, score: 84, textAbout: 'Wildfires & storms', draftMessage: 'Collin, you guys OK out there?' })
+    expect(out.results[1]).toMatchObject({ relevant: true, score: 84, textAbout: 'Big local events' })
+    for (const r of out.results.slice(2)) {
+      expect(r).toMatchObject({ relevant: false, score: IRRELEVANT_MAX, draftMessage: undefined, textAbout: undefined, holdReason: "Not one of the things you'd text Collin about." })
+    }
+  })
+
+  it('shows the model the unchecked choices too, and drops a story it files under one', async () => {
+    const stored = [
+      { label: 'Big games', on: true },
+      { label: 'Trades & signings', on: true },
+      { label: 'Records & milestones', on: false },
+      { label: 'Coaching changes', on: false },
+    ]
+    const fetchImpl = fakeClaudeFetch({ judge: () => ({ relevant: true, significance: 74, textAbout: 'Records & milestones', draftMessage: 'Collin, 1,000 points!' }) })
+    const avs = item({ headline: 'Nathan MacKinnon becomes the Avalanche all-time points leader', themeLabel: 'Colorado Avalanche', themeQuery: '"Colorado Avalanche" (game OR signs)', entityType: 'team', textAbout: stored, contactName: 'Collin Parsons' })
+    const out = await scoreItems([avs], { allowFallback: false, llm: llmWith(fetchImpl), now: () => NOW })
+    const content = fetchImpl.requests[0].messages[0].content
+    expect(content).toContain('"textAbout":["Big games","Trades & signings"],"notTextAbout":["Records & milestones","Coaching changes"]')
+    expect(out.results[0]).toMatchObject({ relevant: false, score: IRRELEVANT_MAX, draftMessage: undefined, holdReason: "Records & milestones isn't one of the things you'd text Collin about." })
+  })
+
+  it('never shows a line that names a field from the prompt', async () => {
+    const answers = {
+      'A Palm Springs mid-century modern landmark by Albert Frey hits the market': { relevant: true, significance: 65, textAbout: 'Famous houses & landmarks', rationale: 'A Frey landmark fits the textAbout category.', holdReason: 'Below the bar for textAbout stories.' },
+      'Mid-century modern architects get a retrospective at LACMA': { relevant: false, significance: 15, textAbout: 'Architect retrospectives', rationale: 'Architect retrospectives are explicitly in notTextAbout.' },
+      'Mid-century modern furniture prices soar': { relevant: false, significance: 15, rationale: 'Nothing in textAbout covers furniture.' },
+    }
+    const fetchImpl = fakeClaudeFetch({ judge: (it) => answers[it.headline] })
+    const stored = [{ label: 'Famous houses & landmarks', on: true }, { label: 'Design events', on: true }, { label: 'Architect retrospectives', on: false }]
+    const items = Object.keys(answers).map(headline => item({ headline, themeLabel: 'Mid century modern architecture', themeQuery: 'mid-century modern architecture', entityType: 'topic', textAbout: stored, contactName: 'Mom C' }))
+    const out = await scoreItems(items, { allowFallback: false, llm: llmWith(fetchImpl), now: () => NOW })
+    expect(fetchImpl.requests[0].system).toContain('never name a field from the items')
+    expect(out.results[0]).toMatchObject({ relevant: true, textAbout: 'Famous houses & landmarks', rationale: "One of the things you'd text Mom about: Famous houses & landmarks." })
+    expect(out.results[0].holdReason).not.toMatch(/textAbout/)
+    expect(out.results[1]).toMatchObject({ relevant: false, rationale: "Architect retrospectives isn't one of the things you'd text Mom about." })
+    expect(out.results[2]).toMatchObject({ relevant: false, rationale: "Not one of the things you'd text Mom about." })
+  })
+
+  it('never lets a choice loosen the rules', async () => {
+    const fetchImpl = fakeClaudeFetch({ judge: (it) => ({ relevant: true, significance: 85, textAbout: it.textAbout[0], game: 'regular', draftMessage: 'Collin, you watching?' }) })
+    const items = [
+      item({ headline: 'Avalanche look to snap four-game skid against Devils', themeLabel: 'Colorado Avalanche', themeQuery: '"Colorado Avalanche" (game OR signs)', entityType: 'team', textAbout: ['Big games', 'Trades & signings'], contactName: 'Collin Parsons' }),
+      item({ headline: 'Vacant Galveston hotel vies for landmark status amid restoration', themeLabel: 'Mid century modern architecture', themeQuery: 'mid-century modern architecture', entityType: 'topic', textAbout: ['Preservation fights'], contactName: 'Mom C' }),
+    ]
+    const out = await scoreItems(items, { allowFallback: false, llm: llmWith(fetchImpl), now: () => NOW })
+    expect(out.results[0]).toMatchObject({ relevant: true, score: ROUTINE_MAX, draftMessage: undefined, textAbout: 'Big games' })
+    expect(out.results[1]).toMatchObject({ relevant: false, score: IRRELEVANT_MAX, rationale: "The headline doesn't mention Mid century modern architecture." })
+  })
+
+  it('judges a theme without checked choices as before, and a relation changes only the tone', async () => {
+    const fetchImpl = fakeClaudeFetch({ judge: () => ({ relevant: true, significance: 82, draftMessage: 'Kellan, congrats!' }) })
+    const items = [item(), item({ relation: 'family' }), item({ relation: 'boss', textAbout: [{ label: 'Big launches & deals', on: false }] })]
+    const out = await scoreItems(items, { allowFallback: false, llm: llmWith(fetchImpl), now: () => NOW })
+    expect(out.results.map(r => [r.relevant, r.score, r.textAbout])).toEqual([[true, 82, undefined], [true, 82, undefined], [true, 82, undefined]])
+    const content = fetchImpl.requests[0].messages[0].content
+    expect(content.match(/"watchFor":\["funding","new hires"\]/g)).toHaveLength(3)
+    expect(content).toContain('"relation":"family"')
+    expect(content).not.toContain('boss')
+  })
+})

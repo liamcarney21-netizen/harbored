@@ -1,4 +1,4 @@
-// Vercel serverless function: POST /api/refine-theme { label, contactName, contactCompany, contactRole }
+// Vercel serverless function: POST /api/refine-theme { label, contactName, contactCompany, contactRole, relation }
 import { handleRefineRequest } from '../server/refineHandler.js'
 import { rateLimit, clientIp } from '../server/rateLimit.js'
 

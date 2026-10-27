@@ -6,6 +6,7 @@
 //  - "heuristic" — fallback: honest template variants, never a 500.
 
 import { callClaude } from './llm.js'
+import { cleanRelation } from '../src/lib/relations.js'
 
 export const MAX_FIELD_CHARS = 2000
 
@@ -15,6 +16,16 @@ export const ANGLES = {
   warmer: 'Warmer and more personal — lead with the relationship, not the news. It should feel like they crossed your mind first and the headline second.',
   shorter: 'Half the length. One punchy line, maybe two. The kind of text you send with one thumb while walking.',
   curious: "More curious — end on a genuine question that's easy to answer. Pull their take out of them instead of delivering yours.",
+}
+
+// How the user knows them (build 12) sets the register under any angle.
+const RELATION_TONE = {
+  family: 'They are family: warm and familiar.',
+  friend: 'They are a friend: easy and casual.',
+  teammate: 'They are a teammate: casual and familiar, and a little friendly ribbing of them is fine.',
+  classmate: 'They are a classmate: casual and friendly.',
+  coworker: 'They are a coworker: friendly, a little professional.',
+  work: 'They are a work contact: friendly and professional.',
 }
 
 function heuristicRedraft({ contactName, headline, themeLabel, kind, angle }) {
@@ -30,11 +41,12 @@ function heuristicRedraft({ contactName, headline, themeLabel, kind, angle }) {
   return `${first} — ${h} came up and you were the first person I thought of. Hope things are good on your end.`
 }
 
-async function claudeRedraft({ contactName, headline, themeLabel, kind, current, angle }, llm) {
+async function claudeRedraft({ contactName, headline, themeLabel, kind, current, angle, relation }, llm) {
   const direction = ANGLES[angle] || ANGLES.warmer
-  const context = kind === 'drift'
+  const context = (kind === 'drift'
     ? `This is a no-news check-in: it has been a while since the user talked to ${contactName}.`
-    : `The reason for reaching out: the news headline "${headline}"${themeLabel ? ` on ${themeLabel}, a theme the user shares with ${contactName}` : ''}.`
+    : `The reason for reaching out: the news headline "${headline}"${themeLabel ? ` on ${themeLabel}, a theme the user shares with ${contactName}` : ''}.`) +
+    (relation ? ` ${RELATION_TONE[relation]}` : '')
   const res = await llm({
     label: 'redraft',
     system:
@@ -55,7 +67,7 @@ async function claudeRedraft({ contactName, headline, themeLabel, kind, current,
 }
 
 export async function handleRedraftRequest(body = {}, { llm = callClaude } = {}) {
-  const { contactName, headline, themeLabel, kind, current, angle } = body || {}
+  const { contactName, headline, themeLabel, kind, current, angle, relation } = body || {}
   if (!current || !String(current).trim()) {
     return { status: 400, body: { error: 'Nothing to redraft.' } }
   }
@@ -71,6 +83,7 @@ export async function handleRedraftRequest(body = {}, { llm = callClaude } = {})
     kind: ['news', 'favor', 'drift'].includes(kind) ? kind : 'news',
     current: String(current).slice(0, 1000),
     angle: Object.prototype.hasOwnProperty.call(ANGLES, angle) ? angle : 'warmer',
+    relation: cleanRelation(relation),
   }
   if (process.env.ANTHROPIC_API_KEY) {
     const message = await claudeRedraft(input, llm)

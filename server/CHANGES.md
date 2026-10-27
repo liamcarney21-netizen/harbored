@@ -49,9 +49,21 @@ From the build 11 walkthrough. A "Southern California" theme, set up for a conta
 
 Old place themes keep their stored `display` line ("…for business news") until the app re-refines them.
 
+## Build 12, phase 1: what you'd text them about (October 27, 2026)
+
+The rules above say what never counts; what's left depends on the person. Build 12 asks: for each theme, which kinds of story you'd text this person about, and how you know them. This is the server half (plan: `BUILD-12.md`). It changes nothing for a theme without the new fields, which is every theme until the build 12 app saves them. Migration 0009 is optional for it to run.
+
+1. **Refine proposes the choices.** `/api/refine-theme` returns `textAbout`: three to five kinds of story within the subject (`[{ label, on }]`), two or three checked, chosen with the contact's company and role and the new optional `relation` input. Code clamps them: labels of at most 40 characters, no duplicates (case, spacing and "&"/"and" don't count), at most five, at most three checked and never none. It drops any choice the scorer never counts (every game, scores, odds, rumors, schedules, previews, forecasts, traffic, crime) and, for a place, any business choice unless the theme's own words ask for it. With fewer than two usable choices the theme gets none. A bare category gets `bare: true` and up to four `narrower` subjects instead (none of them bare themselves); `isBareCategory` decides for the field words it knows, and the model may add others, for topics only. `watchFor` and `display` are still returned for build 11.
+2. **The checked choices are the definition of what counts.** A scorer item can carry `textAbout`: plain labels (checked) or the stored `[{ label, on }]`, which the scorer splits. The model sees the checked kinds as `textAbout` and the unchecked ones as `notTextAbout`, names the one kind the headline is from either list, and is told the item is relevant only if it's a checked kind. Code keeps the story only if the named label is one of the checked choices (`matchChoice`); otherwise relevant becomes false, significance is capped at 20 and the hold reason is "Records & milestones isn't one of the things you'd text Colin about." (or "Not one of…" when it named none). The gate can only drop a story. It can't catch a story filed under the wrong checked choice, which is why the unchecked ones go to the model too: shown only the checked ones on the first live run, it filed "MacKinnon becomes the Avalanche all-time points leader" under "Trades & signings". Choices never loosen anything: the topic headline check, the place rules, ordinary games, listing pages and press releases all still apply, and topic themes still never push. `watchFor` isn't sent when choices are. The result carries the matched `textAbout`.
+   The model's `rationale` and `holdReason` are shown in the app, and on the live run it began naming the new fields ("it's in notTextAbout"). It's told not to, and code replaces any line that names a prompt field with a plain one ("One of the things you'd text Mom about: Famous houses & landmarks.").
+3. **Skipped headlines and relation.** Items can carry `notAbout` (up to five headlines the person marked "It's not about {theme}", the scan sends those from the last 60 days) and `relation` (`family`, `friend`, `teammate`, `classmate`, `coworker`, `work`). The model treats stories like the `notAbout` headlines as not relevant, and uses relation only for the tone of drafts and pass-alongs. `/api/redraft` takes `relation` too.
+4. **The scan.** A theme with every choice turned off (paused) or refined as a bare category isn't scanned at all. A theme's own `bar` (raised by "Too small to text about") decides `above_bar`, clamped to 70–85. `favors: false` stores no pass-along. Rows gain `text_about`, the matched choice (migration 0009). Without that column the insert is retried without it and the run logs it once; the 0005 columns are unaffected, since each migration has its own fallback.
+5. **Push.** A theme with its own bar needs that bar plus 10 to push (80 for an ordinary theme, up to 95). The scan hands the bars to push with the prefs and broad themes; `/api/push` on its own reads them from `user_data`.
+6. **Shared helpers.** `src/lib/relations.js` and `src/lib/themeChoices.js` hold the relation list and the choice clamps, so the build 12 app validates its snapshot with the same rules the server applies.
+
 ## Migrations to apply, in order
 
-Paste each into Supabase → SQL Editor. All are idempotent (`if not exists`), and the code runs without any of them. Each missing one is logged once per run with the migration number. Apply them in number order: 0004 → 0005 → 0006 → 0007. 0005 unlocks the full push gate. Apply it no later than 0006: without `story_key`, push records the `content_key` in `notified_stories` instead of the sha1. Push dedupe is only fully durable from the moment 0006 exists, so a story pushed in the few days before it could be re-pushed once in that window.
+Paste each into Supabase → SQL Editor. All are idempotent (`if not exists`), and the code runs without any of them. Each missing one is logged once per run with the migration number. Apply them in number order: 0004 → 0005 → 0006 → 0007 (then 0008 and 0009, below). 0005 unlocks the full push gate. Apply it no later than 0006: without `story_key`, push records the `content_key` in `notified_stories` instead of the sha1. Push dedupe is only fully durable from the moment 0006 exists, so a story pushed in the few days before it could be re-pushed once in that window.
 
 ### `supabase/migrations/0004_scan_runs.sql`
 
@@ -124,6 +136,13 @@ create index if not exists user_data_last_scanned_idx
   on public.user_data (last_scanned_at asc nulls first);
 ```
 
+### `supabase/migrations/0009_scan_results_text_about.sql` (build 12)
+
+```sql
+alter table public.scan_results
+  add column if not exists text_about text;
+```
+
 ## New environment variables
 
 | Var | Default | Used for |
@@ -143,6 +162,7 @@ All additive; `content_key`, `score`, `above_bar`, `rationale` (with the `[Heads
 | `engine` | `'claude'` (scored by Claude), `'unscored'` (Claude left it out: `score` 0, `above_bar` false, `rationale` null; show it as "not scored", not as a judgment), or `'birthday'`. The cron never writes `'heuristic'`. `null` = a row from before this change. |
 | `relevant` | Claude's verdict on whether the headline is about the watched subject. `above_bar` implies `relevant`. Irrelevant rows have `score` ≤ 20, so the client's `score >= 70` rule stays consistent with `above_bar`. |
 | `story_key` | sha1 of the article link (40 hex chars); the same story has the same key under any theme or headline wording. Good for de-duplicating cards. `content_key` stays the right key for per-card sent/skipped state. |
+| `text_about` | (migration 0009) The checked choice the story matched, copied from the theme ("Wildfires & storms"), for "You'd text Colin about …". Null for themes without choices, birthdays and anything not relevant. Absent until 0009 is applied. |
 
 Behaviour the client will notice:
 - A theme with no news in the last 72h produces **no row** (it used to get whatever stale item Google ranked first), and rows older than 72h are removed on that user's next scan. Expect emptier decks on quiet days. Old App Store builds fall back to their live scan when a user has no rows at all, which means a few more `/api/score` calls.

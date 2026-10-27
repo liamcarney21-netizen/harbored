@@ -149,6 +149,7 @@ export async function runScheduledScan(supabase, {
         excludeUserIds: scan.internal?.erroredUserIds || [],
         prefsByUser: scan.internal?.prefsByUser,
         broadPairsByUser: scan.internal?.broadPairsByUser,
+        themeBarsByUser: scan.internal?.themeBarsByUser,
         deadline: startMs + PUSH_DEADLINE_MS,
         ...pushOptions,
       })

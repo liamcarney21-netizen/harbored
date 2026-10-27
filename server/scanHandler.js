@@ -18,8 +18,9 @@
 
 import { createHash } from 'node:crypto'
 import { fetchThemeNews, filterFresh, isPressRelease, isListingPage, FRESH_HOURS } from './newsHandler.js'
-import { scoreItems, headlineNamesSubject, isBareCategory, SIGNIFICANCE_THRESHOLD, MAX_ITEMS as MAX_SCORED_ITEMS } from './scoreHandler.js'
+import { scoreItems, headlineNamesSubject, isBareCategory, themeBar, SIGNIFICANCE_THRESHOLD, MAX_ITEMS as MAX_SCORED_ITEMS } from './scoreHandler.js'
 import { daysUntilBirthday } from '../src/lib/birthday.js'
+import { isPausedTheme, recentNotAbout } from '../src/lib/themeChoices.js'
 import { isMissingColumnError, shortId } from './db.js'
 
 // Kept importable from here: api/push.js, api/digest.js and vite.config.js use it.
@@ -43,7 +44,8 @@ export const LLM_DEADLINE_MS = 46000 // no Claude attempt or retry starts after 
 const DAY_MS = 86400000
 
 // Fields added by migration 0005. If they aren't there yet, rows are written
-// without them (old behaviour) and the run logs it once.
+// without them (old behaviour) and the run logs it once. text_about (0009) has
+// its own fallback, so a missing 0009 never strips these.
 const NEW_ROW_FIELDS = ['published_at', 'engine', 'story_key', 'relevant']
 
 export class UserScanError extends Error {
@@ -64,6 +66,9 @@ export function pairKey(contactId, themeLabel) {
 // fictional people. Contact ids are Date.now()-based for user-added contacts
 // and small ints for seeds, so a descending sort puts fresh additions first —
 // when the per-user cap bites, it never drops the themes just added.
+// Not watched at all: a theme with every choice turned off (paused) and one
+// refinement marked a bare category, which the app offers narrower subjects
+// for instead.
 export function livePairs(data) {
   const { contacts = [], themesByContact = {} } = data || {}
   const ordered = (Array.isArray(contacts) ? contacts : [])
@@ -73,7 +78,7 @@ export function livePairs(data) {
   for (const contact of ordered) {
     const themes = themesByContact?.[contact.id]
     for (const theme of Array.isArray(themes) ? themes : []) {
-      if (theme && theme.label) pairs.push({ contact, theme })
+      if (theme && theme.label && theme.bare !== true && !isPausedTheme(theme)) pairs.push({ contact, theme })
     }
   }
   return pairs
@@ -104,6 +109,17 @@ export function broadThemePairs(data) {
     if (theme.entityType === 'topic') broad.add(pairKey(contact.id, theme.label))
   }
   return broad
+}
+
+// Themes with their own bar (the person marked a story "Too small to text
+// about"), keyed like broadThemePairs: the push gate asks for 10 more.
+export function themeBarPairs(data) {
+  const bars = new Map()
+  for (const { contact, theme } of livePairs(data)) {
+    const bar = themeBar(theme)
+    if (bar > SIGNIFICANCE_THRESHOLD) bars.set(pairKey(contact.id, theme.label), bar)
+  }
+  return bars
 }
 
 // What the scan searches for a theme: its refined query, else its label. A
@@ -295,7 +311,9 @@ export function pickBestPerPair(candidates, scoreById) {
 
 // Shape scored news into storage rows, carrying notified_at forward for any
 // story the user was already alerted to. Only Claude-scored, relevant items
-// can be above the bar; everything else is stored as below-bar context.
+// can be above the bar (the theme's own bar, 70 unless the person raised it);
+// everything else is stored as below-bar context. A theme with pass-alongs
+// turned off (favors: false) never stores one.
 export function shapeResultRows(found, scoreById, userId, notifiedByKey, scannedAt, { notifiedByStory = new Map() } = {}) {
   return found.map(({ contact, theme, item }, i) => {
     const scored = scoreById.get(i) || {}
@@ -303,7 +321,8 @@ export function shapeResultRows(found, scoreById, userId, notifiedByKey, scanned
     const usable = engine === 'claude' && Number.isFinite(Number(scored.score)) && scored.score !== null
     const score = usable ? clampScore(scored.score) : 0
     const relevant = usable && scored.relevant === true
-    const above = relevant && score >= SIGNIFICANCE_THRESHOLD
+    const above = relevant && score >= themeBar(theme)
+    const passAlong = relevant && theme.favors !== false ? (scored.passAlong ?? null) : null
     const key = contentKeyFor(contact.id, theme.label, item.title)
     const storyKey = storyKeyFor(item)
     let rationale = usable ? (scored.rationale ?? null) : null
@@ -323,7 +342,7 @@ export function shapeResultRows(found, scoreById, userId, notifiedByKey, scanned
       rationale,
       // Above the bar: the reach-out draft. Below it: the scorer's note for
       // passing a relevant story along (a favor), when it judged one fits.
-      draft_message: above ? (scored.draftMessage ?? null) : (relevant ? (scored.passAlong ?? null) : null),
+      draft_message: above ? (scored.draftMessage ?? null) : passAlong,
       above_bar: above,
       content_key: key,
       notified_at: notifiedByKey.get(key) ?? notifiedByStory.get(storyKey) ?? null,
@@ -332,26 +351,44 @@ export function shapeResultRows(found, scoreById, userId, notifiedByKey, scanned
       engine,
       story_key: storyKey,
       relevant,
+      // The choice the story matched, for "You'd text Colin about …".
+      text_about: relevant ? (scored.textAbout ?? null) : null,
     }
   })
 }
 
-function stripNewFields(rows) {
+// The rows as the table can take them: without the 0005 fields or text_about
+// (0009) while that migration is missing.
+function rowsForColumns(rows, state) {
+  if (!state.legacyRowColumns && !state.noTextAbout) return rows
   return rows.map(r => {
     const copy = { ...r }
-    for (const f of NEW_ROW_FIELDS) delete copy[f]
+    if (state.legacyRowColumns) for (const f of NEW_ROW_FIELDS) delete copy[f]
+    if (state.noTextAbout) delete copy.text_about
     return copy
   })
 }
 
+// A missing column is retried without it, once per migration, and logged
+// once per run.
 async function insertRows(supabase, rows, state) {
-  let { error } = await supabase.from('scan_results').insert(state.legacyRowColumns ? stripNewFields(rows) : rows)
-  if (error && !state.legacyRowColumns && isMissingColumnError(error)) {
-    console.error(`[scan] scan_results is missing the 0005 columns (${error.message}); writing rows without published_at/engine/story_key/relevant until migration 0005 is applied`)
-    state.legacyRowColumns = true
-    ;({ error } = await supabase.from('scan_results').insert(stripNewFields(rows)))
+  for (;;) {
+    const { error } = await supabase.from('scan_results').insert(rowsForColumns(rows, state))
+    if (!error) return
+    if (isMissingColumnError(error)) {
+      if (!state.noTextAbout && /text_about/.test(error.message || '')) {
+        console.error(`[scan] scan_results has no text_about column (${error.message}); writing rows without it until migration 0009 is applied`)
+        state.noTextAbout = true
+        continue
+      }
+      if (!state.legacyRowColumns && !/text_about/.test(error.message || '')) {
+        console.error(`[scan] scan_results is missing the 0005 columns (${error.message}); writing rows without published_at/engine/story_key/relevant until migration 0005 is applied`)
+        state.legacyRowColumns = true
+        continue
+      }
+    }
+    throw new UserScanError('insert', error.message)
   }
-  if (error) throw new UserScanError('insert', error.message)
 }
 
 async function markScanned(supabase, userId, scannedAt, state) {
@@ -428,9 +465,15 @@ export async function scanUser(supabase, userId, data, {
       themeQuery: f.theme.query || undefined,
       entityType: f.theme.entityType || undefined,
       watchFor: Array.isArray(f.theme.watchFor) ? f.theme.watchFor : undefined,
+      // The theme's choices as stored ([{ label, on }]; the scorer splits and
+      // clamps them, since the snapshot is user-writable) and only recent
+      // "not about" headlines.
+      textAbout: Array.isArray(f.theme.textAbout) ? f.theme.textAbout : undefined,
+      notAbout: recentNotAbout(f.theme.notAbout, nowMs),
       contactName: f.contact.name,
       contactCompany: f.contact.company,
       contactRole: f.contact.role,
+      relation: f.contact.relation,
     }))
     const res = await score(items, { deadline, now })
     if (!res || !res.ok) throw new UserScanError('score', res?.error || 'scoring failed')
@@ -566,12 +609,14 @@ export async function runScan(supabase, {
   const processedUserIds = []
   const prefsByUser = new Map()
   const broadPairsByUser = new Map()
+  const themeBarsByUser = new Map()
   let totalPairs = 0
 
   for (const row of users) {
     const data = row?.data && typeof row.data === 'object' ? row.data : {}
     prefsByUser.set(row.user_id, data.prefs && typeof data.prefs === 'object' ? data.prefs : {})
     broadPairsByUser.set(row.user_id, broadThemePairs(data))
+    themeBarsByUser.set(row.user_id, themeBarPairs(data))
     const all = pairsForUser(data, maxPairsPerUser, { day })
     const birthday = hasBirthdayToday(data, new Date(now()))
     if (all.length === 0 && !birthday) { summary.users_idle++; continue }
@@ -631,7 +676,7 @@ export async function runScan(supabase, {
   // Internal hand-off to the push step; non-enumerable so it never lands in a
   // JSON response or log line.
   Object.defineProperty(summary, 'internal', {
-    value: { erroredUserIds, processedUserIds, prefsByUser, broadPairsByUser },
+    value: { erroredUserIds, processedUserIds, prefsByUser, broadPairsByUser, themeBarsByUser },
     enumerable: false,
   })
   return summary

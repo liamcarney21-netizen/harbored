@@ -1,7 +1,9 @@
 // Common Ground significance scoring: given a batch of candidate headlines
 // (one per contact/theme pair), judges which are genuinely about the watched
 // subject, how strong a reason to reach out each one is, and drafts a message
-// for the ones that clear the bar.
+// for the ones that clear the bar. When a theme has checked "What would you
+// text them about?" choices, those are what counts: the model names the one a
+// story is, and code drops any story that names none.
 //
 // Two engines:
 //  - "claude"    — the real judgment (server/llm.js). Each item gets a separate
@@ -16,9 +18,15 @@
 
 import { callClaude } from './llm.js'
 import { isPressRelease, isListingPage } from './newsHandler.js'
+import { cleanRelation, relationLabel } from '../src/lib/relations.js'
+import { checkedChoices, uncheckedChoices, choiceKey, NOT_ABOUT_MAX } from '../src/lib/themeChoices.js'
 
 export const SIGNIFICANCE_THRESHOLD = 70 // display bar: above_bar, drafts
 export const PUSH_THRESHOLD = 80         // push bar (pushHandler); stricter than display
+// A theme's own bar: 70 unless the person marked one of its stories "Too
+// small to text about", which raises it 5 at a time up to this. Push asks for
+// 10 more than the theme's bar (never less than PUSH_THRESHOLD).
+export const MAX_THEME_BAR = 85
 // Bad news (a death, a disaster, layoffs) can be worth a check-in, but it only
 // interrupts anyone when it's this significant; below it, the score is held
 // under the push bar so it can show on Today and never push.
@@ -31,6 +39,20 @@ export const IRRELEVANT_MAX = 20         // significance ceiling when relevant i
 export const ROUTINE_MAX = 40
 export const MAX_ITEMS = 20
 export const MAX_FIELD_CHARS = 500
+
+// The bar a theme's stories must clear to become reasons. The snapshot is
+// user-writable, so it's clamped: a theme can ask for bigger news, never for
+// smaller.
+export function themeBar(theme) {
+  const n = Number(theme?.bar)
+  if (!Number.isFinite(n)) return SIGNIFICANCE_THRESHOLD
+  return Math.max(SIGNIFICANCE_THRESHOLD, Math.min(MAX_THEME_BAR, Math.round(n)))
+}
+
+// The push bar for a theme with that bar: 80 for an ordinary theme, up to 95.
+export function pushBarFor(bar = SIGNIFICANCE_THRESHOLD) {
+  return Math.max(PUSH_THRESHOLD, bar + (PUSH_THRESHOLD - SIGNIFICANCE_THRESHOLD))
+}
 
 // Truncates at a word boundary instead of mid-word, so an over-length model
 // response never ends on a fragment like "...know they're dee".
@@ -168,9 +190,19 @@ function normalizeItem(raw, idx) {
     themeQuery: clip(r.themeQuery),
     entityType: clip(r.entityType, 20),
     watchFor: Array.isArray(r.watchFor) ? r.watchFor.map(w => clip(w, 60)).filter(Boolean).slice(0, 4) : undefined,
+    // Build 12: the theme's "What would you text them about?" choices (plain
+    // labels count as checked; stored [{ label, on }] are split), the
+    // headlines the person marked as not about it, and how they know the
+    // contact. All optional; without them an item is judged as before.
+    textAbout: checkedChoices(r.textAbout),
+    textAboutOff: uncheckedChoices(r.textAbout),
+    notAbout: Array.isArray(r.notAbout)
+      ? r.notAbout.map(h => clip(typeof h === 'string' ? h : h?.headline, 200)).filter(Boolean).slice(0, NOT_ABOUT_MAX)
+      : undefined,
     contactName: clip(r.contactName, 120) || '',
     contactCompany: clip(r.contactCompany, 120),
     contactRole: clip(r.contactRole, 120),
+    relation: cleanRelation(r.relation),
   }
 }
 
@@ -270,14 +302,23 @@ function modelItem(item, idx, nowMs) {
     subject: subjectFor(item),
     subjectType: item.entityType || undefined,
     refined: Boolean(item.themeQuery),
-    // Only a company, team or person is watched for kinds of events. Places
-    // and topics are judged by their own rules in the prompt: their stored
-    // watchFor ("startup activity" for a place, "wellness studies" for a bare
-    // category) made the model call off-subject stories relevant.
-    watchFor: WATCHED_FOR_EVENTS.has(item.entityType) && item.watchFor?.length ? item.watchFor : undefined,
+    // The checked choices are what the person said counts, so they replace
+    // the guessed watchFor. The unchecked ones go along as kinds that don't
+    // count: given only the checked ones, the model stretched one to fit ("a
+    // points record" filed under "Trades & signings").
+    textAbout: item.textAbout.length ? item.textAbout : undefined,
+    notTextAbout: item.textAbout.length && item.textAboutOff.length ? item.textAboutOff : undefined,
+    // Otherwise only a company, team or person is watched for kinds of
+    // events. Places and topics are judged by their own rules in the prompt:
+    // their stored watchFor ("startup activity" for a place, "wellness
+    // studies" for a bare category) made the model call off-subject stories
+    // relevant.
+    watchFor: !item.textAbout.length && WATCHED_FOR_EVENTS.has(item.entityType) && item.watchFor?.length ? item.watchFor : undefined,
+    notAboutHeadlines: item.notAbout?.length ? item.notAbout : undefined,
     contactName: item.contactName,
     contactCompany: item.contactCompany,
     contactRole: item.contactRole,
+    relation: relationLabel(item.relation)?.toLowerCase(),
   }
 }
 
@@ -291,10 +332,13 @@ function scoringSystemPrompt(now) {
     'For each item make two separate judgments:',
     '1. "relevant" (true or false): is the headline actually about the item\'s watched subject? "subject" is what the theme resolved to when it was set up, "subjectType" says what kind of thing it is, "watchFor" lists the developments the user cares about, and "theme" is the user\'s own wording. News about a different team, company, person or place in the same category is not relevant, however big. If the theme is only a bare category, a whole field that countless unrelated stories fall under (for example "health and wellness", "basketball", "real estate", "technology", "fintech startup"), and its subject resolved to nothing more specific, nothing is relevant, refined or not, however good the story; say in holdReason that the theme is too broad to watch well. A topic (subjectType "topic") narrower than that (for example "mid-century modern architecture" or "the Daily Wire") is relevant only when the headline itself names it. Never infer the connection: a hotel restoration is not mid-century modern architecture unless the headline says so, and a story is not about a publication just because that publication ran it. Use only the facts given: never assume the contact works at, founded or is otherwise connected to anything in the headline unless contactCompany or contactRole says so, and if contactCompany is given and the headline is about a different company, it is not about their company.',
     '   A place (subjectType "place") is usually where the contact lives. If the theme\'s own wording names a kind of news there (for example "Orange County real estate" or "Colorado sports"), only that kind of news there is relevant. Otherwise the test is whether people who live there will still be talking about it next week. A wildfire, hurricane, earthquake or other disaster, a big event or festival, a local team\'s big moment, a landmark, or a major change to the city or region passes. News that is merely set there is not news about life there: who is headlining a halftime show or a festival, a celebrity\'s doings, a film or TV shoot. Routine local coverage fails and is not relevant: weather advisories and forecasts, everyday weather including routine tidal or coastal flooding, traffic, everyday crime and accidents, school or campus happenings, a single shop or restaurant. Either way, a company\'s deal, funding, acquisition, launch, earnings or stock news, or its press release, is not news about a place just because the company is based there: it is relevant only if contactCompany is that company or the theme asks for that kind of news.',
+    '   When an item has "textAbout", those are the kinds of story the user picked as what they would text this contact about, and "notTextAbout" lists kinds they left out. Always answer with "textAbout": the one kind, from either list, that the headline squarely is, copied exactly, or "none". The item is relevant only if that kind is in textAbout. If it is a kind in notTextAbout, or none of them, it is not relevant, however big the news. Never stretch a kind to fit: a player\'s record is not a signing, and a market report is not a big local event. textAbout only narrows what counts: every other rule here still applies, so routine coverage, an ordinary game, a listing page, a press release or news merely set in a place never becomes relevant because it fits one.',
+    '   "notAboutHeadlines", when given, lists headlines the user marked as not about this theme. A story like those is not relevant.',
     '2. "significance" (an integer from 0 to 100): how strong a reason to reach out this is. Real reasons are major developments for the subject and significant upcoming events (a marquee game, a launch, a milestone on the calendar); anticipation is a great reason to text ("you watching Saturday?"). A marquee game is a playoff or championship game, a rivalry game with real stakes, a season opener, or a record or milestone moment. An ordinary regular-season game is routine however good the teams, and a live-score, box-score or TV listing page is never a reason. When the headline is about one specific game or match, include "game": "playoff", "championship", "rivalry", "opener" or "milestone" when it is one of those, or "regular" for any other regular-season game, whatever its storyline (a streak, a return from injury, a "must-win" before the playoffs). Omit "game" for anything that is not about one game. Routine coverage, schedule listings, fixture dumps, minor previews, rumours, odds and listicles never qualify. "ageHours" is how old the article is: anything older than 72 hours is stale and must score below 50. If relevant is false, significance must be 20 or lower.',
     '',
-    'Always include "rationale": one plain sentence under 140 characters explaining the judgment, specific to this headline and stating only facts you were given.',
+    'Always include "rationale": one plain sentence under 140 characters explaining the judgment, specific to this headline and stating only facts you were given. The user reads rationale and holdReason, so write them in plain words about the story and never name a field from the items (such as textAbout or notTextAbout). Only when a story doesn\'t count because of the kinds the user picked, say it is "not one of the things you\'d text NAME about", with the contact\'s first name for NAME.',
     `If relevant is true and significance is ${SIGNIFICANCE_THRESHOLD} or more, include "draftMessage": a short, warm, specific text the user could send as-is. Use the contact's first name, refer to the actual news, and sound like a friend texting, not a greeting card. Never include links, URLs, web addresses or phone numbers. Otherwise include "holdReason": one short sentence under 100 characters on why it isn't worth an interruption.`,
+    `"relation", when given, is how the user knows the contact. Use it only for the tone of draftMessage and passAlong: warm with family, easy and casual with a friend or classmate, a little ribbing is fine with a teammate, friendly and professional with a coworker or work contact. It never changes relevant or significance.`,
     `Bad news needs care. When the headline is about a death, violence, a disaster, a serious illness, layoffs or job cuts, a crime or a scandal, set "sensitive": true. Ordinary setbacks (a team losing, a player injury, a stock dipping) are not sensitive. A sensitive item is a reason to reach out only when a caring check-in would be welcome (for a place, only something that could really have touched them, such as a wildfire, hurricane, earthquake or flood that forces evacuations or does real damage where they live, never a weather advisory or an everyday crime or accident), and its draftMessage is that check-in: brief and gentle, asking how they are, never upbeat, never treating the news as exciting or as small talk, and never opening with "did you see this". If any message would intrude, score it below ${SIGNIFICANCE_THRESHOLD} and give a holdReason.`,
     `If relevant is true, significance is below ${SIGNIFICANCE_THRESHOLD} and the item is not sensitive, but this contact would personally enjoy reading the article because of what the two of them share (a guide, a ranking, a schedule, a feature or a deep dive on the subject, not routine news), include "passAlong": a short note under 140 characters the user could send along with the link, using the contact's first name, with no link in it. Never pass along a press release, a company announcement, a deal, funding, earnings or market news, or anything whose connection to the contact would need explaining. Otherwise omit passAlong.`,
     'When the headline\'s main subject is a significant event that has not happened yet, include "eventWhen": when it happens, the way a person would say it in a text (e.g. "Saturday night", "this weekend", "Nov 12"), under 25 characters, and write any draft looking forward to it rather than as if it already happened. Omit eventWhen for anything that has already happened, including news that broke today.',
@@ -302,7 +346,7 @@ function scoringSystemPrompt(now) {
     `Today's date is ${date}.`,
     '',
     "Respond with JSON only, no prose and no code fences, in exactly this shape, with one result per item using each item's id:",
-    '{"results":[{"id":"0","relevant":true,"significance":0,"rationale":"...","draftMessage":"...","holdReason":"...","eventWhen":"...","game":"...","sensitive":false,"passAlong":"..."}]}',
+    '{"results":[{"id":"0","relevant":true,"textAbout":"...","significance":0,"rationale":"...","draftMessage":"...","holdReason":"...","eventWhen":"...","game":"...","sensitive":false,"passAlong":"..."}]}',
   ].join('\n')
 }
 
@@ -367,6 +411,32 @@ export function draftHasForeignUrl(draft, item = {}) {
 // bogus heads-up, so it's dropped.
 const NOT_AHEAD = /\b(?:just now|right now|now|recently|earlier|yesterday|ago|last|already)\b/i
 
+// Field names from the items. rationale and holdReason are shown in the app,
+// so a line that names one ("it's in notTextAbout") is replaced.
+const PROMPT_FIELD = /\b(?:textAbout|notTextAbout|notAboutHeadlines|watchFor|subjectType|ageHours|contactCompany|contactRole)\b/i
+
+// A plain verdict line, for when the code overrules the model or the model's
+// own line names a field.
+function plainVerdict(item, { relevant = false, textAbout, off } = {}) {
+  const first = item.contactName.split(/\s+/)[0] || 'them'
+  if (relevant && textAbout) return `One of the things you'd text ${first} about: ${textAbout}.`
+  if (off) return `${off} isn't one of the things you'd text ${first} about.`
+  if (item.textAbout.length) return `Not one of the things you'd text ${first} about.`
+  return relevant ? `About ${subjectFor(item)}.` : `Not about ${subjectFor(item)}.`
+}
+
+// The checked choice the model named, as the person's own label, or
+// undefined. Case, spacing and "&" versus "and" don't matter; a label that
+// isn't one of the choices matches nothing.
+export function matchChoice(answer, choices = []) {
+  for (const a of Array.isArray(answer) ? answer : [answer]) {
+    const key = typeof a === 'string' ? choiceKey(a) : ''
+    const hit = key && choices.find(c => choiceKey(c) === key)
+    if (hit) return hit
+  }
+  return undefined
+}
+
 function shapeClaudeResult(item, r, significanceRaw) {
   let relevant = toBool(r.relevant) === true // missing or garbled verdict = not relevant
   const sensitive = toBool(r.sensitive) === true
@@ -393,6 +463,20 @@ function shapeClaudeResult(item, r, significanceRaw) {
     }
   }
 
+  // The checked choices are the definition of what counts: an item that has
+  // them is relevant only when the model names a checked one. A missing,
+  // unchecked or made-up label drops the story; it can never add one. A story
+  // filed under an unchecked choice says so plainly, whatever the model's own
+  // verdict was.
+  const textAbout = item.textAbout.length ? matchChoice(r.textAbout, item.textAbout) : undefined
+  const off = item.textAbout.length && !textAbout ? matchChoice(r.textAbout, item.textAboutOff) : undefined
+  if (item.textAbout.length && !textAbout && (relevant || off)) {
+    relevant = false
+    significance = Math.min(significance, IRRELEVANT_MAX)
+    draft = ''
+    rationale = holdReason = plainVerdict(item, { off })
+  }
+
   // The model's own label for a game, so a streak or a "must-win" can't talk
   // an ordinary game past the bar.
   const routine = isListingPage(item.headline) || (typeof r.game === 'string' && r.game.trim().toLowerCase() === 'regular')
@@ -407,6 +491,9 @@ function shapeClaudeResult(item, r, significanceRaw) {
     draft = ''
     holdReason = 'Held back: the suggested message included a link.'
   }
+
+  if (PROMPT_FIELD.test(rationale)) rationale = plainVerdict(item, { relevant, textAbout, off })
+  if (PROMPT_FIELD.test(holdReason)) holdReason = ''
 
   const above = relevant && significance >= SIGNIFICANCE_THRESHOLD
   // A favor is a relevant story below the bar that's worth forwarding as-is.
@@ -428,6 +515,7 @@ function shapeClaudeResult(item, r, significanceRaw) {
     eventWhen,
     sensitive: sensitive || undefined,
     passAlong: passAlong ? truncate(passAlong, 200) : undefined,
+    textAbout: relevant ? textAbout : undefined,
     draftRejected: draftRejected || undefined,
   }
 }

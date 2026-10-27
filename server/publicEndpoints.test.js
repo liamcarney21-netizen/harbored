@@ -50,6 +50,99 @@ describe('input clamps on the public LLM endpoints', () => {
   })
 })
 
+describe("refine: what you'd text them about", () => {
+  beforeEach(() => vi.stubEnv('ANTHROPIC_API_KEY', 'test-key'))
+  const refineWith = (parsed) => vi.fn(async () => ({ ok: true, parsed }))
+
+  it('proposes up to five choices with two or three checked, minus duplicates, long labels and kinds that never count', async () => {
+    const llm = refineWith({
+      entityType: 'place',
+      query: '"Southern California"',
+      watchFor: ['big local events'],
+      display: 'Watching Southern California for news people there would notice.',
+      textAbout: [
+        { label: 'Wildfires & storms', on: true },
+        { label: 'wildfires and storms', on: true }, // the same choice
+        { label: 'Big local events', on: true },
+        { label: 'Startup funding', on: true },      // business news, for a place
+        { label: 'Every game', on: false },          // never counts
+        { label: 'x'.repeat(41), on: false },        // too long
+        { label: "Local teams' big moments", on: true },
+        { label: 'Real estate', on: true },          // a fourth checked
+        { label: 'Big changes to the area', on: false },
+        { label: 'Beach openings', on: false },      // past five
+      ],
+      bare: true, // only a topic can be bare
+      narrower: ['Irvine'],
+    })
+    const res = await handleRefineRequest({ label: 'Southern California', contactName: 'Collin Parsons', relation: 'teammate' }, { llm })
+    expect(res.body.textAbout).toEqual([
+      { label: 'Wildfires & storms', on: true },
+      { label: 'Big local events', on: true },
+      { label: "Local teams' big moments", on: true },
+      { label: 'Real estate', on: false },
+      { label: 'Big changes to the area', on: false },
+    ])
+    expect(res.body.bare).toBeUndefined()
+    expect(res.body.narrower).toBeUndefined()
+    const { system, user } = llm.mock.calls[0][0]
+    expect(user).toContain('How the user knows them: "teammate"')
+    expect(system).toContain('how the user knows them')
+    expect(system).toContain('Never offer a kind of story that is never a reason to text')
+  })
+
+  it('checks the first two when the model checks none, and ignores an unknown relation', async () => {
+    const llm = refineWith({ entityType: 'team', query: '"Colorado Avalanche" (game OR trade)', textAbout: ['Big games', 'Trades & signings', 'Coaching changes'] })
+    const res = await handleRefineRequest({ label: 'Colorado Avalanche', relation: 'nemesis' }, { llm })
+    expect(res.body.textAbout).toEqual([{ label: 'Big games', on: true }, { label: 'Trades & signings', on: true }, { label: 'Coaching changes', on: false }])
+    expect(llm.mock.calls[0][0].user).toContain('How the user knows them: ""')
+  })
+
+  it('gives a bare category narrower subjects instead of choices', async () => {
+    const health = await handleRefineRequest({ label: 'Health and wellness' }, {
+      llm: refineWith({
+        entityType: 'topic',
+        query: 'health AND wellness',
+        bare: false, // the code's own list knows this one
+        textAbout: [{ label: 'Studies', on: true }, { label: 'Fitness trends', on: true }],
+        narrower: ['Marathon running', 'Nutrition', 'Yoga', 'yoga', 'Health and wellness', 'Plant-based eating', 'Pilates', 'Barre'],
+      }),
+    })
+    expect(health.body).toMatchObject({ entityType: 'topic', bare: true, narrower: ['Marathon running', 'Yoga', 'Plant-based eating', 'Pilates'] })
+    expect(health.body.textAbout).toBeUndefined()
+    // The model can call a topic bare that the list doesn't know.
+    const running = await handleRefineRequest({ label: 'Running' }, { llm: refineWith({ entityType: 'topic', query: 'running', bare: true, narrower: ['Boston Marathon', 'Trail running'] }) })
+    expect(running.body).toMatchObject({ bare: true, narrower: ['Boston Marathon', 'Trail running'] })
+    // A topic narrow enough to name keeps its choices.
+    const mcm = await handleRefineRequest({ label: 'Mid century modern architecture' }, {
+      llm: refineWith({ entityType: 'topic', query: 'mid-century modern architecture', textAbout: [{ label: 'Famous houses', on: true }, { label: 'Design events', on: true }], narrower: ['Eichler homes'] }),
+    })
+    expect(mcm.body.bare).toBeUndefined()
+    expect(mcm.body.textAbout).toHaveLength(2)
+  })
+
+  it('proposes no choices from fewer than two usable ones, or without a key', async () => {
+    const one = await handleRefineRequest({ label: 'Villanova' }, { llm: refineWith({ entityType: 'team', query: '"Villanova" (game OR trade)', textAbout: [{ label: 'Big games', on: true }, { label: 'Every game', on: true }] }) })
+    expect(one.body).toMatchObject({ engine: 'claude', entityType: 'team' })
+    expect(one.body.textAbout).toBeUndefined()
+    vi.stubEnv('ANTHROPIC_API_KEY', '')
+    const keyless = await handleRefineRequest({ label: 'Villanova Basketball' })
+    expect(keyless.body.engine).toBe('heuristic')
+    expect(keyless.body.textAbout).toBeUndefined()
+  })
+})
+
+describe('redraft: how the user knows them', () => {
+  it('sets the tone, and anything unknown is ignored', async () => {
+    vi.stubEnv('ANTHROPIC_API_KEY', 'test-key')
+    const llm = vi.fn(async () => ({ ok: true, parsed: { message: 'Collin, you guys OK out there?' } }))
+    await handleRedraftRequest({ current: 'Hey Collin', contactName: 'Collin Parsons', headline: 'Wildfire forces evacuations in Irvine', relation: 'teammate' }, { llm })
+    expect(llm.mock.calls[0][0].user).toContain('friendly ribbing of them')
+    await handleRedraftRequest({ current: 'Hey Collin', contactName: 'Collin Parsons', headline: 'Wildfire forces evacuations in Irvine', relation: 'rival' }, { llm })
+    expect(llm.mock.calls[1][0].user).not.toContain('They are')
+  })
+})
+
 describe('digest email', () => {
   it('renders a heads-up as a label instead of raw brackets', () => {
     const html = buildEmailHtml('Liam', [{ contact_name: 'Ann', theme_label: 'Lakers', headline: 'Lakers vs Celtics', rationale: '[Heads-up · Saturday night] Marquee game.' }])

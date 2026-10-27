@@ -1,4 +1,4 @@
-// Vercel serverless function: POST /api/redraft { contactName, headline, themeLabel, kind, current, angle }
+// Vercel serverless function: POST /api/redraft { contactName, headline, themeLabel, kind, current, angle, relation }
 import { handleRedraftRequest } from '../server/redraftHandler.js'
 import { rateLimit, clientIp } from '../server/rateLimit.js'
 
