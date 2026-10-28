@@ -1,7 +1,8 @@
 # Build 13: tell Harbored about them
 
 Written 2026-10-27. Status: phases 1 and 2 built and deployed to the website 2026-10-27 with the
-recommended answers to all five decisions; the iOS build isn't made yet.
+recommended answers to all five decisions, and 1.1.0 (13) was uploaded to App Store Connect the
+same day. Next: Liam's TestFlight walkthrough (phase 3).
 
 ## Why
 

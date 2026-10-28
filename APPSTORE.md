@@ -82,12 +82,16 @@ network,contacts,relationships,keep in touch,networking,CRM,reminders,follow up,
 >
 > Your network is your most valuable asset. Harbored makes sure you never let it drift.
 
-## What's New (1.1.0) — draft for the build 12 submission
+## What's New (1.1.0) — draft for the build 13 submission
 
-> • Tell Harbored what you'd text each person about (storms near their home, big games, news
->   at their company) and only those stories become reasons.
+> • Tell Harbored about someone the way you'd tell a friend, by talking or typing. It sets
+>   them up from what you say: how you know them, how close you are, and what you'd text them
+>   about.
+> • Only the stories you'd text each person about become reasons: storms near their home, big
+>   games, news at their company.
 > • "Not something I'd send" on any suggestion teaches Harbored what to skip next time.
-> • How you know someone (family, a teammate, a work contact) sets the tone of every draft.
+> • How you know someone sets the tone of every draft, and how close you are decides when a
+>   quiet stretch becomes a reason to reach out.
 > • Your first session ends on what Harbored found, not a promise.
 > • Notifications stay rare and quiet: at most one a day and three a week, only between 8 AM
 >   and 9 PM, and never a sound.
