@@ -1,5 +1,6 @@
 import { healthFromLastTouch, daysUntilBirthday } from '../store/dataStore'
 import { isPausedTheme } from './themeChoices'
+import { driftDaysFor, quietDaysFor } from './relations'
 
 // Plain-language status — one line, gold only when it needs attention.
 export function statusFor(contact) {
@@ -8,8 +9,8 @@ export function statusFor(contact) {
   if (bdays === 1) return { text: 'Birthday tomorrow', hot: true }
   if (!contact.lastTouch) return { text: 'No messages yet', hot: false }
   const health = healthFromLastTouch(contact.lastTouch)
-  if (health.days >= 45) return { text: `Drifting · ${health.days} days quiet`, hot: true }
-  if (health.days >= 21) return { text: `Quiet · ${health.days} days`, hot: false }
+  if (health.days >= driftDaysFor(contact)) return { text: `Drifting · ${health.days} days quiet`, hot: true }
+  if (health.days >= quietDaysFor(contact)) return { text: `Quiet · ${health.days} days`, hot: false }
   return { text: `In touch · ${health.days === 0 ? 'today' : `${health.days}d ago`}`, hot: false }
 }
 

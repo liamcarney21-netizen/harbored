@@ -2,20 +2,16 @@ import { useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ChevronLeft, Mail, Phone, Check, Pencil } from 'lucide-react'
 import WarmAvatar from '../../components/WarmAvatar'
-import ThemeAdder from '../../components/ThemeAdder'
-import ThemeRow from '../../components/ThemeRow'
-import RelationPicker from '../../components/RelationPicker'
+import ThemeComposerModal from '../../components/ThemeComposerModal'
+import { RelationshipButton, StoredThemes } from '../../components/RelationshipCard'
 import { useDataStore, openerFor } from '../../store/dataStore'
 import { openSend, sendChannelFor } from '../../services/outreach'
 import { haptic } from '../../services/haptics'
-import { track } from '../../services/events'
 import { statusFor } from '../../lib/status'
-import { relationLabel } from '../../lib/relations'
 import Card, { Eyebrow } from '../../ui/Card'
 import Button from '../../ui/Button'
 import Sheet from '../../ui/Sheet'
 import { Input, Label, TextArea } from '../../ui/Field'
-import { useToast } from '../../ui/toastStore'
 import { T } from '../../ui/tokens'
 
 function fmtDate(iso) {
@@ -28,14 +24,10 @@ export default function ContactProfile() {
   const contacts = useDataStore(s => s.contacts)
   const themesByContact = useDataStore(s => s.themesByContact)
   const allTouches = useDataStore(s => s.touches)
-  const removeTheme = useDataStore(s => s.removeTheme)
-  const restoreTheme = useDataStore(s => s.restoreTheme)
   const recordTouch = useDataStore(s => s.recordTouch)
   const saveNote = useDataStore(s => s.saveNote)
   const updateContact = useDataStore(s => s.updateContact)
-  const setRelation = useDataStore(s => s.setRelation)
   const removeContact = useDataStore(s => s.removeContact)
-  const showToast = useToast(s => s.show)
 
   const contact = contacts.find(c => String(c.id) === String(id))
   const themes = (contact && (themesByContact[contact.id] || themesByContact[String(contact.id)])) || []
@@ -45,16 +37,19 @@ export default function ContactProfile() {
   const [draft, setDraft] = useState('')
   const [editing, setEditing] = useState(false)
   const [confirmRemove, setConfirmRemove] = useState(false)
-  const [pickingRelation, setPickingRelation] = useState(false)
+  const [tellingMore, setTellingMore] = useState(false)
 
   // Notes save themselves, a beat after you stop typing.
   const [noteDraft, setNoteDraft] = useState(contact?.notes ?? '')
   const [noteFor, setNoteFor] = useState(contact?.id)
+  const [notesSeen, setNotesSeen] = useState(contact?.notes ?? '')
   const [noteState, setNoteState] = useState('idle') // idle | saving | saved
   const noteTimer = useRef(null)
-  if (contact && contact.id !== noteFor) {
-    // A different person: show their notes, not the previous one's.
+  // A different person, or notes changed elsewhere ("Tell Harbored more"
+  // adds what's good to know) while you aren't typing: show what's saved.
+  if (contact && (contact.id !== noteFor || (noteState === 'idle' && (contact.notes ?? '') !== notesSeen))) {
     setNoteFor(contact.id)
+    setNotesSeen(contact.notes ?? '')
     setNoteDraft(contact.notes ?? '')
   }
   function onNoteChange(v) {
@@ -89,25 +84,12 @@ export default function ContactProfile() {
     setComposing(true)
   }
 
-  function pickRelation(r) {
-    haptic.tick()
-    setRelation(contact.id, r)
-    track('relation_set', { relation: r || 'none', where: 'profile' })
-    setPickingRelation(false)
-  }
-
   function handleSend() {
     const ch = openSend(contact, draft, 'Checking in')
     if (!ch) return
     recordTouch(contact.id, { channel: ch, message: draft, trigger: 'Reached out from their profile' })
     haptic.success()
     setComposing(false)
-  }
-
-  function handleRemoveTheme(t, index) {
-    removeTheme(contact.id, t.id)
-    haptic.soft()
-    showToast(`Stopped watching ${t.label}`, { action: 'Undo', onAction: () => restoreTheme(contact.id, t, index) })
   }
 
   function handleRemoveContact() {
@@ -132,14 +114,7 @@ export default function ContactProfile() {
         <div style={{ flex: 1, minWidth: 0 }}>
           <h1 className="hb-display" style={{ fontSize: 26, fontWeight: 500, color: T.ink, lineHeight: 1.15, margin: 0 }}>{contact.name}</h1>
           {subtitle && <div style={{ fontSize: 13, color: T.muted, marginTop: 4 }}>{subtitle}</div>}
-          <button
-            type="button"
-            className="hb-press"
-            onClick={() => setPickingRelation(true)}
-            style={{ display: 'block', background: 'none', border: 'none', padding: '4px 0', marginTop: 2, cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, textAlign: 'left', color: contact.relation ? T.body : T.muted, textDecoration: contact.relation ? 'none' : 'underline', textUnderlineOffset: 3 }}
-          >
-            {relationLabel(contact.relation) || `How do you know ${first}?`}
-          </button>
+          <RelationshipButton contact={contact} />
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, fontSize: 13, fontWeight: status.hot ? 600 : 400, color: status.hot ? T.accent : T.muted }}>
             {status.hot && <span style={{ width: 6, height: 6, borderRadius: '50%', background: T.accent }} />}
             {status.text}
@@ -168,23 +143,19 @@ export default function ContactProfile() {
         </Card>
       )}
 
-      {/* What you share */}
-      <Eyebrow>What you share</Eyebrow>
-      <Card>
+      {/* What you'd text them about: the relationship card's lines */}
+      <Eyebrow>You&rsquo;d text {first} about</Eyebrow>
+      <Card style={{ padding: '4px 16px 8px' }}>
         {themes.length === 0 && (
-          <p style={{ fontSize: 13, color: T.muted, lineHeight: 1.55, margin: '0 0 12px' }}>
-            Nothing yet. Name a team, a city, a company, a market — Harbored watches it for a real reason to reach out.
+          <p style={{ fontSize: 13, color: T.muted, lineHeight: 1.55, margin: '12px 0 0' }}>
+            Nothing yet. Name a team, a city, a company — Harbored watches it for a real reason to reach out.
           </p>
         )}
-        {themes.length > 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
-            {themes.map((t, i) => (
-              <ThemeRow key={t.id} contact={contact} theme={t} onRemove={() => handleRemoveTheme(t, i)} />
-            ))}
-          </div>
-        )}
-        <ThemeAdder contact={contact} />
+        <StoredThemes contact={contact} themes={themes} />
       </Card>
+      <Button variant="secondary" size="md" full onClick={() => setTellingMore(true)} style={{ marginTop: 12 }}>
+        Tell Harbored more about {first}
+      </Button>
 
       {/* Notes */}
       <Eyebrow>Notes</Eyebrow>
@@ -250,14 +221,13 @@ export default function ContactProfile() {
         <TextArea value={draft} onChange={e => setDraft(e.target.value)} rows={5} aria-label="Your message" style={{ background: T.ground, fontSize: 15 }} />
       </Sheet>
 
-      <Sheet
-        open={pickingRelation}
-        onClose={() => setPickingRelation(false)}
-        title={`How do you know ${first}?`}
-        sub="It sets the tone of drafts and what Harbored guesses you'd text about."
-      >
-        <RelationPicker value={contact.relation} onChange={pickRelation} />
-      </Sheet>
+      <ThemeComposerModal
+        key={tellingMore ? `more-${contact.id}` : 'closed'}
+        open={tellingMore}
+        contacts={[contact]}
+        more
+        onClose={() => setTellingMore(false)}
+      />
 
       <EditContactSheet open={editing} contact={contact} onClose={() => setEditing(false)} onSave={(patch) => { updateContact(contact.id, patch); setEditing(false) }} />
 

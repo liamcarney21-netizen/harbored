@@ -6,9 +6,9 @@ people you choose, on purpose. For each person you name a few **themes** — thi
 a team, a city, a company, a market. A server scan every morning (16:00 UTC) reads the news for those
 themes, scores what it finds with Claude, and when something is genuinely worth a message it
 becomes a **reason**: the headline, the person, and a short draft. Reasons reach you by push
-and show on the Today screen. Drifting relationships (no message in 45+ days) and birthdays
-become reasons too. Harbored never sends anything: every message opens in your own Messages
-or Mail.
+and show on the Today screen. Drifting relationships (no message in 45+ days; 30 for someone
+you're close to, 90 for a loose contact) and birthdays become reasons too. Harbored never sends
+anything: every message opens in your own Messages or Mail.
 
 The phone app is the product. The website is its demo and a desktop companion. There is one
 layout for every screen (phone-width, centered on desktop); do not add desktop-only layouts.
@@ -30,8 +30,10 @@ layout for every screen (phone-width, centered on desktop); do not add desktop-o
 - `src/pages/app/` — the app: `CommonGround.jsx` (Today, the deck of reasons + draft screen
   + themes manager), `Network.jsx` (Crew), `ContactProfile.jsx`, `Settings.jsx` (You).
 - `src/components/` — shell (`AppLayout`, `BottomTabBar`), `Onboarding`, the import flow
-  (`ImportContactsModal`, `AddContactModal`), the theme quiz (`ThemeComposerModal`),
-  `ThemeAdder` (the one non-quiz way to add a theme), `WhyDisclosure`, `StreamText`.
+  (`ImportContactsModal`, `AddContactModal`), the describe-and-confirm quiz
+  (`ThemeComposerModal`: describe someone, confirm the card), the relationship card's lines and
+  sheets (`RelationshipCard`, `CardSheets`; also on the profile and in the themes manager),
+  `WhyDisclosure`, `StreamText`.
 - `src/ui/` — tokens (`T`), `Button`, `Card`/`Row`/`Eyebrow`/`PageTitle`, `Field`
   (`Input`, `TextArea`, `Label`, `Toggle`, `ErrorText`), `Sheet` (the only modal), `toast`.
   New UI uses these; don't re-declare colors or hand-roll buttons.
@@ -51,6 +53,8 @@ layout for every screen (phone-width, centered on desktop); do not add desktop-o
 - One snapshot per user: `contacts`, `themesByContact`, `touches`, `meetings` (legacy),
   `prefs` (`push`, `tz`, `recap`; the old `digest` flag is ignored), `reasonState`
   (sent/dismissed per reason key, with `why` for "Not something I'd send").
+- Build 13 adds a contact's `relationNote` ("at High Point") and `closeness` (`close`/`regular`/
+  `loose`, which sets the drift timing); facts from a description are appended to Notes.
 - Build 12 fields (`src/lib/relations.js`, `src/lib/themeChoices.js`; `normalize` validates them
   and the server clamps them again): a contact's `relation`; a theme's `textAbout` choices
   (`[{ label, on }]`, the checked ones define what counts), `textAboutConfirmed`, `bare` and

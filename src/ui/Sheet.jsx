@@ -5,9 +5,10 @@ import { T } from './tokens'
 
 const FOCUSABLE = 'a[href], button:not([disabled]), input, textarea, select, [tabindex]:not([tabindex="-1"])'
 
-// The app's one modal. A real dialog: labelled, focus moves in on open and
-// back out on close, Escape closes, Tab stays inside. On phones it sits at
-// the bottom like a sheet; on wider screens it centers.
+// The app's one modal. A real dialog: labelled, focus moves in on open (to a
+// field marked data-autofocus, else the first control) and back out on
+// close, Escape closes, Tab stays inside. On phones it sits at the bottom
+// like a sheet; on wider screens it centers.
 export default function Sheet({ open, onClose, title, sub, icon, children, footer, width = 520, zIndex = 60 }) {
   const panelRef = useRef(null)
   const restoreRef = useRef(null)
@@ -16,7 +17,7 @@ export default function Sheet({ open, onClose, title, sub, icon, children, foote
     if (!open) return
     restoreRef.current = document.activeElement
     const panel = panelRef.current
-    const first = panel?.querySelector(FOCUSABLE)
+    const first = panel?.querySelector('[data-autofocus]') || panel?.querySelector(FOCUSABLE)
     ;(first || panel)?.focus?.()
     function onKey(e) {
       if (e.key === 'Escape') { e.stopPropagation(); onClose?.() }

@@ -195,6 +195,13 @@ describe("build 12's fields", () => {
       },
     })
     expect(snap.contacts.map(c => c.relation)).toEqual(['teammate', undefined])
+    const more = normalizeSnapshot({ contacts: [
+      { id: 3, name: 'Colin', relationNote: ' at High Point ', closeness: 'close' },
+      { id: 4, name: 'Dana', relationNote: 'x'.repeat(50), closeness: 'besties' },
+    ] })
+    expect(more.contacts[0]).toMatchObject({ relationNote: 'at High Point', closeness: 'close' })
+    expect(more.contacts[1]).not.toHaveProperty('relationNote')
+    expect(more.contacts[1]).not.toHaveProperty('closeness')
     expect(snap.contacts[1]).not.toHaveProperty('relation')
     const [a] = snap.themesByContact[1]
     expect(a.textAbout).toEqual([{ label: 'Wildfires & storms', on: true }, { label: 'Real estate', on: false }])

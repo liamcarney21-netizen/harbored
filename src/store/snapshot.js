@@ -3,7 +3,7 @@
 // functions with no browser or Supabase dependency, so tests and one-off
 // maintenance scripts can import them directly. dataStore.js owns the sync.
 
-import { cleanRelation } from '../lib/relations'
+import { cleanRelation, cleanRelationNote, cleanCloseness } from '../lib/relations'
 import { cleanChoices, cleanNarrower, cleanBar, cleanNotAbout } from '../lib/themeChoices'
 
 export const DEFAULT_PREFS = { push: true, digest: true }
@@ -77,9 +77,11 @@ function normalize(raw, nowMs = Date.now()) {
   const s = raw && typeof raw === 'object' ? raw : {}
   const contacts = (Array.isArray(s.contacts) ? s.contacts : [])
     .filter(c => c && typeof c.name === 'string' && c.name.trim() && c.id != null)
-    .map(({ relation, ...c }) => ({
+    .map(({ relation, relationNote, closeness, ...c }) => ({
       ...c,
       ...(cleanRelation(relation) ? { relation } : {}),
+      ...(cleanRelationNote(relationNote) ? { relationNote: cleanRelationNote(relationNote) } : {}),
+      ...(cleanCloseness(closeness) ? { closeness } : {}),
       name: c.name.trim(),
       initials: c.initials || initialsOf(c.name),
       email: typeof c.email === 'string' ? c.email : '',

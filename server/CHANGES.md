@@ -61,6 +61,13 @@ The rules above say what never counts; what's left depends on the person. Build 
 5. **Push.** A theme with its own bar needs that bar plus 10 to push (80 for an ordinary theme, up to 95). The scan hands the bars to push with the prefs and broad themes; `/api/push` on its own reads them from `user_data`.
 6. **Shared helpers.** `src/lib/relations.js` and `src/lib/themeChoices.js` hold the relation list and the choice clamps, so the build 12 app validates its snapshot with the same rules the server applies.
 
+## Build 13: tell Harbored about them (October 27, 2026)
+
+Build 12's choice chips made each person's setup screen too busy. Build 13 asks for a description instead and shows one card to confirm (plan: `BUILD-13.md`). Server side:
+
+1. **`/api/discover` mode `relationship`.** One call maps a description (12 to 2,000 characters) into `relation` (one of the six; a label like "Work contact" is accepted), `relationNote` (where from, at most 40 characters), `closeness` (`close`, `regular`, `loose`), `company`, up to five `themes` (`label`, `category`, and `said`: what the person said about it), up to three `goodToKnow` facts and `skipped`. The prompt allows only what was said, and code clamps every field: an unknown relation or closeness is dropped, as is a longer note, and themes and facts are deduplicated. A company the description names becomes a theme when the model filed it only as a fact, and a fact that only says where they work is dropped. Without a key it returns keyword themes and nothing else. Same rate limit as before (40 an hour).
+2. **`/api/refine-theme` takes `said`.** The choices that match what was said start checked ("we text during playoff games" turns on big games); otherwise the likeliest, as before. Build 12's clamps all still apply.
+
 ## Migrations to apply, in order
 
 Paste each into Supabase → SQL Editor. All are idempotent (`if not exists`), and the code runs without any of them. Each missing one is logged once per run with the migration number. Apply them in number order: 0004 → 0005 → 0006 → 0007 (then 0008 and 0009, below). 0005 unlocks the full push gate. Apply it no later than 0006: without `story_key`, push records the `content_key` in `notified_stories` instead of the sha1. Push dedupe is only fully durable from the moment 0006 exists, so a story pushed in the few days before it could be re-pushed once in that window.

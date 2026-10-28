@@ -4,7 +4,7 @@ import { sharedThemes as seedThemes } from '../data/commonGround'
 import { supabase } from '../lib/supabase'
 import { useAuthStore } from './authStore'
 import { daysUntilBirthday } from '../lib/birthday'
-import { cleanRelation } from '../lib/relations'
+import { cleanRelation, cleanRelationNote, cleanCloseness, driftDaysFor } from '../lib/relations'
 import { cleanChoices, cleanNarrower, cleanNotAbout, raisedBar } from '../lib/themeChoices'
 import {
   DEFAULT_PREFS, SNAPSHOT_KEYS, emptySnapshot, initialsOf,
@@ -472,14 +472,33 @@ export const useDataStore = create((set, get) => {
       contacts: s.contacts.map(c => (String(c.id) === String(contactId) ? { ...c, ...patch } : c)),
     })),
 
-    // How the person knows someone (lib/relations.js); anything else clears it.
-    setRelation: (contactId, relation) => syncedSet(s => ({
+    // How the person knows someone, where from and how close (lib/relations.js).
+    // Only the keys in `patch` change; an empty or unknown value clears that one.
+    setRelationship: (contactId, patch = {}) => syncedSet(s => ({
       contacts: s.contacts.map(c => {
         if (String(c.id) !== String(contactId)) return c
         const out = { ...c }
-        delete out.relation
-        const r = cleanRelation(relation)
-        return r ? { ...out, relation: r } : out
+        const clean = { relation: cleanRelation, relationNote: cleanRelationNote, closeness: cleanCloseness }
+        for (const [k, fn] of Object.entries(clean)) {
+          if (!(k in patch)) continue
+          const v = fn(patch[k])
+          if (v) out[k] = v
+          else delete out[k]
+        }
+        return out
+      }),
+    })),
+    setRelation: (contactId, relation) => get().setRelationship(contactId, { relation }),
+
+    // Facts worth remembering ("New dad since August") go at the end of the
+    // person's Notes, one per line, skipping any the notes already say.
+    addNotes: (contactId, facts = []) => syncedSet(s => ({
+      contacts: s.contacts.map(c => {
+        if (String(c.id) !== String(contactId)) return c
+        const notes = typeof c.notes === 'string' ? c.notes.trim() : ''
+        const have = notes.toLowerCase()
+        const fresh = facts.map(f => String(f || '').trim()).filter(f => f && !have.includes(f.toLowerCase()))
+        return fresh.length ? { ...c, notes: [notes, ...fresh].filter(Boolean).join('\n') } : c
       }),
     })),
 
@@ -683,13 +702,15 @@ export function openerFor(contact) {
   }
 }
 
-// Contacts quietly drifting: no touch in 45+ days (brand-new contacts have no
-// history yet and aren't "drifting"). Each gets a low-stakes opener.
+// Contacts quietly drifting: no touch in 45+ days, or 30 for someone you're
+// close to and 90 for someone you keep in touch with loosely (brand-new
+// contacts have no history yet and aren't "drifting"). Each gets a low-stakes
+// opener.
 export function selectNudges(state) {
   return state.contacts
     .filter(c => c.lastTouch)
     .map(c => ({ contact: c, health: healthFromLastTouch(c.lastTouch) }))
-    .filter(({ health }) => health.days >= 45)
+    .filter(({ contact, health }) => health.days >= driftDaysFor(contact))
     .sort((a, b) => b.health.days - a.health.days)
     .map(({ contact, health }) => ({
       contact,

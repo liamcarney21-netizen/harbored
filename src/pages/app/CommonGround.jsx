@@ -3,8 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronLeft } from 'lucide-react'
 import WarmAvatar from '../../components/WarmAvatar'
-import ThemeAdder from '../../components/ThemeAdder'
-import ThemeRow from '../../components/ThemeRow'
+import { StoredThemes } from '../../components/RelationshipCard'
 import StreamText from '../../components/StreamText'
 import WhyDisclosure from '../../components/WhyDisclosure'
 import NotForThemSheet, { ChoicesSheet } from '../../components/NotForThemSheet'
@@ -883,19 +882,10 @@ function CheckedCard({ lines }) {
 }
 
 function ThemesManager({ contacts, themesByContact, themeCount, onBack }) {
-  const removeTheme = useDataStore(s => s.removeTheme)
-  const restoreTheme = useDataStore(s => s.restoreTheme)
-  const showToast = useToast(s => s.show)
   const [addingFor, setAddingFor] = useState(null)
 
   const monitored = contacts.filter(c => (themesByContact[c.id] || []).length > 0 || String(c.id) === String(addingFor))
   const unmonitored = contacts.filter(c => (themesByContact[c.id] || []).length === 0 && String(c.id) !== String(addingFor))
-
-  function remove(c, t, index) {
-    removeTheme(c.id, t.id)
-    haptic.soft()
-    showToast(`Stopped watching ${t.label}`, { action: 'Undo', onAction: () => restoreTheme(c.id, t, index) })
-  }
 
   return (
     <div style={{ width: '100%', padding: `14px ${T.gutter}px 32px` }}>
@@ -927,19 +917,12 @@ function ThemesManager({ contacts, themesByContact, themeCount, onBack }) {
         {monitored.map(c => {
           const themes = themesByContact[c.id] || []
           return (
-            <Card key={c.id}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 13, marginBottom: 12 }}>
+            <Card key={c.id} style={{ padding: '14px 16px 8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 13, marginBottom: 4 }}>
                 <WarmAvatar initials={c.initials} size="md" />
                 <div style={{ fontSize: 15, fontWeight: 600, color: T.ink }}>{c.name}</div>
               </div>
-              {themes.length > 0 && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
-                  {themes.map((t, i) => (
-                    <ThemeRow key={t.id} contact={c} theme={t} onRemove={() => remove(c, t, i)} />
-                  ))}
-                </div>
-              )}
-              <ThemeAdder contact={c} autoFocus={String(c.id) === String(addingFor)} />
+              <StoredThemes contact={c} themes={themes} />
             </Card>
           )
         })}

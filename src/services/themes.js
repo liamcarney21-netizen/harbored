@@ -6,7 +6,9 @@
 import { apiUrl } from '../lib/apiBase'
 import { isFallbackRefinement } from '../lib/status'
 
-export async function refineTheme(label, contact) {
+// `said`: what the person said about it while describing them ("we text
+// during playoff games"), which decides the choices that start checked.
+export async function refineTheme(label, contact, { said } = {}) {
   try {
     const resp = await fetch(apiUrl('/api/refine-theme'), {
       method: 'POST',
@@ -17,6 +19,7 @@ export async function refineTheme(label, contact) {
         contactCompany: contact?.company,
         contactRole: contact?.role,
         relation: contact?.relation,
+        ...(said ? { said } : {}),
       }),
     })
     if (!resp.ok) return null

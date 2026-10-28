@@ -207,6 +207,38 @@ describe("build 12: what you'd text them about", () => {
     expect(saved).toMatchObject({ label: 'Yoga', query: null })
   })
 
+  it('stores where from and how close, changing only what a patch names', () => {
+    setup()
+    const { setRelationship } = useDataStore.getState()
+    setRelationship(COLIN, { relation: 'teammate', relationNote: 'at High Point', closeness: 'close' })
+    expect(useDataStore.getState().contacts[0]).toMatchObject({ relation: 'teammate', relationNote: 'at High Point', closeness: 'close' })
+    setRelationship(COLIN, { closeness: 'loose' })
+    expect(useDataStore.getState().contacts[0]).toMatchObject({ relation: 'teammate', relationNote: 'at High Point', closeness: 'loose' })
+    setRelationship(COLIN, { relationNote: '', closeness: 'whenever' })
+    expect(useDataStore.getState().contacts[0]).not.toHaveProperty('relationNote')
+    expect(useDataStore.getState().contacts[0]).not.toHaveProperty('closeness')
+  })
+
+  it("adds what's good to know to their notes, once", () => {
+    setup(socal, { notes: 'Wife: Kelly' })
+    const { addNotes } = useDataStore.getState()
+    addNotes(COLIN, ['New dad since August', 'wife: kelly'])
+    addNotes(COLIN, ['New dad since August'])
+    expect(useDataStore.getState().contacts[0].notes).toBe('Wife: Kelly\nNew dad since August')
+  })
+
+  it('times drift cards by how close you are', async () => {
+    const { selectNudges } = await import('./dataStore')
+    const ago = (d) => new Date(Date.now() - d * 86400000).toISOString()
+    const contacts = [
+      { id: 1, name: 'Close Friend', closeness: 'close', lastTouch: ago(35) },
+      { id: 2, name: 'Usual Friend', lastTouch: ago(35) },
+      { id: 3, name: 'Loose Contact', closeness: 'loose', lastTouch: ago(60) },
+      { id: 4, name: 'Old Contact', closeness: 'loose', lastTouch: ago(95) },
+    ]
+    expect(selectNudges({ contacts }).map(n => n.contact.name)).toEqual(['Old Contact', 'Close Friend'])
+  })
+
   it('stores how you know someone, and the no-news opener follows it', async () => {
     setup()
     const { setRelation } = useDataStore.getState()

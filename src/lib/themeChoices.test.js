@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { cleanChoiceLabel, choiceKey, checkedChoices, uncheckedChoices, isPausedTheme, recentNotAbout, CHOICE_LABEL_MAX } from './themeChoices'
-import { cleanRelation, relationLabel } from './relations'
+import { cleanRelation, relationLabel, parseRelation, cleanRelationNote, cleanCloseness, driftDaysFor, quietDaysFor, relationshipLine } from './relations'
 
 const NOW = Date.parse('2026-10-27T17:00:00Z')
 const daysAgo = (n) => new Date(NOW - n * 86400000).toISOString()
@@ -73,5 +73,30 @@ describe('relations', () => {
     expect(cleanRelation({ id: 'family' })).toBeUndefined()
     expect(relationLabel('work')).toBe('Work contact')
     expect(relationLabel('nope')).toBeUndefined()
+  })
+
+  it("reads a model's answer by id or label", () => {
+    expect(parseRelation('Work contact')).toBe('work')
+    expect(parseRelation(' Teammate ')).toBe('teammate')
+    expect(parseRelation('boss')).toBeUndefined()
+  })
+
+  it('keeps a short one-line note and a known closeness, and drops the rest', () => {
+    expect(cleanRelationNote('  at  High\nPoint ')).toBe('at High Point')
+    expect(cleanRelationNote('x'.repeat(41))).toBeUndefined()
+    expect(cleanCloseness('close')).toBe('close')
+    expect(cleanCloseness('very')).toBeUndefined()
+  })
+
+  it('times drifting by how close you are', () => {
+    expect([driftDaysFor({ closeness: 'close' }), driftDaysFor({}), driftDaysFor({ closeness: 'loose' })]).toEqual([30, 45, 90])
+    expect([quietDaysFor({ closeness: 'close' }), quietDaysFor({}), quietDaysFor({ closeness: 'loose' })]).toEqual([14, 21, 45])
+  })
+
+  it('says the relationship in one line', () => {
+    expect(relationshipLine({ relation: 'teammate', relationNote: 'at High Point', closeness: 'close' })).toBe('Teammate at High Point · Close')
+    expect(relationshipLine({ relation: 'friend', relationNote: 'college roommate' })).toBe('Friend · college roommate')
+    expect(relationshipLine({ closeness: 'loose' })).toBe('Loosely')
+    expect(relationshipLine({})).toBe('')
   })
 })

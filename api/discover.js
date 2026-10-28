@@ -1,4 +1,4 @@
-// Vercel serverless function: POST /api/discover { text, contactName }
+// Vercel serverless function: POST /api/discover { text, contactName, mode } (mode relationship also takes contactCompany, contactRole)
 import { handleDiscoverRequest } from '../server/discoverHandler.js'
 import { rateLimit, clientIp } from '../server/rateLimit.js'
 
